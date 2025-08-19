@@ -9,6 +9,7 @@ var pool = require('./mysql-connector');
 
 // Importación de rutas personalizadas para dispositivos
 const routerDispositivos = require('./dispositivos/index');
+const routerModulos = require('./modulos/index');
 
 // Inicialización de la aplicación Express
 var app = express();
