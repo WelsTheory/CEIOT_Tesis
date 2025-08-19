@@ -1,0 +1,54 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      Mediciones del Dispositivo N° {{ dispositivoId }}
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- Si hay mediciones -->
+  <ng-container *ngIf="mediciones && mediciones.length > 0">
+    <!-- Última medición destacada -->
+    <ion-card color="light" class="ultima-medicion">
+      <ion-card-header>
+        <ion-card-title>📌 Última medición </ion-card-title>
+        <ion-card-subtitle>{{ mediciones[0].fecha | date: 'dd/MM/yyyy HH:mm' }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="valor-destacado">
+          <span>{{ mediciones[0].valor }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Bloque único para el resto de mediciones -->
+    <ion-card color="light" class="bloque-historial">
+      <ion-card-header>
+        <ion-card-title>📜 Historial de mediciones</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list lines="full">
+          <ion-item *ngFor="let medicion of mediciones.slice(1); let i = index; trackBy: trackByFecha" class="item-historial">
+            <ion-label>
+              <h2>N°{{ mediciones.length - (i + 1) }}</h2>
+              <p>Fecha: {{ medicion.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+              <p>Valor: {{ medicion.valor }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <!-- Si no hay mediciones -->
+  <ion-text color="medium" *ngIf="!mediciones || mediciones.length === 0">
+    <p class="ion-text-center">No hay mediciones disponibles</p>
+  </ion-text>
+  <!-- Botón de Home -->
+  <ion-button expand="block" color="primary" (click)="volverAlHome()" class="boton-home">
+    🏠 Volver al Home
+  </ion-button>
+
+</ion-content>

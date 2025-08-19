@@ -1,0 +1,27 @@
+.full-height {
+    height: 100%;
+  }
+  
+  .login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .login-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  
+    img {
+      max-width: 120px;
+      border-radius: 50%;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+    }
+  }
+  
+  ion-card {
+    border-radius: 16px;
+    box-shadow: 0px 6px 18px rgba(0,0,0,0.12);
+  }
+  
