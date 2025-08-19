@@ -48,7 +48,9 @@ INSERT INTO `Dispositivos` (`dispositivoId`, `nombre`, `ubicacion`, `electrovalv
 (4, 'Sensor 4', 'Living', 4),
 (5, 'Sensor 5', 'Habitacion 1', 5),
 (6, 'Sensor 6', 'Habitacion 2', 6),
-(7, 'Sensor 7', 'Habitacion 3', 7);
+(7, 'Sensor 7', 'Habitacion 3', 7),
+(8, 'Sensor 8', 'Habitacion 4', 8),
+(9, 'Sensor 9', 'Habitacion 5', 9);
 
 -- --------------------------------------------------------
 
@@ -72,7 +74,9 @@ INSERT INTO `Electrovalvulas` (`electrovalvulaId`, `nombre`) VALUES
 (4, 'eLLiving'),
 (5, 'eLHabitacion1'),
 (6, 'eLHabitacion2'),
-(7, 'eLHabitacion3');
+(7, 'eLHabitacion3'),
+(8, 'eLHabitacion4'),
+(9, 'eLHabitacion5');
 
 -- --------------------------------------------------------
 
@@ -116,7 +120,9 @@ INSERT INTO `Mediciones` (`medicionId`, `fecha`, `valor`, `dispositivoId`) VALUE
 (9, '2020-11-26 21:19:41', '44', 4),
 (10, '2020-11-26 21:19:41', '61', 5),
 (11, '2020-11-26 21:19:41', '28', 7),
-(12, '2020-11-26 21:19:41', '12', 2);
+(12, '2020-11-26 21:19:41', '12', 2),
+(13, '2020-11-26 21:19:41', '23', 9),
+(14, '2020-11-26 21:19:41', '11', 8);
 
 --
 -- Índices para tablas volcadas

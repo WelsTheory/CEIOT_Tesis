@@ -3,7 +3,7 @@
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   img {
-    width: 100%;
+    width: 100% !important;
     height: 80px;
     object-fit: contain; // muestra toda la imagen aunque no llene el ancho
     padding: 5px;
@@ -38,5 +38,264 @@
     margin-left: 10px;
     border-radius: 12px;
     font-weight: 500;
+  }
+}
+
+
+.cuadrantes-container {
+  padding: 16px 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;  // 2 columnas en pantallas grandes
+  gap: 20px;
+  
+  // Tablet y pantallas medianas (768px o menos)
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;    // 1 columna en pantallas medianas/pequeñas
+    gap: 16px;
+  }
+  
+  // Móviles pequeños (opcional, para mayor control)
+  @media (max-width: 480px) {
+    padding: 8px;
+    gap: 12px;
+  }
+  img {
+    width: 100% !important;
+    height: 40px;
+    object-fit: contain; // muestra toda la imagen aunque no llene el ancho
+    padding: 5px;
+    background: #f5f5f5; // fondo gris claro para que no se vea vacío
+  }
+}
+
+.cuadrante {
+  border: 2px solid var(--ion-color-light);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--ion-color-light-shade);
+  min-height: 500px;              // Altura mínima para mantener consistencia
+  
+  // En pantallas pequeñas, reducir padding
+  @media (max-width: 768px) {
+    padding: 12px;
+    min-height: 400px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px;
+    min-height: 350px;
+  }
+  
+  h3 {
+    text-align: center;
+    color: var(--ion-color-primary);
+    font-weight: bold;
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+}
+
+.dispositivo-card {
+  margin: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0000001a;
+  
+  ion-card-header {
+    padding: 12px 16px 8px 16px;
+    
+    ion-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+      text-align: center;
+    }
+  }
+  
+  ion-card-content {
+    padding: 8px 16px 16px 16px;
+    
+    .card-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      
+      // Información del dispositivo a la izquierda
+      .dispositivo-info-left {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        
+        .info-item {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          
+          .label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--ion-color-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            word-break: break-word;
+          }
+        }
+      }
+      
+      // Mediciones a la derecha
+      .mediciones-right {
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
+        min-width: 80px;
+        
+        .dispositivo-item {
+          padding: 8px 10px;
+          border-radius: 2px;
+          border: 1px solid var(--ion-color-light);
+          background: var(--ion-color-light-tint);
+          transition: all 0.3s ease;
+          
+          &.up {
+            border-top: 3px solid var(--ion-color-tertiary);
+            border-bottom: 1px solid var(--ion-color-light);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+          }
+          
+          &.down {
+            border-bottom: 3px solid var(--ion-color-secondary);
+            border-top: none;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+          }
+
+          &.activo {
+            background: var(--ion-color-success-tint);
+            border-color: var(--ion-color-success);
+            
+            .medicion-container {
+              .posicion-label {
+                color: var(--ion-color-success);
+              }
+              
+              .temperatura {
+                color: white;
+                font-weight: bold;
+              }
+            }
+          }
+          
+          .medicion-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            
+            .posicion-label {
+              font-size: 0.7rem;
+              font-weight: bold;
+              color: var(--ion-color-medium);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .temperatura {
+              font-size: 0.8rem;
+              font-weight: 600;
+              color: white;
+              text-align: center;
+            }
+          }
+        }
+        
+        .up {
+          border-top: 1px solid var(--ion-color-tertiary);
+        }
+        
+        .down {
+          border-bottom: 1px solid var(--ion-color-secondary);
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .dispositivo-card {
+    ion-card-content {
+      .card-body {
+        flex-direction: column;
+        gap: 12px;
+        
+        .mediciones-right {
+          flex-direction: row;
+          justify-content: space-around;
+          width: 100%;
+          
+          .dispositivo-item {
+            flex: 1;
+            margin: 0 4px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Para pantallas muy pequeñas
+@media (max-width: 480px) {
+  .cuadrante-grid {
+    ion-col {
+      size: 6; // 2 columnas en móvil
+    }
+  }
+  
+  .dispositivo-card {
+    ion-card-header {
+      ion-card-title {
+        font-size: 0.9rem;
+      }
+    }
+    
+    ion-card-content {
+      .card-body {
+        .dispositivo-info-left {
+          .info-item {
+            .label {
+              font-size: 0.7rem;
+            }
+            
+            .value {
+              font-size: 0.8rem;
+            }
+          }
+        }
+        
+        .mediciones-right {
+          .dispositivo-item {
+            .medicion-container {
+              .posicion-label {
+                font-size: 0.65rem;
+              }
+              
+              .temperatura {
+                font-size: 0.75rem;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

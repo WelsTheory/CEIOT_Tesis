@@ -5,10 +5,225 @@
 </ion-header>
 
 <ion-content>
+  <div class="cuadrantes-container">
+    <!-- CUADRANTE NORTE -->
+    <div class="cuadrante">
+      <h3>Cuadrante Norte</h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <ion-card class="dispositivo-card">
+              <img [src]="dispositivo.estadoValvula 
+                    ? 'assets/img/version2.png' 
+                    : 'assets/img/version1.png'"  
+              alt="Dispositivo"/>
+              <ion-card-header>
+                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <div class="card-body">
+                  <!-- Información del dispositivo a la izquierda -->
+                  <div class="dispositivo-info-left">
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.version || 'Version 1' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.medicionActual || 'N/A' }} °C</span>
+                    </div>
+                  </div>
+
+                  <!-- Mediciones a la derecha -->
+                  <div class="mediciones-right">
+                    <!-- Dispositivo UP -->
+                    <div class="dispositivo-item up" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+
+                    <!-- Dispositivo DOWN -->
+                    <div class="dispositivo-item down" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <br>
+                <div class="botones">
+                  <ion-button fill="outline" size="small"
+                    (click)="verMediciones(dispositivo.dispositivoId)">
+                    Historial
+                  </ion-button>
+
+                  <ion-button color="primary" size="small"
+                    (click)="verDetalle(dispositivo.dispositivoId)">
+                    +Info
+                  </ion-button>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div>
+    <!-- CUADRANTE ESTE -->
+    <div class="cuadrante">
+      <h3>Cuadrante ESTE</h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <ion-card class="dispositivo-card">
+              <ion-card-header>
+                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <div class="card-body">
+                  <!-- Información del dispositivo a la izquierda -->
+                  <div class="dispositivo-info-left">
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.nombre || 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.ubicacion || 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.version || 'N/A' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Mediciones a la derecha -->
+                  <div class="mediciones-right">
+                    <!-- Dispositivo UP -->
+                    <div class="dispositivo-item up" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+
+                    <!-- Dispositivo DOWN -->
+                    <div class="dispositivo-item down" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div>
+    <!-- CUADRANTE OESTE-->
+    <div class="cuadrante">
+      <h3>Cuadrante OESTE</h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <ion-card class="dispositivo-card">
+              <ion-card-header>
+                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <div class="card-body">
+                  <!-- Información del dispositivo a la izquierda -->
+                  <div class="dispositivo-info-left">
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.nombre || 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.ubicacion || 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.version || 'N/A' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Mediciones a la derecha -->
+                  <div class="mediciones-right">
+                    <!-- Dispositivo UP -->
+                    <div class="dispositivo-item up" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+
+                    <!-- Dispositivo DOWN -->
+                    <div class="dispositivo-item down" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div>
+    <!-- CUADRANTE SUR -->
+    <div class="cuadrante">
+      <h3>Cuadrante SUR</h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <ion-card class="dispositivo-card">
+              <ion-card-header>
+                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <div class="card-body">
+                  <!-- Información del dispositivo a la izquierda -->
+                  <div class="dispositivo-info-left">
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.nombre || 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.ubicacion || 'N/A' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="value">{{ dispositivo.version || 'N/A' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Mediciones a la derecha -->
+                  <div class="mediciones-right">
+                    <!-- Dispositivo UP -->
+                    <div class="dispositivo-item up" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+
+                    <!-- Dispositivo DOWN -->
+                    <div class="dispositivo-item down" 
+                         [class.activo]="dispositivo.estadoValvula">
+                      <div class="medicion-container">
+                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div>
+  </div>
+
   <ion-grid>
     <ion-row>
-      <ion-col size="12" size-md="9" size-lg="4"
-        *ngFor="let dispositivo of dispositivos">
+      <ion-col size="6" size-md="3" size-lg="1" *ngFor="let dispositivo of dispositivos">
 
         <ion-card class="device-card">
           <img 
@@ -54,3 +269,141 @@
     </ion-row>    
   </ion-grid>
 </ion-content>
+
+<!--
+<div class="cuadrante">
+      <h3> Cuadrante ESTE </h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <div class="columna">
+              <ion-card class="dispositivo-card">
+                <ion-card-content>
+                  <div class="dispositivo-item up" >
+                    <div class="dispositivo-info">
+                      <span class="posicion">UP </span>
+                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
+                      <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                    </div>
+                    <div class="dispositivo-controles">
+                      <ion-button size="small" fill="clear" 
+                                  (click)="verDetalle(dispositivo.dispositivoId)">
+                        <ion-icon name="information-circle"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+
+                  <div class="separador"></div>
+                  <div class="dispositivo-item down">
+                    <div class="dispositivo-info">
+                      <span class="posicion">DOWN </span>
+                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
+                      <span class="temperatura"> {{ dispositivo.medicionActual || '—' }}°C</span>
+                    </div>
+                    <div class="dispositivo-controles">
+                      <ion-button size="small" fill="clear" 
+                                  (click)="verDetalle(dispositivo.dispositivoId)">
+                        <ion-icon name="information-circle"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+
+                </ion-card-content>
+              </ion-card>
+            </div>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div>
+
+    <div class="cuadrante">
+      <h3> Cuadrante Oeste </h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <div class="columna">
+              <ion-card class="dispositivo-card">
+                <ion-card-content>
+                  <div class="dispositivo-item up" >
+                    <div class="dispositivo-info">
+                      <span class="posicion">UP </span>
+                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
+                      <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                    </div>
+                    <div class="dispositivo-controles">
+                      <ion-button size="small" fill="clear" 
+                                  (click)="verDetalle(dispositivo.dispositivoId)">
+                        <ion-icon name="information-circle"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+
+                  <div class="separador"></div>
+
+
+                  <div class="dispositivo-item down">
+                    <div class="dispositivo-info">
+                      <span class="posicion">DOWN </span>
+                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
+                      <span class="temperatura"> {{ dispositivo.medicionActual || '—' }}°C</span>
+                    </div>
+                    <div class="dispositivo-controles">
+                      <ion-button size="small" fill="clear" 
+                                  (click)="verDetalle(dispositivo.dispositivoId)">
+                        <ion-icon name="information-circle"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+
+                </ion-card-content>
+              </ion-card>
+            </div>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div>
+
+    <div class="cuadrante">
+      <h3> Cuadrante SUR </h3>
+      <ion-grid class="cuadrante-grid">
+        <ion-row>
+          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
+            <div class="columna">
+              <ion-card class="dispositivo-card">
+                <ion-card-content>
+                  <div class="dispositivo-item up" >
+                    <div class="dispositivo-info">
+                      <span class="posicion">UP </span>
+                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
+                      <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                    </div>
+                    <div class="dispositivo-controles">
+                      <ion-button size="small" fill="clear" 
+                                  (click)="verDetalle(dispositivo.dispositivoId)">
+                        <ion-icon name="information-circle"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+
+                  <div class="separador"></div>
+                  <div class="dispositivo-item down">
+                    <div class="dispositivo-info">
+                      <span class="posicion">DOWN </span>
+                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
+                      <span class="temperatura"> {{ dispositivo.medicionActual || '—' }}°C</span>
+                    </div>
+                    <div class="dispositivo-controles">
+                      <ion-button size="small" fill="clear" 
+                                  (click)="verDetalle(dispositivo.dispositivoId)">
+                        <ion-icon name="information-circle"></ion-icon>
+                      </ion-button>
+                    </div>
+                  </div>
+
+                </ion-card-content>
+              </ion-card>
+            </div>
+          </ion-col>
+        </ion-row>  
+      </ion-grid>
+    </div> -->
