@@ -30,14 +30,14 @@ export class ModuloPage implements OnInit{
 
   modulo!: Modulo;
   moduloId!: number;
-  estadoValvula: boolean | null = null;
+  estadoReset: boolean | null = null;
   ultimaMedicion: { fecha: string; valor: string } | null = null;
 
 
   constructor(
     private route: ActivatedRoute,
     private moduloService: ModuloService,
-    private valveService: ModuloService,
+    private resetService: ModuloService,
     private router: Router
   ) {}
 
@@ -52,11 +52,11 @@ export class ModuloPage implements OnInit{
     this.moduloId = Number(this.route.snapshot.paramMap.get('id'));
     await this.cargarmodulo();
     try {
-      const estadoResponse = await this.moduloService.getEstadoValvula(this.moduloId);
-      this.estadoValvula = estadoResponse.estado;
+      const estadoResponse = await this.moduloService.getEstadoReset(this.moduloId);
+      this.estadoReset = estadoResponse.estado;
     } catch (error) {
       console.error('Error al obtener el estado de la válvula:', error);
-      this.estadoValvula = null;
+      this.estadoReset = null;
     }
     await this.cargarUltimaMedicion();
   }
@@ -69,9 +69,9 @@ export class ModuloPage implements OnInit{
     }
   }
 
-  async cambiarEstadoValvula(apertura: boolean) {
+  async cambiarEstadoReset(apertura: boolean) {
     try {
-      await this.moduloService.cambiarEstadoValvula(
+      await this.moduloService.cambiarEstadoReset(
         this.moduloId,
         apertura
       );
@@ -82,43 +82,44 @@ export class ModuloPage implements OnInit{
     }
   }
   verMediciones() {
+    console.log('Es aqui:',this.modulo);
     this.router.navigate([`/modulo`, this.moduloId, 'mediciones']);
   }
   
-  async abrirValvula(moduloId: number) {
+  async abrirReset(moduloId: number) {
     try {
-      await this.moduloService.abrirValvula(moduloId);
+      await this.moduloService.abrirReset(moduloId);
       alert('Válvula abierta exitosamente');
-      this.actualizarEstadoValvula();
-      this.moduloService.setValveState(moduloId, true); // ✅ Notifica a Home
+      this.actualizarEstadoReset();
+      this.moduloService.setResetState(moduloId, true); // ✅ Notifica a Home
     } catch (error) {
       console.error('Error al abrir la válvula:', error);
       alert('No se pudo abrir la válvula');
     }
   }
   
-  async cerrarValvula(moduloId: number) {
+  async cerrarReset(moduloId: number) {
     try {
-      await this.moduloService.cerrarValvula(moduloId);
+      await this.moduloService.cerrarReset(moduloId);
       alert('Válvula cerrada exitosamente');
-      this.actualizarEstadoValvula();
-      this.moduloService.setValveState(moduloId, false); // ✅ Notifica a Home
+      this.actualizarEstadoReset();
+      this.moduloService.setResetState(moduloId, false); // ✅ Notifica a Home
     } catch (error) {
       console.error('Error al cerrar la válvula:', error);
       alert('No se pudo cerrar la válvula');
     }
   }
-  private async actualizarEstadoValvula() {
+  private async actualizarEstadoReset() {
     try {
-      const estadoResponse = await this.moduloService.getEstadoValvula(this.moduloId);
-      this.estadoValvula = estadoResponse.estado;
+      const estadoResponse = await this.moduloService.getEstadoReset(this.moduloId);
+      this.estadoReset = estadoResponse.estado;
     } catch (error) {
       console.error('Error al actualizar el estado de la válvula:', error);
     }
   }
 
-  toggleValve(newState: boolean) {
-    this.valveService.setValveState(this.moduloId, newState);
+  toggleReset(newState: boolean) {
+    this.resetService.setResetState(this.moduloId, newState);
   }
   
 

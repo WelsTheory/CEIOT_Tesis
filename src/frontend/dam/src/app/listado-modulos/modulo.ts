@@ -5,5 +5,6 @@ export interface Modulo {
     version: number,
     up: number,
     down: number,
+    resetId: number,
     medicionActual: number,
 }

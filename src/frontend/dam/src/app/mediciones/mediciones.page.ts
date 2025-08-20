@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { DispositivoService } from '../services/dispositivo.service';
+import { ModuloService } from '../services/modulo.service';
 
 // Ionic standalone imports
 import {
@@ -49,23 +49,23 @@ import {
   ]
 })
 export class MedicionesPage implements OnInit {
-  dispositivoId!: number;
+  moduloId!: number;
   mediciones: { medicionId: number; fecha: string; valor: string }[] = [];
 
   constructor(
     private route: ActivatedRoute,
-    private dispositivoService: DispositivoService,
+    private moduloService: ModuloService,
     private router: Router
   ) {}
 
   async ngOnInit() {
-    this.dispositivoId = Number(this.route.snapshot.paramMap.get('id'));
+    this.moduloId = Number(this.route.snapshot.paramMap.get('id'));
     await this.cargarMediciones();
   }
 
   async cargarMediciones() {
     try {
-      this.mediciones = await this.dispositivoService.getMediciones(this.dispositivoId);
+      this.mediciones = await this.moduloService.getMediciones(this.moduloId);
     } catch (error) {
       console.error('Error al cargar las mediciones:', error);
     }

@@ -7,8 +7,7 @@ var cors = require('cors');
 const jwt = require('jsonwebtoken');
 var pool = require('./mysql-connector');
 
-// Importación de rutas personalizadas para dispositivos
-const routerDispositivos = require('./dispositivos/index');
+// Importación de rutas personalizadas para modulos
 const routerModulos = require('./modulos/index');
 
 // Inicialización de la aplicación Express
@@ -57,27 +56,27 @@ var authenticator = function (req, res, next) {
 //=======[ Generador de Mediciones Aleatorias ]================================
 // Función que genera mediciones aleatorias y las guarda en la BD
 const generarMediciones = () => {
-    console.log('Intentando obtener dispositivos para generar mediciones...');
-    // Query para obtener todos los dispositivos
-    const queryDispositivos = 'SELECT dispositivoId FROM Dispositivos';
+    console.log('Intentando obtener modulos para generar mediciones...');
+    // Query para obtener todos los modulos
+    const queryModulos = 'SELECT moduloId FROM Modulos';
     // Query para insertar una medición
     const queryInsertMedicion = `
-        INSERT INTO Mediciones (dispositivoId, fecha, valor)
+        INSERT INTO Mediciones (moduloId, fecha, valor)
         VALUES (?, NOW(), ?)`;
     // Consulta a la base de datos
-    pool.query(queryDispositivos, (err, dispositivos) => {
+    pool.query(queryModulos, (err, modulos) => {
         if (err) {
-            console.error('Error al obtener dispositivos:', err);
+            console.error('Error al obtener modulos:', err);
             return;
         }
-        // Para cada dispositivo, genera una medición aleatoria
-        dispositivos.forEach(({ dispositivoId }) => {
+        // Para cada modulo, genera una medición aleatoria
+        modulos.forEach(({ moduloId }) => {
             const valor = (Math.random() * 100).toFixed(2);
-            pool.query(queryInsertMedicion, [dispositivoId, valor], (err) => {
+            pool.query(queryInsertMedicion, [moduloId, valor], (err) => {
                 if (err) {
-                    console.error(`Error al registrar medición para dispositivo ${dispositivoId}:`, err);
+                    console.error(`Error al registrar medición para modulo ${moduloId}:`, err);
                 } else {
-                    console.log(`Medición registrada para dispositivo ${dispositivoId}: ${valor}`);
+                    console.log(`Medición registrada para modulo ${moduloId}: ${valor}`);
                 }
             });
         });
@@ -128,21 +127,22 @@ app.all('/secreto', authenticator, function (req, res) {
     res.status(200).send('Secreto');
 });
 
-// Ruta protegida que devuelve todos los dispositivos desde la BD
+// Ruta protegida que devuelve todos los modulos desde la BD
 app.get('/devices', authenticator, function (req, res) {
-    const query = 'SELECT * FROM Dispositivos';
+    const query = 'SELECT * FROM Modulos';
     pool.query(query, (error, results) => {
         if (error) {
-            console.error('Error al obtener los dispositivos:', error);
-            res.status(500).send({ error: 'Error al obtener los dispositivos' });
+            console.error('Error al obtener los modulos:', error);
+            res.status(500).send({ error: 'Error al obtener los modulos' });
         } else {
             res.status(200).send(results);
         }
     });
 });
 
-// Rutas adicionales para /dispositivo (importadas de otro módulo)
-app.use('/dispositivo', authenticator, routerDispositivos);
+// Rutas adicionales para /modulo (importadas de otro módulo)
+//app.use('/modulo', authenticator, routermodulos);
+app.use('/modulo', authenticator, routerModulos);
 
 //=======[ Server Listener ]===================================================
 // Inicia el servidor en el puerto configurado

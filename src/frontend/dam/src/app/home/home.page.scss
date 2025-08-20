@@ -97,7 +97,7 @@
   }
 }
 
-.dispositivo-card {
+.modulo-card {
   margin: 0;
   border-radius: 8px;
   box-shadow: 0 2px 8px #0000001a;
@@ -122,8 +122,8 @@
       align-items: flex-start;
       gap: 12px;
       
-      // Información del dispositivo a la izquierda
-      .dispositivo-info-left {
+      // Información del modulo a la izquierda
+      .modulo-info-left {
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -158,30 +158,30 @@
         gap: 0px;
         min-width: 80px;
         
-        .dispositivo-item {
+        .modulo-item {
           padding: 8px 10px;
           border-radius: 2px;
           border: 1px solid var(--ion-color-light);
-          background: var(--ion-color-light-tint);
+          background: #2e8857;
           transition: all 0.3s ease;
           
           &.up {
-            border-top: 3px solid var(--ion-color-tertiary);
-            border-bottom: 1px solid var(--ion-color-light);
+            border-top: 3px;
+            border-bottom: 1px;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
           }
           
           &.down {
-            border-bottom: 3px solid var(--ion-color-secondary);
+            border-bottom: 3px;
             border-top: none;
             border-top-left-radius: 0;
             border-top-right-radius: 0;
           }
 
           &.activo {
-            background: var(--ion-color-success-tint);
-            border-color: var(--ion-color-success);
+            //background: var(--ion-color-success-tint);
+            //border-color: var(--ion-color-success);
             
             .medicion-container {
               .posicion-label {
@@ -232,7 +232,7 @@
 
 // Responsive design
 @media (max-width: 768px) {
-  .dispositivo-card {
+  .modulo-card {
     ion-card-content {
       .card-body {
         flex-direction: column;
@@ -243,7 +243,7 @@
           justify-content: space-around;
           width: 100%;
           
-          .dispositivo-item {
+          .modulo-item {
             flex: 1;
             margin: 0 4px;
           }
@@ -261,7 +261,7 @@
     }
   }
   
-  .dispositivo-card {
+  .modulo-card {
     ion-card-header {
       ion-card-title {
         font-size: 0.9rem;
@@ -270,7 +270,7 @@
     
     ion-card-content {
       .card-body {
-        .dispositivo-info-left {
+        .modulo-info-left {
           .info-item {
             .label {
               font-size: 0.7rem;
@@ -283,7 +283,7 @@
         }
         
         .mediciones-right {
-          .dispositivo-item {
+          .modulo-item {
             .medicion-container {
               .posicion-label {
                 font-size: 0.65rem;

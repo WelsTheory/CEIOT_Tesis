@@ -17,16 +17,16 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'dispositivo',
-    loadComponent: () => import('./listado-dispositivos/listado-dispositivos.page').then( m => m.DispositivoPage)
+    path: 'modulo',
+    loadComponent: () => import('./listado-modulos/listado-modulos.page').then( m => m.ModuloPage)
   },
   {
-    path: 'dispositivo/:id',
+    path: 'modulo/:id',
     loadComponent: () =>
-      import('./listado-dispositivos/listado-dispositivos.page').then((m) => m.DispositivoPage),
+      import('./listado-modulos/listado-modulos.page').then((m) => m.ModuloPage),
   },
   {
-    path: 'dispositivo/:id/mediciones',
+    path: 'modulo/:id/mediciones',
     loadComponent: () =>
       import('./mediciones/mediciones.page').then((m) => m.MedicionesPage),
   },

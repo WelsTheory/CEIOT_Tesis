@@ -15,12 +15,12 @@
 
             <p>
               <strong>Válvula:</strong>
-              <ng-container *ngIf="estadoValvula !== null; else cargandoValvula">
-                <ion-chip [color]="estadoValvula ? 'success' : 'danger'">
-                  {{ estadoValvula ? 'Abierta' : 'Cerrada' }}
+              <ng-container *ngIf="estadoReset !== null; else cargandoReset">
+                <ion-chip [color]="estadoReset ? 'success' : 'danger'">
+                  {{ estadoReset ? 'Abierta' : 'Cerrada' }}
                 </ion-chip>
               </ng-container>
-              <ng-template #cargandoValvula>
+              <ng-template #cargandoReset>
                 Cargando estado...
               </ng-template>
             </p>
@@ -37,16 +37,16 @@
             </div>
 
             <!-- Botones de válvula -->
-            <div class="botones-valvula">
-              <ion-button expand="block" color="success" (click)="abrirValvula(modulo.moduloId)">Abrir Válvula</ion-button>
-              <ion-button expand="block" color="danger" (click)="cerrarValvula(modulo.moduloId)">Cerrar Válvula</ion-button>
+            <div class="botones-reset">
+              <ion-button expand="block" color="success" (click)="abrirReset(modulo.moduloId)">Abrir Reset</ion-button>
+              <ion-button expand="block" color="danger" (click)="cerrarReset(modulo.moduloId)">Cerrar Reset</ion-button>
             </div>
           </ion-card-content>
         </ion-col>
 
         <!-- Imagen a la derecha -->
         <ion-col size="12" size-md="5" class="device-image">
-          <img [src]="estadoValvula ? 'assets/img/version2.png' : 'assets/img/version1.png'" 
+          <img [src]="estadoReset ? 'assets/img/version2.png' : 'assets/img/version1.png'" 
               alt="Imagen modulo" />
         </ion-col>
       </ion-row>

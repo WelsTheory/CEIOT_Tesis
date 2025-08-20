@@ -12,15 +12,15 @@ export class ModuloService {
 
   constructor(private _http: HttpClient) {}
 
-  private valveState = new BehaviorSubject<{id: number, estado: boolean} | null>(null);
-  valveState$ = this.valveState.asObservable();
+  private resetState = new BehaviorSubject<{id: number, estado: boolean} | null>(null);
+  resetState$ = this.resetState.asObservable();
 
-  setValveState(id: number, estado: boolean) {
-    this.valveState.next({ id, estado });
+  setResetState(id: number, estado: boolean) {
+    this.resetState.next({ id, estado });
   }
 
-  getValveState(): boolean {
-    return this.valveState.value?.estado ?? false;
+  getResetState(): boolean {
+    return this.resetState.value?.estado ?? false;
   }
 
  
@@ -33,10 +33,10 @@ export class ModuloService {
     );
   }
   
-  cambiarEstadoValvula(id: number, apertura: boolean): Promise<void> {
+  cambiarEstadoReset(id: number, apertura: boolean): Promise<void> {
     return firstValueFrom(
       this._http.post<void>(
-        `http://localhost:8000/modulo/valvula`,
+        `http://localhost:8000/modulo/reset`,
         { apertura: apertura ? 1 : 0 }
       )
     );
@@ -50,19 +50,19 @@ export class ModuloService {
     );
   }
   
-  abrirValvula(id: number): Promise<any> {
+  abrirReset(id: number): Promise<any> {
     return firstValueFrom(
       this._http.post(`http://localhost:8000/modulo/${id}/abrir`, {})
     );
   }
   
-  cerrarValvula(id: number): Promise<any> {
+  cerrarReset(id: number): Promise<any> {
     return firstValueFrom(
       this._http.post(`http://localhost:8000/modulo/${id}/cerrar`, {})
     );
   }
   
-  getEstadoValvula(id: number): Promise<any> {
+  getEstadoReset(id: number): Promise<any> {
     return firstValueFrom(
       this._http.get(`http://localhost:8000/modulo/${id}/estado`)
     );

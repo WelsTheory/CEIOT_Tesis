@@ -15,41 +15,41 @@ routerModulos.get('/', (req, res) => {
     });
 });
 
-// Obtener detalle de un dispositivo
+// Obtener detalle de un modulo
 routerModulos.get('/:id', (req, res) => {
-    const dispositivoId = req.params.id;
+    const moduloId = req.params.id;
     const query = `
-        SELECT d.dispositivoId, d.nombre AS dispositivoNombre, d.ubicacion, 
-               e.electrovalvulaId, e.nombre AS electrovalvulaNombre
+        SELECT d.moduloId, d.nombre AS moduloNombre, d.ubicacion, 
+               e.resetId, e.nombre AS resetName
         FROM Modulos d
-        INNER JOIN Electrovalvulas e ON d.electrovalvulaId = e.electrovalvulaId
-        WHERE d.dispositivoId = ?`;
+        INNER JOIN Control_Reinicio e ON d.resetId = e.resetId
+        WHERE d.moduloId = ?`;
 
-    pool.query(query, [dispositivoId], (err, result) => {
+    pool.query(query, [moduloId], (err, result) => {
         if (err) {
-            console.error('Error al obtener el dispositivo:', err);
-            return res.status(500).json({ error: 'Error al obtener el dispositivo' });
+            console.error('Error al obtener el modulo:', err);
+            return res.status(500).json({ error: 'Error al obtener el modulo' });
         }
         if (result.length === 0) {
-            return res.status(404).json({ error: 'Dispositivo no encontrado' });
+            return res.status(404).json({ error: 'Modulo no encontrado' });
         }
         res.status(200).json(result[0]);
     });
 });
 
 // Registrar apertura/cierre de válvula
-routerModulos.post('/:id/valvula', (req, res) => {
-    const dispositivoId = req.params.id;
+routerModulos.post('/:id/reset', (req, res) => {
+    const moduloId = req.params.id;
     const { apertura } = req.body;
     const fecha = new Date();
 
     const queryLog = `
-        INSERT INTO Log_Riegos (apertura, fecha, electrovalvulaId)
-        SELECT ?, ?, electrovalvulaId
+        INSERT INTO Log_Riegos (apertura, fecha, resetId)
+        SELECT ?, ?, resetId
         FROM Modulos
-        WHERE dispositivoId = ?`;
+        WHERE moduloId = ?`;
 
-    pool.query(queryLog, [apertura, fecha, dispositivoId], (err) => {
+    pool.query(queryLog, [apertura, fecha, moduloId], (err) => {
         if (err) {
             console.error('Error al registrar el riego:', err);
             return res.status(500).json({ error: 'Error al registrar el riego' });
@@ -58,16 +58,16 @@ routerModulos.post('/:id/valvula', (req, res) => {
     });
 });
 
-// Obtener todas las mediciones de un dispositivo
+// Obtener todas las mediciones de un modulo
 routerModulos.get('/:id/mediciones', (req, res) => {
-    const dispositivoId = req.params.id;
+    const moduloId = req.params.id;
     const query = `
         SELECT medicionId, fecha, valor
         FROM Mediciones
-        WHERE dispositivoId = ?
+        WHERE moduloId = ?
         ORDER BY fecha DESC`;
 
-    pool.query(query, [dispositivoId], (err, result) => {
+    pool.query(query, [moduloId], (err, result) => {
         if (err) {
             console.error('Error al obtener las mediciones:', err);
             return res.status(500).json({ error: 'Error al obtener las mediciones' });
@@ -78,47 +78,47 @@ routerModulos.get('/:id/mediciones', (req, res) => {
 
 // Abrir válvula
 routerModulos.post('/:id/abrir', (req, res) => {
-    const electrovalvulaId = req.params.id;
+    const resetId = req.params.id;
     const query = `
-        INSERT INTO Log_Riegos (electrovalvulaId, apertura, fecha)
+        INSERT INTO Log_Riegos (resetId, apertura, fecha)
         VALUES (?, 1, NOW())`;
 
-    pool.query(query, [electrovalvulaId], (err) => {
+    pool.query(query, [resetId], (err) => {
         if (err) {
-            console.error('Error al abrir la válvula:', err);
+            console.error('Error al abrir la modulo reset:', err);
             return res.status(500).send({ error: 'No se pudo abrir la válvula' });
         }
-        res.status(200).send({ message: 'Válvula abierta exitosamente' });
+        res.status(200).send({ message: 'Reset abierta exitosamente' });
     });
 });
 
 // Cerrar válvula
 routerModulos.post('/:id/cerrar', (req, res) => {
-    const electrovalvulaId = req.params.id;
+    const resetId = req.params.id;
     const query = `
-        INSERT INTO Log_Riegos (electrovalvulaId, apertura, fecha)
+        INSERT INTO Log_Riegos (resetId, apertura, fecha)
         VALUES (?, 0, NOW())`;
 
-    pool.query(query, [electrovalvulaId], (err) => {
+    pool.query(query, [resetId], (err) => {
         if (err) {
             console.error('Error al cerrar la válvula:', err);
             return res.status(500).send({ error: 'No se pudo cerrar la válvula' });
         }
-        res.status(200).send({ message: 'Válvula cerrada exitosamente' });
+        res.status(200).send({ message: 'Reset cerrada exitosamente' });
     });
 });
 
 // Obtener estado de la válvula
 routerModulos.get('/:id/estado', (req, res) => {
-    const electrovalvulaId = req.params.id;
+    const resetId = req.params.id;
     const query = `
         SELECT apertura
         FROM Log_Riegos
-        WHERE electrovalvulaId = ?
+        WHERE resetId = ?
         ORDER BY fecha DESC
         LIMIT 1`;
 
-    pool.query(query, [electrovalvulaId], (err, result) => {
+    pool.query(query, [resetId], (err, result) => {
         if (err) {
             console.error('Error al obtener el estado de la válvula:', err);
             return res.status(500).send({ error: 'No se pudo obtener el estado' });
@@ -133,20 +133,20 @@ routerModulos.get('/:id/estado', (req, res) => {
 
 // Obtener última medición
 routerModulos.get('/:id/ultima-medicion', (req, res) => {
-    const dispositivoId = req.params.id;
+    const moduloId = req.params.id;
     const query = `
         SELECT fecha, valor
         FROM Mediciones
-        WHERE dispositivoId = ?
+        WHERE moduloId = ?
         ORDER BY fecha DESC
         LIMIT 1`;
 
-    pool.query(query, [dispositivoId], (err, result) => {
+    pool.query(query, [moduloId], (err, result) => {
         if (err) {
             console.error('Error al obtener la última medición:', err);
             return res.status(500).send({ error: 'Error al obtener la última medición' });
         } else if (result.length === 0) {
-            return res.status(404).send({ error: 'No se encontraron mediciones para este dispositivo' });
+            return res.status(404).send({ error: 'No se encontraron mediciones para este modulo' });
         } else {
             res.status(200).send(result[0]);
         }

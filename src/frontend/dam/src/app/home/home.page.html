@@ -11,42 +11,42 @@
       <h3>Cuadrante Norte</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <ion-card class="dispositivo-card">
-              <img [src]="dispositivo.estadoValvula 
+          <ion-col size="3" *ngFor="let modulo of modulos">
+            <ion-card class="modulo-card">
+              <img [src]="modulo.estadoReset 
                     ? 'assets/img/version2.png' 
                     : 'assets/img/version1.png'"  
-              alt="Dispositivo"/>
+              alt="Modulo"/>
               <ion-card-header>
-                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del dispositivo a la izquierda -->
-                  <div class="dispositivo-info-left">
+                  <!-- Información del modulo a la izquierda -->
+                  <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.version || 'Version 1' }}</span>
+                      <span class="value">{{ modulo.version || 'Version 1' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.medicionActual || 'N/A' }} °C</span>
+                      <span class="value">{{ modulo.medicionActual || 'N/A' }} °C</span>
                     </div>
                   </div>
 
                   <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- Dispositivo UP -->
-                    <div class="dispositivo-item up" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo UP -->
+                    <div class="modulo-item up" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
 
-                    <!-- Dispositivo DOWN -->
-                    <div class="dispositivo-item down" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo DOWN -->
+                    <div class="modulo-item down" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
                   </div>
@@ -54,12 +54,12 @@
                 <br>
                 <div class="botones">
                   <ion-button fill="outline" size="small"
-                    (click)="verMediciones(dispositivo.dispositivoId)">
+                    (click)="verMediciones(modulo.moduloId)">
                     Historial
                   </ion-button>
 
                   <ion-button color="primary" size="small"
-                    (click)="verDetalle(dispositivo.dispositivoId)">
+                    (click)="verDetalle(modulo.moduloId)">
                     +Info
                   </ion-button>
                 </div>
@@ -74,41 +74,41 @@
       <h3>Cuadrante ESTE</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <ion-card class="dispositivo-card">
+          <ion-col size="3" *ngFor="let modulo of modulos">
+            <ion-card class="modulo-card">
               <ion-card-header>
-                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del dispositivo a la izquierda -->
-                  <div class="dispositivo-info-left">
+                  <!-- Información del modulo a la izquierda -->
+                  <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.nombre || 'N/A' }}</span>
+                      <span class="value">{{ modulo.nombre || 'N/A' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.ubicacion || 'N/A' }}</span>
+                      <span class="value">{{ modulo.ubicacion || 'N/A' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.version || 'N/A' }}</span>
+                      <span class="value">{{ modulo.version || 'N/A' }}</span>
                     </div>
                   </div>
 
                   <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- Dispositivo UP -->
-                    <div class="dispositivo-item up" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo UP -->
+                    <div class="modulo-item up" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
 
-                    <!-- Dispositivo DOWN -->
-                    <div class="dispositivo-item down" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo DOWN -->
+                    <div class="modulo-item down" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
                   </div>
@@ -124,41 +124,41 @@
       <h3>Cuadrante OESTE</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <ion-card class="dispositivo-card">
+          <ion-col size="3" *ngFor="let modulo of modulos">
+            <ion-card class="modulo-card">
               <ion-card-header>
-                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del dispositivo a la izquierda -->
-                  <div class="dispositivo-info-left">
+                  <!-- Información del modulo a la izquierda -->
+                  <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.nombre || 'N/A' }}</span>
+                      <span class="value">{{ modulo.nombre || 'N/A' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.ubicacion || 'N/A' }}</span>
+                      <span class="value">{{ modulo.ubicacion || 'N/A' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.version || 'N/A' }}</span>
+                      <span class="value">{{ modulo.version || 'N/A' }}</span>
                     </div>
                   </div>
 
                   <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- Dispositivo UP -->
-                    <div class="dispositivo-item up" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo UP -->
+                    <div class="modulo-item up" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
 
-                    <!-- Dispositivo DOWN -->
-                    <div class="dispositivo-item down" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo DOWN -->
+                    <div class="modulo-item down" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
                   </div>
@@ -174,41 +174,41 @@
       <h3>Cuadrante SUR</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <ion-card class="dispositivo-card">
+          <ion-col size="3" *ngFor="let modulo of modulos">
+            <ion-card class="modulo-card">
               <ion-card-header>
-                <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
+                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del dispositivo a la izquierda -->
-                  <div class="dispositivo-info-left">
+                  <!-- Información del modulo a la izquierda -->
+                  <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.nombre || 'N/A' }}</span>
+                      <span class="value">{{ modulo.nombre || 'N/A' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.ubicacion || 'N/A' }}</span>
+                      <span class="value">{{ modulo.ubicacion || 'N/A' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ dispositivo.version || 'N/A' }}</span>
+                      <span class="value">{{ modulo.version || 'N/A' }}</span>
                     </div>
                   </div>
 
                   <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- Dispositivo UP -->
-                    <div class="dispositivo-item up" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo UP -->
+                    <div class="modulo-item up" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
 
-                    <!-- Dispositivo DOWN -->
-                    <div class="dispositivo-item down" 
-                         [class.activo]="dispositivo.estadoValvula">
+                    <!-- modulo DOWN -->
+                    <div class="modulo-item down" 
+                         [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
+                        <span class="temperatura">{{ modulo.medicionActual || '—' }}°C</span>
                       </div>
                     </div>
                   </div>
@@ -220,190 +220,14 @@
       </ion-grid>
     </div>
   </div>
-
-  <ion-grid>
-    <ion-row>
-      <ion-col size="6" size-md="3" size-lg="1" *ngFor="let dispositivo of dispositivos">
-
-        <ion-card class="device-card">
-          <img 
-              [src]="dispositivo.estadoValvula 
-                    ? 'assets/img/version2.png' 
-                    : 'assets/img/version1.png'"  
-              alt="Dispositivo"/>
-          <ion-card-header>
-            <ion-card-title>{{ dispositivo.nombre }}</ion-card-title>
-            <ion-card-subtitle>{{ dispositivo.ubicacion }}</ion-card-subtitle>
-          </ion-card-header>
-
-          <ion-card-content>
-            <div class="measurement">
-              <span>TEMPERATURA: {{ dispositivo.medicionActual || '—' }} °C </span>
-            </div>
-
-            <div class="botones">
-              <ion-button fill="outline" size="small"
-                (click)="verMediciones(dispositivo.dispositivoId)">
-                Más Mediciones
-              </ion-button>
-
-              <ion-button color="primary" size="small"
-                (click)="verDetalle(dispositivo.dispositivoId)">
-                Detalles
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
-
-      </ion-col>
-    </ion-row>
-    <ion-row class="acciones-globales">
-      <ion-col size="12" class="ion-text-right">
-        <ion-button fill="solid" color="success" size="small" (click)="encenderTodos()">
-          Encender Todos
-        </ion-button>
-        <ion-button fill="solid" color="danger" size="small" (click)="apagarTodos()">
-          Apagar Todos
-        </ion-button>
-      </ion-col>
-    </ion-row>    
-  </ion-grid>
+  <ion-row class="acciones-globales">
+    <ion-col size="12" class="ion-text-right">
+      <ion-button fill="solid" color="success" size="small" (click)="encenderTodos()">
+        Encender Todos
+      </ion-button>
+      <ion-button fill="solid" color="danger" size="small" (click)="apagarTodos()">
+        Apagar Todos
+      </ion-button>
+    </ion-col>
+  </ion-row>    
 </ion-content>
-
-<!--
-<div class="cuadrante">
-      <h3> Cuadrante ESTE </h3>
-      <ion-grid class="cuadrante-grid">
-        <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <div class="columna">
-              <ion-card class="dispositivo-card">
-                <ion-card-content>
-                  <div class="dispositivo-item up" >
-                    <div class="dispositivo-info">
-                      <span class="posicion">UP </span>
-                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
-                      <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
-                    </div>
-                    <div class="dispositivo-controles">
-                      <ion-button size="small" fill="clear" 
-                                  (click)="verDetalle(dispositivo.dispositivoId)">
-                        <ion-icon name="information-circle"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-
-                  <div class="separador"></div>
-                  <div class="dispositivo-item down">
-                    <div class="dispositivo-info">
-                      <span class="posicion">DOWN </span>
-                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
-                      <span class="temperatura"> {{ dispositivo.medicionActual || '—' }}°C</span>
-                    </div>
-                    <div class="dispositivo-controles">
-                      <ion-button size="small" fill="clear" 
-                                  (click)="verDetalle(dispositivo.dispositivoId)">
-                        <ion-icon name="information-circle"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-
-                </ion-card-content>
-              </ion-card>
-            </div>
-          </ion-col>
-        </ion-row>  
-      </ion-grid>
-    </div>
-
-    <div class="cuadrante">
-      <h3> Cuadrante Oeste </h3>
-      <ion-grid class="cuadrante-grid">
-        <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <div class="columna">
-              <ion-card class="dispositivo-card">
-                <ion-card-content>
-                  <div class="dispositivo-item up" >
-                    <div class="dispositivo-info">
-                      <span class="posicion">UP </span>
-                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
-                      <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
-                    </div>
-                    <div class="dispositivo-controles">
-                      <ion-button size="small" fill="clear" 
-                                  (click)="verDetalle(dispositivo.dispositivoId)">
-                        <ion-icon name="information-circle"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-
-                  <div class="separador"></div>
-
-
-                  <div class="dispositivo-item down">
-                    <div class="dispositivo-info">
-                      <span class="posicion">DOWN </span>
-                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
-                      <span class="temperatura"> {{ dispositivo.medicionActual || '—' }}°C</span>
-                    </div>
-                    <div class="dispositivo-controles">
-                      <ion-button size="small" fill="clear" 
-                                  (click)="verDetalle(dispositivo.dispositivoId)">
-                        <ion-icon name="information-circle"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-
-                </ion-card-content>
-              </ion-card>
-            </div>
-          </ion-col>
-        </ion-row>  
-      </ion-grid>
-    </div>
-
-    <div class="cuadrante">
-      <h3> Cuadrante SUR </h3>
-      <ion-grid class="cuadrante-grid">
-        <ion-row>
-          <ion-col size="3" *ngFor="let dispositivo of dispositivos">
-            <div class="columna">
-              <ion-card class="dispositivo-card">
-                <ion-card-content>
-                  <div class="dispositivo-item up" >
-                    <div class="dispositivo-info">
-                      <span class="posicion">UP </span>
-                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
-                      <span class="temperatura">{{ dispositivo.medicionActual || '—' }}°C</span>
-                    </div>
-                    <div class="dispositivo-controles">
-                      <ion-button size="small" fill="clear" 
-                                  (click)="verDetalle(dispositivo.dispositivoId)">
-                        <ion-icon name="information-circle"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-
-                  <div class="separador"></div>
-                  <div class="dispositivo-item down">
-                    <div class="dispositivo-info">
-                      <span class="posicion">DOWN </span>
-                      <span class="nombre">{{ dispositivo.nombre || 'N/A' }} </span>
-                      <span class="temperatura"> {{ dispositivo.medicionActual || '—' }}°C</span>
-                    </div>
-                    <div class="dispositivo-controles">
-                      <ion-button size="small" fill="clear" 
-                                  (click)="verDetalle(dispositivo.dispositivoId)">
-                        <ion-icon name="information-circle"></ion-icon>
-                      </ion-button>
-                    </div>
-                  </div>
-
-                </ion-card-content>
-              </ion-card>
-            </div>
-          </ion-col>
-        </ion-row>  
-      </ion-grid>
-    </div> -->

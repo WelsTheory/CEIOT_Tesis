@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { DispositivoService } from '../services/dispositivo.service';
-import { Dispositivo } from '../listado-dispositivos/dispositivo';
+import { ModuloService } from '../services/modulo.service';
+import { Modulo } from '../listado-modulos/modulo';
 import { Router } from '@angular/router';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonList, IonToolbar, IonHeader, IonTitle, IonItem, IonAvatar, IonIcon, IonLabel, IonButton } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
@@ -37,54 +37,54 @@ import { Subscription } from 'rxjs';
 })
 
 export class HomePage implements OnInit {
-  dispositivos: any[] = []; // Para almacenar dispositivos
+  modulos: any[] = []; // Para almacenar modulos
   private sub!: Subscription;
   private refreshMedicionesInterval: any;
 
   constructor(
-    private dispositivoService: DispositivoService, // Servicio para cargar dispositivos
+    private moduloService: ModuloService, // Servicio para cargar modulos
     private router: Router 
   ) {}
 
   // Método que se ejecuta al inicializar el componente
   async ngOnInit() {
     try {
-      const dispositivos = await this.dispositivoService.getDispositivos();
+      const modulos = await this.moduloService.getModulos();
   
-      // Para cada dispositivo, traemos la última medición y estado de válvula
-      this.dispositivos = await Promise.all(
-        dispositivos.map(async (d: Dispositivo) => {
+      // Para cada modulo, traemos la última medición y estado de válvula
+      this.modulos = await Promise.all(
+        modulos.map(async (d: Modulo) => {
           let medicionActual = '—';
-          let estadoValvula = null;
+          let estadoReset = null;
 
           try {
             // 👇 ahora pedimos solo la última medición
-            const ultimaMedicion = await this.dispositivoService.getUltimaMedicion(d.dispositivoId);
+            const ultimaMedicion = await this.moduloService.getUltimaMedicion(d.moduloId);
             medicionActual = ultimaMedicion?.valor ?? '—';
           } catch (err) {
-            console.error(`Error cargando última medición de ${d.dispositivoId}`, err);
+            console.error(`Error cargando última medición de ${d.moduloId}`, err);
           }
 
           try {
-            const estadoResponse = await this.dispositivoService.getEstadoValvula(d.dispositivoId);
-            estadoValvula = estadoResponse.estado;
+            const estadoResponse = await this.moduloService.getEstadoReset(d.moduloId);
+            estadoReset = estadoResponse.estado;
           } catch (err) {
-            console.error(`Error cargando estado válvula ${d.dispositivoId}`, err);
+            console.error(`Error cargando estado válvula ${d.moduloId}`, err);
           }
 
           return {
             ...d,
             medicionActual,
-            estadoValvula
+            estadoReset
           };
         })
       );
       // refresca mediciones cada 5 segundos
-      this.sub = this.dispositivoService.valveState$.subscribe(change => {
+      this.sub = this.moduloService.resetState$.subscribe(change => {
         if (change) {
-          this.dispositivos = this.dispositivos.map(d =>
-            d.dispositivoId === change.id
-              ? { ...d, estadoValvula: change.estado }
+          this.modulos = this.modulos.map(d =>
+            d.moduloId === change.id
+              ? { ...d, estadoReset: change.estado }
               : d
           );
         }
@@ -92,21 +92,21 @@ export class HomePage implements OnInit {
       
     } 
     catch (error) {
-      console.error('Error al cargar dispositivos:', error);
+      console.error('Error al cargar modulos:', error);
     }
     this.refreshMedicionesInterval = setInterval(async () => {
       try {
         await Promise.all(
-          this.dispositivos.map(async (d) => {
+          this.modulos.map(async (d) => {
             try {
-              const ultima = await this.dispositivoService.getUltimaMedicion(d.dispositivoId);
+              const ultima = await this.moduloService.getUltimaMedicion(d.moduloId);
               const nuevoValor = ultima?.valor ?? '—';
               if (d.medicionActual !== nuevoValor) {
                 d.medicionActual = nuevoValor; // actualiza lo que ya usas en el HTML
               }
             } catch (e) {
               // no interrumpe el resto si una falla
-              console.warn(`No se pudo refrescar medición de ${d.dispositivoId}`, e);
+              console.warn(`No se pudo refrescar medición de ${d.moduloId}`, e);
             }
           })
         );
@@ -125,53 +125,53 @@ async ngOnDestroy() {
   }
 }
 
-  // Encender todos los dispositivos
+  // Encender todos los modulos
 async encenderTodos() {
   try {
     await Promise.all(
-      this.dispositivos.map(async (d) => {
+      this.modulos.map(async (d) => {
         try {
-          await this.dispositivoService.abrirValvula(d.dispositivoId);
-          d.estadoValvula = true; // Actualiza localmente
+          await this.moduloService.abrirReset(d.moduloId);
+          d.estadoReset = true; // Actualiza localmente
         } catch (err) {
-          console.error(`Error encendiendo válvula ${d.dispositivoId}`, err);
+          console.error(`Error encendiendo módulos ${d.moduloId}`, err);
         }
       })
     );
   } catch (err) {
-    console.error('Error al encender todas las válvulas', err);
+    console.error('Error al encender todas las módulos', err);
   }
 }
 
-// Apagar todos los dispositivos
+// Apagar todos los modulos
 async apagarTodos() {
   try {
     await Promise.all(
-      this.dispositivos.map(async (d) => {
+      this.modulos.map(async (d) => {
         try {
-          await this.dispositivoService.cerrarValvula(d.dispositivoId);
-          d.estadoValvula = false; // Actualiza localmente
+          await this.moduloService.cerrarReset(d.moduloId);
+          d.estadoReset = false; // Actualiza localmente
         } catch (err) {
-          console.error(`Error apagando válvula ${d.dispositivoId}`, err);
+          console.error(`Error apagando modulo ${d.moduloId}`, err);
         }
       })
     );
   } catch (err) {
-    console.error('Error al apagar todas las válvulas', err);
+    console.error('Error al apagar todas las modulos', err);
   }
 }
 
   
 
-// Método para navegar a la página de detalles de un dispositivo
-verDetalle(dispositivoId: number) {
-  console.log(`Ver detalle del dispositivo: ${dispositivoId}`);
-  this.router.navigate([`/dispositivo`, dispositivoId]);
+// Método para navegar a la página de detalles de un modulo
+verDetalle(moduloId: number) {
+  console.log(`Ver detalle del modulo: ${moduloId}`);
+  this.router.navigate([`/modulo`, moduloId]);
 }
 
-verMediciones(dispositivoId: number) {
-  console.log(`Ver mediciones del dispositivo: ${dispositivoId}`);
-  this.router.navigate([`/dispositivo`, dispositivoId, 'mediciones']);
+verMediciones(moduloId: number) {
+  console.log(`Ver mediciones del modulo: ${moduloId}`);
+  this.router.navigate([`/modulo`, moduloId, 'mediciones']);
   }
   
 }
