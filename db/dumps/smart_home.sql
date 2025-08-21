@@ -80,7 +80,7 @@ CREATE TABLE `Beam` (
 --
 CREATE TABLE `Log_Reinicios` (
   `logResetId` int(11) NOT NULL,
-  `apertura` tinyint(4) DEFAULT NULL,
+  `reinicio` tinyint(4) DEFAULT NULL,
   `fecha` datetime DEFAULT NULL,
   `resetId` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

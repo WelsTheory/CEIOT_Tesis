@@ -55,7 +55,7 @@ export class ModuloPage implements OnInit{
       const estadoResponse = await this.moduloService.getEstadoReset(this.moduloId);
       this.estadoReset = estadoResponse.estado;
     } catch (error) {
-      console.error('Error al obtener el estado de la válvula:', error);
+      console.error('Error al obtener el reinicio del módulo:', error);
       this.estadoReset = null;
     }
     await this.cargarUltimaMedicion();
@@ -69,16 +69,16 @@ export class ModuloPage implements OnInit{
     }
   }
 
-  async cambiarEstadoReset(apertura: boolean) {
+  async cambiarEstadoReset(reinicio: boolean) {
     try {
       await this.moduloService.cambiarEstadoReset(
         this.moduloId,
-        apertura
+        reinicio
       );
-      alert(`Válvula ${apertura ? 'abierta' : 'cerrada'} correctamente`);
+      alert(` ${reinicio ? 'abierto' : 'cerrado'} correctamente`);
     } catch (error) {
-      console.error('Error al cambiar el estado de la válvula:', error);
-      alert('No se pudo cambiar el estado de la válvula.');
+      console.error('Error al cambiar el estado del reinicio :', error);
+      alert('No se pudo cambiar el reinicio del módulo.');
     }
   }
   verMediciones() {
@@ -114,7 +114,7 @@ export class ModuloPage implements OnInit{
       const estadoResponse = await this.moduloService.getEstadoReset(this.moduloId);
       this.estadoReset = estadoResponse.estado;
     } catch (error) {
-      console.error('Error al actualizar el estado de la válvula:', error);
+      console.error('Error al actualizar el reinicio del módulo:', error);
     }
   }
 

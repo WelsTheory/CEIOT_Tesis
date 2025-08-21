@@ -61,8 +61,8 @@ const generarMediciones = () => {
     const queryModulos = 'SELECT moduloId FROM Modulos';
     // Query para insertar una medición
     const queryInsertMedicion = `
-        INSERT INTO Mediciones (moduloId, fecha, valor)
-        VALUES (?, NOW(), ?)`;
+        INSERT INTO Mediciones (moduloId, fecha, valor_temp, valor_press)
+        VALUES (?, NOW(), ?, ?)`;
     // Consulta a la base de datos
     pool.query(queryModulos, (err, modulos) => {
         if (err) {
@@ -71,12 +71,13 @@ const generarMediciones = () => {
         }
         // Para cada modulo, genera una medición aleatoria
         modulos.forEach(({ moduloId }) => {
-            const valor = (Math.random() * 100).toFixed(2);
-            pool.query(queryInsertMedicion, [moduloId, valor], (err) => {
+            const valor1 = (Math.random() * 100).toFixed(2);
+            const valor2 = (Math.random() * 100).toFixed(2);
+            pool.query(queryInsertMedicion, [moduloId, valor1,valor2], (err) => {
                 if (err) {
                     console.error(`Error al registrar medición para modulo ${moduloId}:`, err);
                 } else {
-                    console.log(`Medición registrada para modulo ${moduloId}: ${valor}`);
+                    console.log(`Medición registrada para modulo ${moduloId}: ${valor1} y ${valor2}`);
                 }
             });
         });

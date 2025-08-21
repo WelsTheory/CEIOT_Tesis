@@ -54,13 +54,15 @@ export class HomePage implements OnInit {
       // Para cada modulo, traemos la última medición y estado de válvula
       this.modulos = await Promise.all(
         modulos.map(async (d: Modulo) => {
-          let medicionActual = '—';
+          let medicionTempActual = '—';
+          let medicionPressActual = '—';
           let estadoReset = null;
 
           try {
             // 👇 ahora pedimos solo la última medición
             const ultimaMedicion = await this.moduloService.getUltimaMedicion(d.moduloId);
-            medicionActual = ultimaMedicion?.valor ?? '—';
+            medicionTempActual = ultimaMedicion?.valor_temp ?? '—';
+            medicionPressActual = ultimaMedicion?.valor_press ?? '—';
           } catch (err) {
             console.error(`Error cargando última medición de ${d.moduloId}`, err);
           }
@@ -74,7 +76,8 @@ export class HomePage implements OnInit {
 
           return {
             ...d,
-            medicionActual,
+            medicionTempActual,
+            medicionPressActual,
             estadoReset
           };
         })
@@ -100,10 +103,15 @@ export class HomePage implements OnInit {
           this.modulos.map(async (d) => {
             try {
               const ultima = await this.moduloService.getUltimaMedicion(d.moduloId);
-              const nuevoValor = ultima?.valor ?? '—';
-              if (d.medicionActual !== nuevoValor) {
-                d.medicionActual = nuevoValor; // actualiza lo que ya usas en el HTML
+              const nuevoValorTemp = ultima?.valor_temp ?? '—';
+              const nuevoValorPress = ultima?.valor_press ?? '—';
+              if (d.medicionTempActual !== nuevoValorTemp) {
+                d.medicionTempActual = nuevoValorTemp; // actualiza lo que ya usas en el HTML
               }
+              if (d.medicionTempActual !== nuevoValorPress) {
+                d.medicionTempActual = nuevoValorPress; // actualiza lo que ya usas en el HTML
+              }
+
             } catch (e) {
               // no interrumpe el resto si una falla
               console.warn(`No se pudo refrescar medición de ${d.moduloId}`, e);

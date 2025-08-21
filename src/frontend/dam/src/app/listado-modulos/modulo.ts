@@ -6,5 +6,6 @@ export interface Modulo {
     up: number,
     down: number,
     resetId: number,
-    medicionActual: number,
+    medicionTempActual: number,
+    medicionPressActual: number
 }

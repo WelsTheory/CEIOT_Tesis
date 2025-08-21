@@ -37,24 +37,24 @@ routerModulos.get('/:id', (req, res) => {
     });
 });
 
-// Registrar apertura/cierre de válvula
+// Registrar reinicio módulo
 routerModulos.post('/:id/reset', (req, res) => {
     const moduloId = req.params.id;
-    const { apertura } = req.body;
+    const { reinicio } = req.body;
     const fecha = new Date();
 
     const queryLog = `
-        INSERT INTO Log_Riegos (apertura, fecha, resetId)
+        INSERT INTO Log_Reinicios (reinicio, fecha, resetId)
         SELECT ?, ?, resetId
         FROM Modulos
         WHERE moduloId = ?`;
 
-    pool.query(queryLog, [apertura, fecha, moduloId], (err) => {
+    pool.query(queryLog, [reinicio, fecha, moduloId], (err) => {
         if (err) {
             console.error('Error al registrar el riego:', err);
             return res.status(500).json({ error: 'Error al registrar el riego' });
         }
-        res.status(200).json({ mensaje: `Válvula ${apertura ? 'abierta' : 'cerrada'} correctamente` });
+        res.status(200).json({ mensaje: `Módulo ${reinicio ? 'reinicio' : 'no reiniciado'} correctamente` });
     });
 });
 
@@ -62,7 +62,7 @@ routerModulos.post('/:id/reset', (req, res) => {
 routerModulos.get('/:id/mediciones', (req, res) => {
     const moduloId = req.params.id;
     const query = `
-        SELECT medicionId, fecha, valor
+        SELECT medicionId, fecha, valor_temp, valor_press
         FROM Mediciones
         WHERE moduloId = ?
         ORDER BY fecha DESC`;
@@ -76,11 +76,11 @@ routerModulos.get('/:id/mediciones', (req, res) => {
     });
 });
 
-// Abrir válvula
+// Reiniciar módulo
 routerModulos.post('/:id/abrir', (req, res) => {
     const resetId = req.params.id;
     const query = `
-        INSERT INTO Log_Riegos (resetId, apertura, fecha)
+        INSERT INTO Log_Reinicios (resetId, reinicio, fecha)
         VALUES (?, 1, NOW())`;
 
     pool.query(query, [resetId], (err) => {
@@ -88,15 +88,15 @@ routerModulos.post('/:id/abrir', (req, res) => {
             console.error('Error al abrir la modulo reset:', err);
             return res.status(500).send({ error: 'No se pudo abrir la válvula' });
         }
-        res.status(200).send({ message: 'Reset abierta exitosamente' });
+        res.status(200).send({ message: 'Reset reinicio exitosamente' });
     });
 });
 
-// Cerrar válvula
+// No reinicio modulo
 routerModulos.post('/:id/cerrar', (req, res) => {
     const resetId = req.params.id;
     const query = `
-        INSERT INTO Log_Riegos (resetId, apertura, fecha)
+        INSERT INTO Log_Reinicios (resetId, reinicio, fecha)
         VALUES (?, 0, NOW())`;
 
     pool.query(query, [resetId], (err) => {
@@ -104,7 +104,7 @@ routerModulos.post('/:id/cerrar', (req, res) => {
             console.error('Error al cerrar la válvula:', err);
             return res.status(500).send({ error: 'No se pudo cerrar la válvula' });
         }
-        res.status(200).send({ message: 'Reset cerrada exitosamente' });
+        res.status(200).send({ message: 'Reset no reiniciado exitosamente' });
     });
 });
 
@@ -112,19 +112,19 @@ routerModulos.post('/:id/cerrar', (req, res) => {
 routerModulos.get('/:id/estado', (req, res) => {
     const resetId = req.params.id;
     const query = `
-        SELECT apertura
-        FROM Log_Riegos
+        SELECT reinicio
+        FROM Log_Reinicios
         WHERE resetId = ?
         ORDER BY fecha DESC
         LIMIT 1`;
 
     pool.query(query, [resetId], (err, result) => {
         if (err) {
-            console.error('Error al obtener el estado de la válvula:', err);
-            return res.status(500).send({ error: 'No se pudo obtener el estado' });
+            console.error('Error al obtener el estado del módulo:', err);
+            return res.status(500).send({ error: 'No se pudo obtener del módulo' });
         }
         if (result.length > 0) {
-            res.status(200).send({ estado: result[0].apertura === 1 });
+            res.status(200).send({ estado: result[0].reinicio === 1 });
         } else {
             res.status(200).send({ estado: false });
         }
@@ -135,7 +135,7 @@ routerModulos.get('/:id/estado', (req, res) => {
 routerModulos.get('/:id/ultima-medicion', (req, res) => {
     const moduloId = req.params.id;
     const query = `
-        SELECT fecha, valor
+        SELECT fecha, valor_temp, valor_press
         FROM Mediciones
         WHERE moduloId = ?
         ORDER BY fecha DESC

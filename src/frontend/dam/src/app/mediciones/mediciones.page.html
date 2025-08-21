@@ -18,7 +18,7 @@
       </ion-card-header>
       <ion-card-content>
         <div class="valor-destacado">
-          <span>{{ mediciones[0].valor }}</span>
+          <span>{{ mediciones[0].valor_temp }}</span>
         </div>
       </ion-card-content>
     </ion-card>
@@ -34,7 +34,7 @@
             <ion-label>
               <h2>N°{{ mediciones.length - (i + 1) }}</h2>
               <p>Fecha: {{ medicion.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
-              <p>Valor: {{ medicion.valor }}</p>
+              <p>Valor: {{ medicion.valor_temp }}</p>
             </ion-label>
           </ion-item>
         </ion-list>

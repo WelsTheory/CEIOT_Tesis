@@ -29,7 +29,7 @@
               <ng-container *ngIf="ultimaMedicion; else noMediciones">
                 <p><strong>Última Medición:</strong></p>
                 <p>Fecha: {{ ultimaMedicion.fecha | date: 'dd/MM/yyyy HH:mm'}}</p>
-                <p>Valor: {{ ultimaMedicion.valor }} °C</p>
+                <p>Valor: {{ ultimaMedicion.valor_temp }} °C</p>
               </ng-container>
               <ng-template #noMediciones>
                 <p>No hay mediciones registradas.</p>
