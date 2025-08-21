@@ -50,7 +50,7 @@ import {
 })
 export class MedicionesPage implements OnInit {
   moduloId!: number;
-  mediciones: { medicionId: number; fecha: string; valor: string }[] = [];
+  mediciones: { medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[] = [];
 
   constructor(
     private route: ActivatedRoute,

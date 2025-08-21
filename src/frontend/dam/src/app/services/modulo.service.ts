@@ -42,9 +42,9 @@ export class ModuloService {
     );
   }
   
-  getMediciones(id: number): Promise<{ medicionId: number; fecha: string; valor: string }[]> {
+  getMediciones(id: number): Promise<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[]> {
     return firstValueFrom(
-      this._http.get<{ medicionId: number; fecha: string; valor: string }[]>(
+      this._http.get<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[]>(
         `http://localhost:8000/modulo/${id}/mediciones`
       )
     );
@@ -69,7 +69,7 @@ export class ModuloService {
   }
   getUltimaMedicion(moduloId: number) {
     return firstValueFrom(
-      this._http.get<{ fecha: string; valor: string }>(`http://localhost:8000/modulo/${moduloId}/ultima-medicion`)
+      this._http.get<{ fecha: string; valor_temp: string; valor_press: string; }>(`http://localhost:8000/modulo/${moduloId}/ultima-medicion`)
     );
   }
   

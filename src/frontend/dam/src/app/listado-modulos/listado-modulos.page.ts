@@ -31,7 +31,7 @@ export class ModuloPage implements OnInit{
   modulo!: Modulo;
   moduloId!: number;
   estadoReset: boolean | null = null;
-  ultimaMedicion: { fecha: string; valor: string } | null = null;
+  ultimaMedicion: { fecha: string; valor_temp: string; valor_press: string; } | null = null;
 
 
   constructor(
