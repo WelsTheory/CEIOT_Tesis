@@ -1,61 +1,153 @@
-<ion-header >
+<ion-header>
   <ion-toolbar color="primary">
-    <ion-title> Detalles del Modulo N° {{ moduloId }}</ion-title>
+    <ion-title>Detalles del Módulo N° {{ moduloId }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content *ngIf="modulo">
   <ion-card class="device-detail-card">
+    <!-- Título del módulo encima de las columnas -->
+    <ion-card-header>
+      <ion-card-title class="modulo-titulo">
+        Módulo {{ modulo.ubicacion }} #{{ modulo.moduloId }}
+      </ion-card-title>
+    </ion-card-header>
+
     <ion-grid>
       <ion-row>
-        <!-- Texto a la izquierda -->
-        <ion-col size="12" size-md="8">
-          <ion-card-content>
-            <p><strong>Ubicación:</strong> {{ modulo.ubicacion }}</p>
-
-            <p>
-              <strong>Válvula:</strong>
+        <!-- Información a la izquierda -->
+        <ion-col size="12" size-md="6">
+          <ion-card-content class="info-izquierda">
+            <!-- Estado del Reset -->
+            <div class="estado-section">
+              <h4>Estado:</h4>
               <ng-container *ngIf="estadoReset !== null; else cargandoReset">
                 <ion-chip [color]="estadoReset ? 'success' : 'danger'">
-                  {{ estadoReset ? 'Abierta' : 'Cerrada' }}
+                  {{ estadoReset ? 'Abierto' : 'Cerrado' }}
                 </ion-chip>
               </ng-container>
               <ng-template #cargandoReset>
-                Cargando estado...
-              </ng-template>
-            </p>
-
-            <div class="ultima-medicion">
-              <ng-container *ngIf="ultimaMedicion; else noMediciones">
-                <p><strong>Última Medición:</strong></p>
-                <p>Fecha: {{ ultimaMedicion.fecha | date: 'dd/MM/yyyy HH:mm'}}</p>
-                <p>Valor: {{ ultimaMedicion.valor_temp }} °C</p>
-              </ng-container>
-              <ng-template #noMediciones>
-                <p>No hay mediciones registradas.</p>
+                <ion-chip color="warning">Cargando estado...</ion-chip>
               </ng-template>
             </div>
 
-            <!-- Botones de válvula -->
-            <div class="botones-reset">
-              <ion-button expand="block" color="success" (click)="abrirReset(modulo.moduloId)">Abrir Reset</ion-button>
-              <ion-button expand="block" color="danger" (click)="cerrarReset(modulo.moduloId)">Cerrar Reset</ion-button>
+            <!-- Valores UP y DOWN -->
+            <div class="valores-section">
+              <h4>Valores Actuales:</h4>
+              <div class="valores-container">
+                <div class="valor-item">
+                  <span class="valor-label">UP:</span>
+                  <span class="valor-dato">{{ modulo.up || '—' }}</span>
+                </div>
+                <div class="valor-item">
+                  <span class="valor-label">DOWN:</span>
+                  <span class="valor-dato">{{ modulo.down || '—' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Últimas Mediciones -->
+            <div class="mediciones-section">
+              <h4>Últimas Mediciones:</h4>
+              
+              <!-- Temperatura -->
+              <div class="medicion-item">
+                <div class="medicion-header">
+                  <ion-icon name="thermometer-outline"></ion-icon>
+                  <span class="medicion-tipo">Temperatura:</span>
+                </div>
+                <ng-container *ngIf="ultimaMedicion">
+                  <p class="medicion-valor">{{ ultimaMedicion.valor_temp }} °C</p>
+                  <p class="medicion-fecha">{{ ultimaMedicion.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+                </ng-container>
+                <ng-template #noMedicionTemp>
+                  <p class="no-medicion">No disponible</p>
+                </ng-template>
+              </div>
+
+              <!-- Presión -->
+              <div class="medicion-item">
+                <div class="medicion-header">
+                  <ion-icon name="speedometer-outline"></ion-icon>
+                  <span class="medicion-tipo">Presión:</span>
+                </div>
+                <ng-container *ngIf="ultimaMedicion">
+                  <p class="medicion-valor">{{ ultimaMedicion.valor_press }} bar</p>
+                  <p class="medicion-fecha">{{ ultimaMedicion.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+                </ng-container>
+                <ng-template #noMedicionPres>
+                  <p class="no-medicion">No disponible</p>
+                </ng-template>
+              </div>
             </div>
           </ion-card-content>
         </ion-col>
 
-        <!-- Imagen a la derecha -->
-        <ion-col size="12" size-md="5" class="device-image">
-          <img [src]="estadoReset ? 'assets/img/version2.png' : 'assets/img/version1.png'" 
-              alt="Imagen modulo" />
+        <!-- Imagen y versión a la derecha -->
+        <ion-col size="12" size-md="6" class="device-image-section">
+          <div class="imagen-container">
+            <img [src]="estadoReset ? 'assets/img/version2.png' : 'assets/img/version1.png'" 
+                 alt="Imagen módulo" 
+                 class="device-image"/>
+            <div class="version-info">
+              <ion-chip color="tertiary">
+                <ion-icon name="information-circle-outline"></ion-icon>
+                <ion-label>{{ modulo.version || 'Versión 1.0' }}</ion-label>
+              </ion-chip>
+            </div>
+          </div>
+        </ion-col>
+      </ion-row>
+
+      <!-- Botones de Reset debajo de las columnas -->
+      <ion-row>
+        <ion-col size="12">
+          <div class="botones-reset">
+            <ion-button expand="block" 
+                       color="success" 
+                       (click)="abrirReset(modulo.moduloId)"
+                       [disabled]="estadoReset === true">
+              <ion-icon name="radio-button-on-outline" slot="start"></ion-icon>
+              Abrir Reset
+            </ion-button>
+            <ion-button expand="block" 
+                       color="danger" 
+                       (click)="cerrarReset(modulo.moduloId)"
+                       [disabled]="estadoReset === false">
+              <ion-icon name="radio-button-off-outline" slot="start"></ion-icon>
+              Cerrar Reset
+            </ion-button>
+          </div>
         </ion-col>
       </ion-row>
     </ion-grid>
   </ion-card>
 
-  <!-- Botones generales fuera de la tarjeta -->
-  <div class="botones-generales">
-    <ion-button expand="block" color="primary" (click)="verMediciones()">Mostrar Mediciones</ion-button>
-    <ion-button expand="block" fill="outline" color="medium" (click)="volverAlHome()">Volver al Home</ion-button>
+  <!-- Botones principales fuera de la tarjeta -->
+  <div class="botones-principales">
+    <ion-button expand="block" 
+               color="primary" 
+               (click)="verMediciones()"
+               class="boton-principal">
+      <ion-icon name="thermometer" slot="start"></ion-icon>
+      Temperatura
+    </ion-button>
+    
+    <ion-button expand="block" 
+               fill="outline" 
+               color="medium" 
+               (click)="volverAlHome()"
+               class="boton-principal">
+      <ion-icon name="home" slot="start"></ion-icon>
+      Home
+    </ion-button>
+    
+    <ion-button expand="block" 
+               color="tertiary" 
+               (click)="verMediciones()"
+               class="boton-principal">
+      <ion-icon name="document-text" slot="start"></ion-icon>
+      Apuntes
+    </ion-button>
   </div>
 </ion-content>

@@ -76,6 +76,7 @@ export class HomePage implements OnInit {
 
           return {
             ...d,
+            ubicacion: d.ubicacion || 'Desconocida', 
             medicionTempActual,
             medicionPressActual,
             estadoReset
@@ -133,6 +134,22 @@ async ngOnDestroy() {
   }
 }
 
+// Métodos para filtrar por cuadrante
+getModulosNorte() {
+  return this.modulos?.filter(m => m.ubicacion === 'Norte') || [];
+}
+
+getModulosSur() {
+  return this.modulos?.filter(m => m.ubicacion === 'Sur') || [];
+}
+
+getModulosEste() {
+  return this.modulos?.filter(m => m.ubicacion === 'Este') || [];
+}
+
+getModulosOeste() {
+  return this.modulos?.filter(m => m.ubicacion === 'Oeste') || [];
+}
   // Encender todos los modulos
 async encenderTodos() {
   try {
