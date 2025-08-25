@@ -1,5 +1,5 @@
 export interface Modulo {
-    moduloId: number
+    moduloId: number,
     nombre: string,
     ubicacion: string,
     version: number,

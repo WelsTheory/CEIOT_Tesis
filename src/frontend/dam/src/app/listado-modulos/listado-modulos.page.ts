@@ -32,7 +32,7 @@ export class ModuloPage implements OnInit{
   moduloId!: number;
   estadoReset: boolean | null = null;
   ultimaMedicion: { fecha: string; valor_temp: string; valor_press: string; } | null = null;
-
+  ultimoApunte: { up: number; down: number; } | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -48,6 +48,14 @@ export class ModuloPage implements OnInit{
       console.error('Error al cargar la última medición:', error);
     }
   }
+  async cargarApunte() {
+    try {
+      this.ultimoApunte = await this.moduloService.getApunte(this.moduloId);
+      console.log('Apunte cargado:', this.ultimoApunte);
+    } catch (error) {
+      console.error('Error al cargar el apunte:', error);
+    }
+  }
   async ngOnInit() {
     this.moduloId = Number(this.route.snapshot.paramMap.get('id'));
     await this.cargarmodulo();
@@ -59,6 +67,7 @@ export class ModuloPage implements OnInit{
       this.estadoReset = null;
     }
     await this.cargarUltimaMedicion();
+    await this.cargarApunte();
   }
   async cargarmodulo() {
     try {

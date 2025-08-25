@@ -25,11 +25,11 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">Ver: {{ modulo.version || 'Version 1' }}</span>
+                      <span class="value">Versión: {{ modulo.version || 'Version 1' }}</span>
                     </div>
                     <div class="info-item">
                       <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }}</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
                     </div>
                   </div>
 
@@ -39,7 +39,7 @@
                     <div class="modulo-item up" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.up || '—' }}</span>
+                        <span class="temperatura">UP: {{ modulo.up || '—' }}</span>
                       </div>
                     </div>
 
@@ -47,7 +47,7 @@
                     <div class="modulo-item down" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.down || '—' }}</span>
+                        <span class="temperatura">DW: {{ modulo.down || '—' }}</span>
                       </div>
                     </div>
                   </div>
@@ -89,11 +89,11 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ modulo.version || 'Version 1' }}</span>
+                      <span class="value">Versión: {{ modulo.version || 'Version 1' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ modulo.medicionTempActual || 'N/A' }}°C</span>
-                      <span class="value">{{ modulo.medicionPressActual || 'N/A' }}</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
                     </div>
                   </div>
 
@@ -103,7 +103,7 @@
                     <div class="modulo-item up" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.up || '—' }}</span>
+                        <span class="temperatura">UP: {{ modulo.up || '—' }}</span>
                       </div>
                     </div>
 
@@ -111,7 +111,7 @@
                     <div class="modulo-item down" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.down || '—' }}</span>
+                        <span class="temperatura">DW: {{ modulo.down || '—' }}</span>
                       </div>
                     </div>
                   </div>
@@ -153,11 +153,11 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ modulo.version || 'Version 1' }}</span>
+                      <span class="value">Versión: {{ modulo.version || 'Version 1' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">{{ modulo.medicionPressActual || 'N/A' }} °C</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
                     </div>
                   </div>
 
@@ -167,7 +167,7 @@
                     <div class="modulo-item up" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.up || '—' }}°C</span>
+                        <span class="temperatura">UP: {{ modulo.up || '—' }}</span>
                       </div>
                     </div>
 
@@ -175,7 +175,7 @@
                     <div class="modulo-item down" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.down || '—' }}°C</span>
+                        <span class="temperatura">DW: {{ modulo.down || '—' }}</span>
                       </div>
                     </div>
                   </div>
@@ -217,11 +217,11 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">{{ modulo.version || 'Version 1' }}</span>
+                      <span class="value">Versión: {{ modulo.version || 'Version 1' }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="value">{{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">{{ modulo.medicionPressActual || 'N/A' }} °C</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
                     </div>
                   </div>
 
@@ -231,7 +231,7 @@
                     <div class="modulo-item up" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.up || '—' }}°C</span>
+                        <span class="temperatura">UP: {{ modulo.up || '—' }}</span>
                       </div>
                     </div>
 
@@ -239,7 +239,7 @@
                     <div class="modulo-item down" 
                          [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
-                        <span class="temperatura">{{ modulo.down || '—' }}°C</span>
+                        <span class="temperatura">DW: {{ modulo.down || '—' }}</span>
                       </div>
                     </div>
                   </div>

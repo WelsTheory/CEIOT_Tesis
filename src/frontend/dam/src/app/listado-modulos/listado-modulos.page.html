@@ -33,15 +33,15 @@
 
             <!-- Valores UP y DOWN -->
             <div class="valores-section">
-              <h4>Valores Actuales:</h4>
+              <h4>Apunte Actual:</h4>
               <div class="valores-container">
                 <div class="valor-item">
                   <span class="valor-label">UP:</span>
-                  <span class="valor-dato">{{ modulo.up || '—' }}</span>
+                  <span class="valor-dato">{{ ultimoApunte?.up }}</span>
                 </div>
                 <div class="valor-item">
                   <span class="valor-label">DOWN:</span>
-                  <span class="valor-dato">{{ modulo.down || '—' }}</span>
+                  <span class="valor-dato">{{ ultimoApunte?.down }}</span>
                 </div>
               </div>
             </div>
@@ -53,7 +53,6 @@
               <!-- Temperatura -->
               <div class="medicion-item">
                 <div class="medicion-header">
-                  <ion-icon name="thermometer-outline"></ion-icon>
                   <span class="medicion-tipo">Temperatura:</span>
                 </div>
                 <ng-container *ngIf="ultimaMedicion">
@@ -68,7 +67,6 @@
               <!-- Presión -->
               <div class="medicion-item">
                 <div class="medicion-header">
-                  <ion-icon name="speedometer-outline"></ion-icon>
                   <span class="medicion-tipo">Presión:</span>
                 </div>
                 <ng-container *ngIf="ultimaMedicion">
@@ -91,7 +89,6 @@
                  class="device-image"/>
             <div class="version-info">
               <ion-chip color="tertiary">
-                <ion-icon name="information-circle-outline"></ion-icon>
                 <ion-label>{{ modulo.version || 'Versión 1.0' }}</ion-label>
               </ion-chip>
             </div>
@@ -107,15 +104,13 @@
                        color="success" 
                        (click)="abrirReset(modulo.moduloId)"
                        [disabled]="estadoReset === true">
-              <ion-icon name="radio-button-on-outline" slot="start"></ion-icon>
-              Abrir Reset
+              Encender módulo
             </ion-button>
             <ion-button expand="block" 
                        color="danger" 
                        (click)="cerrarReset(modulo.moduloId)"
                        [disabled]="estadoReset === false">
-              <ion-icon name="radio-button-off-outline" slot="start"></ion-icon>
-              Cerrar Reset
+              Apagar módulo
             </ion-button>
           </div>
         </ion-col>
@@ -129,8 +124,7 @@
                color="primary" 
                (click)="verMediciones()"
                class="boton-principal">
-      <ion-icon name="thermometer" slot="start"></ion-icon>
-      Temperatura
+      Historial Apuntes
     </ion-button>
     
     <ion-button expand="block" 
@@ -138,7 +132,6 @@
                color="medium" 
                (click)="volverAlHome()"
                class="boton-principal">
-      <ion-icon name="home" slot="start"></ion-icon>
       Home
     </ion-button>
     
@@ -146,8 +139,7 @@
                color="tertiary" 
                (click)="verMediciones()"
                class="boton-principal">
-      <ion-icon name="document-text" slot="start"></ion-icon>
-      Apuntes
+      Historial Mediciones
     </ion-button>
   </div>
 </ion-content>

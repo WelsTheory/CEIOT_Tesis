@@ -1,40 +1,65 @@
+.filtros-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  justify-content: center;
+  
+  .filtro-btn {
+    flex: 1;
+    --border-radius: 12px;
+    font-weight: 600;
+    height: 40px;
+    
+    &:first-child {
+      margin-right: 4px;
+    }
+    
+    &:last-child {
+      margin-left: 4px;
+    }
+  }
+}
+
 .ultima-medicion {
   text-align: center;
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 
-  ion-card-title {
-    font-size: 1.3rem;
-    font-weight: bold;
-  }
+  ion-card-header {
+    padding-bottom: 8px;
 
-  ion-card-subtitle {
-    color: var(--ion-color-medium);
+    ion-card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    ion-card-subtitle {
+      color: var(--ion-color-medium);
+      font-size: 0.9rem;
+    }
   }
 
   .valor-destacado {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--ion-color-primary);
+    text-align: center;
+    
+    span {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--ion-color-primary);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
   }
 }
 
 .bloque-historial {
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 
-  ion-card-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    text-align: center;
-  }
-
-  ion-list {
-    margin-top: 8px;
-    background: transparent;
+  ion-card-header {
+    ion-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
   }
 
   .item-historial {
@@ -49,21 +74,49 @@
     &:nth-child(even) {
       background: rgba(var(--ion-color-primary-rgb), 0.1);
     }
+    ion-label{
+      h2 {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 4px;
+        color: var(--ion-color-primary);
+      }
 
-    h2 {
-      font-weight: bold;
-      margin-bottom: 4px;
-      color: var(--ion-color-primary);
+      p {
+        margin: 2px 0;
+        font-size: 0.9rem;
+        color: var(--ion-color-dark);
+        &:last-child {
+          font-weight: 600;
+          color: var(--ion-color-primary);
+        }
+      }
     }
-
-    p {
-      margin: 0;
-      font-size: 0.9rem;
+    &:hover {
+      --background: var(--ion-color-light-tint);
     }
   }
 }
 
 .boton-home {
   margin-top: 20px;
-  font-weight: bold;
+  font-weight: 600px;
+  --border-radius: 12px;
+}
+
+.filtros-container,
+.ultima-medicion,
+.bloque-historial {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

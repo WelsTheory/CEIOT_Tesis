@@ -153,4 +153,25 @@ routerModulos.get('/:id/ultima-medicion', (req, res) => {
     });
 });
 
+// Obtener apunte
+routerModulos.get('/:id/apunte', (req, res) => {
+    const moduloId = req.params.id;
+    const query = `
+        SELECT up, down
+        FROM Modulos
+        WHERE moduloId = ?
+        LIMIT 1`;
+
+    pool.query(query, [moduloId], (err, result) => {
+        if (err) {
+            console.error('Error al obtener el apunte:', err);
+            return res.status(500).send({ error: 'Error al obtener el apunte' });
+        } else if (result.length === 0) {
+            return res.status(404).send({ error: 'No se encontraron apuntes para este modulo' });
+        } else {
+            res.status(200).send(result[0]);
+        }
+    });
+});
+
 module.exports = routerModulos;

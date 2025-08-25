@@ -50,19 +50,20 @@ export class HomePage implements OnInit {
   async ngOnInit() {
     try {
       const modulos = await this.moduloService.getModulos();
-  
-      // Para cada modulo, traemos la última medición y estado de válvula
       this.modulos = await Promise.all(
         modulos.map(async (d: Modulo) => {
           let medicionTempActual = '—';
           let medicionPressActual = '—';
           let estadoReset = null;
-
+          let valor_up = 0.0;
+          let valor_down = 0.0;
           try {
-            // 👇 ahora pedimos solo la última medición
             const ultimaMedicion = await this.moduloService.getUltimaMedicion(d.moduloId);
             medicionTempActual = ultimaMedicion?.valor_temp?? '—';
             medicionPressActual = ultimaMedicion?.valor_press?? '—';
+            const apunte = await this.moduloService.getApunte(d.moduloId);
+            valor_up = apunte?.up ?? 0.0;
+            valor_down = apunte?.down ?? 0.0;
           } catch (err) {
             console.error(`Error cargando última medición de ${d.moduloId}`, err);
           }
@@ -77,6 +78,8 @@ export class HomePage implements OnInit {
           return {
             ...d,
             ubicacion: d.ubicacion || 'Desconocida', 
+            valor_up,
+            valor_down,
             medicionTempActual,
             medicionPressActual,
             estadoReset

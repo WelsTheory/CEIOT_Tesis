@@ -20,7 +20,9 @@ import {
   IonCardSubtitle,
   IonCardContent,
   IonIcon,
-  IonText
+  IonText,
+  IonSegment,           // ← Agregar esta línea
+  IonSegmentButton     // ← Agregar esta línea
 } from '@ionic/angular/standalone';
 
 @Component({
@@ -45,12 +47,16 @@ import {
     IonCardSubtitle,
     IonCardContent,
     IonIcon,
-    IonText
+    IonText,
+    IonSegment,           // ← Agregar esta línea
+    IonSegmentButton     // ← Agregar esta línea
   ]
 })
 export class MedicionesPage implements OnInit {
   moduloId!: number;
   mediciones: { medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[] = [];
+  medicionesFiltradas: { medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[] = [];
+  tipoSeleccionado: 'temperatura' | 'presion' = 'temperatura';
 
   constructor(
     private route: ActivatedRoute,
@@ -61,6 +67,46 @@ export class MedicionesPage implements OnInit {
   async ngOnInit() {
     this.moduloId = Number(this.route.snapshot.paramMap.get('id'));
     await this.cargarMediciones();
+    await this.aplicarFiltro();
+  }
+
+  seleccionarTipo(tipo: 'temperatura' | 'presion'| undefined) {
+    if (tipo === 'temperatura' || tipo === 'presion') {
+      this.tipoSeleccionado = tipo;
+      this.aplicarFiltro();
+    }
+  }
+   // Método alternativo más específico para el segment
+   onSegmentChange(event: any) {
+    const valor = event.detail.value as 'temperatura' | 'presion';
+    if (valor === 'temperatura' || valor === 'presion') {
+      this.tipoSeleccionado = valor;
+      this.aplicarFiltro();
+      console.log('Datos de: ', valor);
+    }
+  }
+
+  aplicarFiltro() {
+    if (this.tipoSeleccionado === 'temperatura') {
+      // Filtrar mediciones que tengan valor_temp (no vacío)
+      this.medicionesFiltradas = this.mediciones.filter(m => 
+        m.valor_temp !== undefined && 
+        m.valor_temp !== null && 
+        m.valor_temp !== ''
+      );
+    } else {
+      // Filtrar mediciones que tengan valor_press (no vacío)
+      this.medicionesFiltradas = this.mediciones.filter(m => 
+        m.valor_press !== undefined && 
+        m.valor_press !== null && 
+        m.valor_press !== ''
+      );
+    }
+  }
+
+  obtenerValorMedicion(medicion: { medicionId: number; fecha: string; valor_temp: string; valor_press: string; }): string {
+    return this.tipoSeleccionado === 'temperatura' ? 
+           medicion.valor_temp : medicion.valor_press;
   }
 
   async cargarMediciones() {

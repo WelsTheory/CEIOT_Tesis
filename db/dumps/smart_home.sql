@@ -81,27 +81,36 @@ COMMIT;
 
 -- Insertar Control_Reinicio PRIMERO
 INSERT INTO `Control_Reinicio` (`resetId`, `nombre`) VALUES
-(1, 'CRSur1'),
-(2, 'CRNorte1'),
-(3, 'CROeste1'),
-(4, 'CREste1'),
-(5, 'CRSur2'),
-(6, 'CRNorte2'),
-(7, 'CREste2'),
-(8, 'CROeste2'),
-(9, 'CRSur3');
+(1, 'CRNorte1'),
+(2, 'CRSur1'),
+(3, 'CREste1'),
+(4, 'CROeste1'),
+(5, 'CRNorte2'),
+(6, 'CRSur2'),
+(7, 'CREste3'),
+(8, 'CROeste4'),
+(9, 'CRNorte5'),
+(10, 'CRSur6'),
+(11, 'CREste7'),
+(12, 'CROeste8'),
+(13, 'CRNorte9');
 
 -- Insertar Modulos DESPUÉS
 INSERT INTO `Modulos` VALUES 
+-- id, nombre, ubicacion,version, up, down, temp_min, temp_max, press_min, press_max, resetId
 (1, 'Modulo 1', 'Norte', '1.0', 1.0, 0.5, 15.0, 25.0, 1.0, 3.0, 1),
-(2, 'Modulo 2', 'Sur', '2.0', 0.0, 1.5, 18.0, 28.0, 1.5, 3.5, 2),
-(3, 'Modulo 3', 'Este', '2.0', 2.0, 0.5, 20.0, 30.0, 2.0, 4.0, 3),
-(4, 'Modulo 4', 'Oeste', '2.0', 3.0, 3.5, 22.0, 32.0, 1.8, 3.8, 4),
-(5, 'Modulo 5', 'Norte', '2.0', 3.5, 3.5, 16.0, 26.0, 1.2, 3.2, 5),
-(6, 'Modulo 6', 'Sur', '1.0', 0.0, 0.0, 19.0, 29.0, 1.4, 3.4, 6),
-(7, 'Modulo 7', 'Este', '2.0', 1.0, 2.0, 21.0, 31.0, 1.6, 3.6, 7),
-(8, 'Modulo 8', 'Oeste', '1.0', 2.0, 2.5, 17.0, 27.0, 1.3, 3.3, 8),
-(9, 'Modulo 9', 'Norte', '2.0', 3.0, 3.5, 23.0, 33.0, 1.7, 3.7, 9);
+(2, 'Modulo 1', 'Sur', '2.0', 0.0, 1.5, 18.0, 28.0, 1.5, 3.5, 2),
+(3, 'Modulo 1', 'Este', '2.0', 2.0, 0.5, 20.0, 30.0, 2.0, 4.0, 3),
+(4, 'Modulo 1', 'Oeste', '1.0', 3.0, 3.5, 22.0, 32.0, 1.8, 3.8, 4),
+(5, 'Modulo 2', 'Norte', '2.0', 1.0, 0.5, 15.0, 25.0, 1.0, 3.0, 5),
+(6, 'Modulo 2', 'Sur', '2.0', 0.0, 1.5, 18.0, 28.0, 1.5, 3.5, 6),
+(7, 'Modulo 3', 'Este', '2.0', 2.0, 0.5, 20.0, 30.0, 2.0, 4.0, 7),
+(8, 'Modulo 4', 'Oeste', '2.0', 3.0, 3.5, 22.0, 32.0, 1.8, 3.8, 8),
+(9, 'Modulo 5', 'Norte', '2.0', 3.5, 3.5, 16.0, 26.0, 1.2, 3.2, 9),
+(10, 'Modulo 6', 'Sur', '1.0', 0.0, 0.0, 19.0, 29.0, 1.4, 3.4, 10),
+(11, 'Modulo 7', 'Este', '2.0', 1.0, 2.0, 21.0, 31.0, 1.6, 3.6, 11),
+(12, 'Modulo 8', 'Oeste', '1.0', 2.0, 2.5, 17.0, 27.0, 1.3, 3.3, 12),
+(13, 'Modulo 9', 'Norte', '2.0', 3.0, 3.5, 23.0, 33.0, 1.7, 3.7, 13);
 
 -- ===================================================================
 -- PASO 3: AGREGAR moduloId A Control_Reinicio Y CREAR CLAVES FORÁNEAS
