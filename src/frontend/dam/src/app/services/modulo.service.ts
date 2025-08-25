@@ -42,9 +42,9 @@ export class ModuloService {
     );
   }
   
-  getMediciones(id: number): Promise<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[]> {
+  getMediciones(id: number): Promise<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string;}[]> {
     return firstValueFrom(
-      this._http.get<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; }[]>(
+      this._http.get<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; ubicacion: string}[]>(
         `http://localhost:8000/modulo/${id}/mediciones`
       )
     );

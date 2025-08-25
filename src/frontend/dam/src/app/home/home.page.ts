@@ -62,8 +62,8 @@ export class HomePage implements OnInit {
             medicionTempActual = ultimaMedicion?.valor_temp?? '—';
             medicionPressActual = ultimaMedicion?.valor_press?? '—';
             const apunte = await this.moduloService.getApunte(d.moduloId);
-            valor_up = apunte?.up ?? 0.0;
-            valor_down = apunte?.down ?? 0.0;
+            valor_up = apunte?.up ;
+            valor_down = apunte?.down;
           } catch (err) {
             console.error(`Error cargando última medición de ${d.moduloId}`, err);
           }
