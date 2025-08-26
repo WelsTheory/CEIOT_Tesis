@@ -55,15 +55,15 @@ export class HomePage implements OnInit {
           let medicionTempActual = '—';
           let medicionPressActual = '—';
           let estadoReset = null;
-          let valor_up = 0.0;
-          let valor_down = 0.0;
+          let up = 0.0;
+          let down = 0.0;
           try {
             const ultimaMedicion = await this.moduloService.getUltimaMedicion(d.moduloId);
             medicionTempActual = ultimaMedicion?.valor_temp?? '—';
             medicionPressActual = ultimaMedicion?.valor_press?? '—';
             const apunte = await this.moduloService.getApunte(d.moduloId);
-            valor_up = apunte?.up ;
-            valor_down = apunte?.down;
+            up = apunte?.up ;
+            down = apunte?.down;
           } catch (err) {
             console.error(`Error cargando última medición de ${d.moduloId}`, err);
           }
@@ -78,8 +78,8 @@ export class HomePage implements OnInit {
           return {
             ...d,
             ubicacion: d.ubicacion || 'Desconocida', 
-            valor_up,
-            valor_down,
+            up,
+            down,
             medicionTempActual,
             medicionPressActual,
             estadoReset
@@ -117,14 +117,14 @@ export class HomePage implements OnInit {
                 d.medicionPressActual = nuevoValorPress; // actualiza lo que ya usas en el HTML
               }
               // OBTENER ULTIMO APUNTE
-              const valores_apunte = await this.moduloService.getApunte(d.moduloId);
-              const nuevoValorUP = valores_apunte?.valor_up ?? 0.0;
-              const nuevoValorDOWN = valores_apunte?.valor_down ?? 0.0;
-              if(d.valor_up !== nuevoValorUP){
-                d.valor_up = nuevoValorUP;
+              const valor_apunte = await this.moduloService.getApunte(d.moduloId);
+              const nuevoValorUP = valor_apunte?.up ?? 0.0;
+              const nuevoValorDOWN = valor_apunte?.down ?? 0.0;
+              if(d.up !== nuevoValorUP){
+                d.up = nuevoValorUP;
               }
-              if(d.valor_down !== nuevoValorDOWN){
-                d.valor_down = nuevoValorDOWN;
+              if(d.down !== nuevoValorDOWN){
+                d.down = nuevoValorDOWN;
               }
             } catch (e) {
               // no interrumpe el resto si una falla

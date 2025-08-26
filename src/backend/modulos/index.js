@@ -153,10 +153,12 @@ routerModulos.get('/:id/ultima-medicion', (req, res) => {
     });
 });
 
-routerModulos.get('/:id/ultimo-apunte', (req, res) => {
+
+// Obtener apunte
+routerModulos.get('/:id/apunte', (req, res) => {
     const moduloId = req.params.id;
     const query = `
-        SELECT fecha, valor_up, valor_down
+        SELECT valor_up as up, valor_down as down, fecha
         FROM Beam
         WHERE modulo_id = ?
         ORDER BY fecha DESC
@@ -164,35 +166,37 @@ routerModulos.get('/:id/ultimo-apunte', (req, res) => {
 
     pool.query(query, [moduloId], (err, result) => {
         if (err) {
-            console.error('Error al obtener la última medición:', err);
-            return res.status(500).send({ error: 'Error al obtener la última medición' });
+            console.error('Error al obtener el apunte:', err);
+            return res.status(500).send({ error: 'Error al obtener el apunte' });
         } else if (result.length === 0) {
-            return res.status(404).send({ error: 'No se encontraron mediciones para este modulo' });
+            // Si no hay apuntes en Beam, devolver los valores por defecto de Modulos
+            const queryDefault = `SELECT up, down FROM Modulos WHERE moduloId = ?`;
+            pool.query(queryDefault, [moduloId], (err2, result2) => {
+                if (err2) {
+                    return res.status(500).send({ error: 'Error al obtener valores por defecto' });
+                }
+                return res.status(200).send(result2[0] || { up: 0.0, down: 0.0 });
+            });
         } else {
             res.status(200).send(result[0]);
         }
     });
 });
 
-
-// Obtener apunte
-routerModulos.get('/:id/apunte', (req, res) => {
+// Endpoint para actualizar apuntes
+routerModulos.post('/:id/apunte', (req, res) => {
     const moduloId = req.params.id;
+    const { up, down } = req.body;
+    
     const query = `
-        SELECT up, down
-        FROM Modulos
-        WHERE moduloId = ?
-        LIMIT 1`;
-
-    pool.query(query, [moduloId], (err, result) => {
+        INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down)
+        VALUES (?, NOW(), ?, ?)`;
+        
+    pool.query(query, [moduloId, up, down], (err, result) => {
         if (err) {
-            console.error('Error al obtener el apunte:', err);
-            return res.status(500).send({ error: 'Error al obtener el apunte' });
-        } else if (result.length === 0) {
-            return res.status(404).send({ error: 'No se encontraron apuntes para este modulo' });
-        } else {
-            res.status(200).send(result[0]);
+            return res.status(500).send({ error: 'Error al obtener valores por defecto' });
         }
+        return res.status(200).send(result[0] || { up: 0.0, down: 0.0 });
     });
 });
 
