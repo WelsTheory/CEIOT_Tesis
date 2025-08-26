@@ -1,0 +1,182 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title class="ion-text-center">
+      Mediciones del Modulo N° {{ moduloId }}
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Botones de selección de tipo de medición -->
+  <div class="filtros-container">
+    <ion-segment 
+      [value]="tipoSeleccionado" 
+      (ionChange)="onSegmentChange($event)"
+      color="primary">
+      <ion-segment-button value="temperatura">
+        <ion-label>🌡️ Temperatura</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="presion">
+        <ion-label>🌪️ Presión</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <!-- Si hay mediciones -->
+  <ng-container *ngIf="mediciones && mediciones.length > 0">
+    <!-- Última medición destacada -->
+    <ion-card color="light" class="ultima-medicion">
+      <ion-card-header>
+        <ion-card-title>📌 Última medición {{tipoSeleccionado}}</ion-card-title>
+        <ion-card-subtitle>{{ medicionesFiltradas[0].fecha | date: 'dd/MM/yyyy HH:mm' }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="valor-destacado">
+          <span>{{ obtenerValorMedicion(medicionesFiltradas[0]) }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+   <!-- Botón para alternar vista -->
+   <div class="vista-toggle">
+    <ion-button 
+      [fill]="vistaGrafico ? 'solid' : 'outline'" 
+      color="secondary" 
+      (click)="toggleVistaGrafico()" 
+      expand="block">
+      <ion-icon name="{{ vistaGrafico ? 'list' : 'bar-chart' }}" slot="start"></ion-icon>
+      {{ vistaGrafico ? 'Ver Lista' : 'Ver Gráfico' }}
+    </ion-button>
+  </div>
+
+  <!-- Filtros de fecha (solo visible cuando hay mediciones y se muestra el gráfico) -->
+  <ion-card *ngIf="mediciones && mediciones.length > 0 && vistaGrafico" color="light">
+    <ion-card-header>
+      <ion-card-title>
+        <ion-icon name="calendar"></ion-icon>
+        Filtrar por fechas
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12" size-md="5">
+            <ion-item>
+              <ion-label position="stacked">Fecha inicio:</ion-label>
+              <ion-input 
+                type="datetime-local" 
+                [value]="fechaInicio"
+                (ionInput)="onFechaInicioChange($event)">
+              </ion-input>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="5">
+            <ion-item>
+              <ion-label position="stacked">Fecha fin:</ion-label>
+              <ion-input 
+                type="datetime-local" 
+                [value]="fechaFin"
+                (ionInput)="onFechaFinChange($event)">
+              </ion-input>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="2" class="ion-align-self-end">
+            <ion-button 
+              size="small" 
+              fill="clear" 
+              color="medium"
+              (click)="limpiarFiltrosFecha()"
+              expand="block">
+              Limpiar
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Vista de Gráfico -->
+  <ion-card color="light" class="grafico-container" *ngIf="vistaGrafico">
+    <ion-card-header>
+      <ion-card-title>📊 Gráfico de {{ tipoSeleccionado }}</ion-card-title>
+      <ion-card-subtitle>{{ medicionesFiltradas.length }} mediciones</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="grafico-simple">
+        <div class="grafico-puntos" 
+             [style.--color-primario]="obtenerColorGrafico()"
+             [attr.data-tipo]="tipoSeleccionado">
+          <div class="punto-container" 
+               *ngFor="let dato of datosGrafico; let i = index"
+               [style.left.%]="(i / (datosGrafico.length - 1)) * 100"
+               [style.bottom.%]="calcularPorcentajeAltura(dato.valor)"
+               (mouseenter)="mostrarTooltipEnPunto($event, dato, i)"
+               (mouseleave)="ocultarTooltip()">
+            <div class="punto" [class]="tipoSeleccionado"></div>
+          </div>
+          <!-- Líneas conectoras -->
+          <svg class="lineas-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polyline 
+              [attr.points]="obtenerPuntosLinea()"
+              [attr.stroke]="obtenerColorGrafico()"
+              stroke-width="0.5"
+              fill="none" />
+          </svg>
+        </div>
+        <div class="etiquetas-x">
+          <span *ngFor="let dato of datosGrafico" class="etiqueta-x">
+            {{ dato.fecha }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Tooltip -->
+      <div class="tooltip-custom" 
+           *ngIf="mostrarTooltip && tooltipData"
+           [style.left.px]="tooltipPosition.x"
+           [style.top.px]="tooltipPosition.y"
+           [style.background-color]="obtenerColorGrafico()">
+        <div class="tooltip-content">
+          <div class="tooltip-fecha">{{ tooltipData.fecha }}</div>
+          <div class="tooltip-valor">
+            {{ tooltipData.valor }} {{ tooltipData.unidad }}
+          </div>
+          <div class="tooltip-tipo">{{ tooltipData.tipo | titlecase }}</div>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Vista de Lista (Historial) -->
+  <ion-card color="light" class="bloque-historial" *ngIf="!vistaGrafico">
+    <ion-card-header>
+      <ion-card-title>📜 Historial de mediciones: {{tipoSeleccionado}}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list lines="full">
+        <ion-item *ngFor="let medicion of medicionesFiltradas.slice(1); let i = index; trackBy: trackByFecha" class="item-historial">
+          <ion-label>
+            <h2>N°{{ medicionesFiltradas.length - (i + 1) }}</h2>
+            <p>Fecha: {{ medicion.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
+            <p>Valor: {{ obtenerValorMedicion(medicion) }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-card>
+</ng-container>
+
+  <!-- Si no hay mediciones -->
+  <ion-text color="medium" *ngIf="!mediciones || mediciones.length === 0">
+    <p class="ion-text-center">No hay mediciones de {{tipoSeleccionado}} disponibles</p>
+  </ion-text>
+  
+  <!-- Botón de Home -->
+  <ion-button expand="block" color="primary" (click)="volverAlHome()" class="boton-home">
+    🏠 Volver al Home
+  </ion-button>
+</ion-content>
+
+
+
+  

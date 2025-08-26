@@ -69,12 +69,25 @@ export class ModuloService {
   }
   getUltimaMedicion(moduloId: number) {
     return firstValueFrom(
-      this._http.get<{ fecha: string; valor_temp: string; valor_press: string; }>(`http://localhost:8000/modulo/${moduloId}/ultima-medicion`)
+      this._http.get<{ fecha: string; valor_temp: string; valor_press: string;}>(`http://localhost:8000/modulo/${moduloId}/ultima-medicion`)
     );
   }
   getApunte(moduloId:number): Promise<any> {
     return this._http.get(`http://localhost:8000/modulo/${moduloId}/apunte`).toPromise();
   }
+
+  getUltimoApunte(moduloId: number) {
+    return firstValueFrom(
+      this._http.get<{ fecha: string; valor_up: number; valor_down: number }>(`http://localhost:8000/modulo/${moduloId}/ultimo-apunte`)
+    );
+  }
   
+  getApuntes(id: number): Promise<{ beamId: number; fecha: string; valor_up: string; valor_down: string;}[]> {
+    return firstValueFrom(
+      this._http.get<{ beamId: number; fecha: string; valor_up: string; valor_down: string;}[]>(
+        `http://localhost:8000/modulo/${id}/apuntes`
+      )
+    );
+  }
 
 }

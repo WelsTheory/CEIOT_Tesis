@@ -84,12 +84,51 @@ const generarMediciones = () => {
     });
 };
 
+const generarApuntes = () => {
+    console.log('Intentando obtener apuntes de módulos...');
+    
+    // Valores permitidos según las restricciones de la BD
+    const valoresPermitidos = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5];
+    
+    // Query para obtener todos los modulos existentes
+    const queryModulos = 'SELECT moduloId FROM Modulos';
+    
+    // Query para insertar una medición
+    const queryInsertApuntes = `
+        INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down)
+        VALUES (?, NOW(), ?, ?)`;
+    
+    // Consulta a la base de datos
+    pool.query(queryModulos, (err, modulos) => {
+        if (err) {
+            console.error('Error al obtener los módulos:', err);
+            return;
+        }
+        
+        // Para cada modulo, genera una medición aleatoria
+        modulos.forEach(({ moduloId }) => {
+            // Generar valores aleatorios de los valores permitidos
+            const valor_up = valoresPermitidos[Math.floor(Math.random() * valoresPermitidos.length)];
+            const valor_down = valoresPermitidos[Math.floor(Math.random() * valoresPermitidos.length)];
+            
+            pool.query(queryInsertApuntes, [moduloId, valor_up, valor_down], (err) => {
+                if (err) {
+                    console.error(`Error al registrar el apunte para modulo ${moduloId}:`, err);
+                } else {
+                    console.log(`Apunte registrado para modulo ${moduloId}: ${valor_up} y ${valor_down}`);
+                }
+            });
+        });
+    });
+};
+
 // Inicia la generación periódica de mediciones
 setTimeout(() => {
     console.log('Iniciando generación periódica de mediciones...');
     setInterval(() => {
         console.log('Generando nuevas mediciones...');
         generarMediciones();
+        generarApuntes();
     }, 300000); // cada 5 minutos
 }, 10000); // retraso inicial de 10 segundos
 
