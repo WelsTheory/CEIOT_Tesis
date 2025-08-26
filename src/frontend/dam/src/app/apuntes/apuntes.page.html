@@ -1,182 +1,233 @@
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title class="ion-text-center">
-      Mediciones del Modulo N° {{ moduloId }}
+      📝 Historial de Apuntes - Módulo N° {{ moduloId }}
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Botones de selección de tipo de medición -->
-  <div class="filtros-container">
-    <ion-segment 
-      [value]="tipoSeleccionado" 
-      (ionChange)="onSegmentChange($event)"
-      color="primary">
-      <ion-segment-button value="temperatura">
-        <ion-label>🌡️ Temperatura</ion-label>
-      </ion-segment-button>
-      <ion-segment-button value="presion">
-        <ion-label>🌪️ Presión</ion-label>
-      </ion-segment-button>
-    </ion-segment>
-  </div>
-
-  <!-- Si hay mediciones -->
-  <ng-container *ngIf="mediciones && mediciones.length > 0">
-    <!-- Última medición destacada -->
-    <ion-card color="light" class="ultima-medicion">
-      <ion-card-header>
-        <ion-card-title>📌 Última medición {{tipoSeleccionado}}</ion-card-title>
-        <ion-card-subtitle>{{ medicionesFiltradas[0].fecha | date: 'dd/MM/yyyy HH:mm' }}</ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="valor-destacado">
-          <span>{{ obtenerValorMedicion(medicionesFiltradas[0]) }}</span>
+  <!-- Información del módulo -->
+  <ion-card color="light" class="modulo-info-card" *ngIf="modulo">
+    <ion-card-header>
+      <ion-card-title>{{ modulo.nombre }}</ion-card-title>
+      <ion-card-subtitle>{{ modulo.ubicacion }} - Versión {{ modulo.version }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="valores-actuales">
+        <div class="valor-item up">
+          <ion-chip color="success">
+            <ion-label>UP: {{ modulo.up }}</ion-label>
+          </ion-chip>
         </div>
-      </ion-card-content>
-    </ion-card>
+        <div class="valor-item down">
+          <ion-chip color="warning">
+            <ion-label>DOWN: {{ modulo.down }}</ion-label>
+          </ion-chip>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
 
-   <!-- Botón para alternar vista -->
-   <div class="vista-toggle">
-    <ion-button 
-      [fill]="vistaGrafico ? 'solid' : 'outline'" 
-      color="secondary" 
-      (click)="toggleVistaGrafico()" 
-      expand="block">
-      <ion-icon name="{{ vistaGrafico ? 'list' : 'bar-chart' }}" slot="start"></ion-icon>
-      {{ vistaGrafico ? 'Ver Lista' : 'Ver Gráfico' }}
-    </ion-button>
-  </div>
+  <!-- Último apunte destacado -->
+  <ion-card color="light" class="ultimo-apunte" *ngIf="apuntes && apuntes.length > 0">
+    <ion-card-header>
+      <ion-card-title>📌 Último Apunte</ion-card-title>
+      <ion-card-subtitle>{{ apuntes[0].fecha | date: 'dd/MM/yyyy HH:mm:ss' }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="valores-destacados">
+        <div class="valor-up">
+          <span class="label">UP:</span>
+          <span class="valor">{{ apuntes[0].up }}</span>
+        </div>
+        <div class="valor-down">
+          <span class="label">DOWN:</span>
+          <span class="valor">{{ apuntes[0].down }}</span>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
 
-  <!-- Filtros de fecha (solo visible cuando hay mediciones y se muestra el gráfico) -->
-  <ion-card *ngIf="mediciones && mediciones.length > 0 && vistaGrafico" color="light">
+  <!-- Filtros de fecha -->
+  <ion-card color="light" class="filtros-card">
+    <ion-card-header>
+      <ion-card-title>🗓️ Filtrar por fecha</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-row>
+        <ion-col size="6">
+          <ion-item>
+            <ion-label position="stacked">Desde:</ion-label>
+            <ion-datetime 
+              [(ngModel)]="fechaDesde" 
+              presentation="date"
+              (ionChange)="filtrarPorFechas()"
+              locale="es-ES">
+            </ion-datetime>
+          </ion-item>
+        </ion-col>
+        <ion-col size="6">
+          <ion-item>
+            <ion-label position="stacked">Hasta:</ion-label>
+            <ion-datetime 
+              [(ngModel)]="fechaHasta" 
+              presentation="date"
+              (ionChange)="filtrarPorFechas()"
+              locale="es-ES">
+            </ion-datetime>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size="12">
+          <ion-button 
+            expand="block" 
+            fill="outline" 
+            color="medium" 
+            (click)="limpiarFiltros()">
+            <ion-icon name="refresh" slot="start"></ion-icon>
+            Limpiar filtros
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Lista de apuntes ordenados por fecha -->
+  <ion-card color="light" class="historial-card" *ngIf="apuntesFiltrados && apuntesFiltrados.length > 0">
     <ion-card-header>
       <ion-card-title>
-        <ion-icon name="calendar"></ion-icon>
-        Filtrar por fechas
+        📋 Historial de Apuntes
+        <ion-chip color="primary">
+          <ion-label>{{ apuntesFiltrados.length }} registros</ion-label>
+        </ion-chip>
       </ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <ion-grid>
-        <ion-row>
-          <ion-col size="12" size-md="5">
-            <ion-item>
-              <ion-label position="stacked">Fecha inicio:</ion-label>
-              <ion-input 
-                type="datetime-local" 
-                [value]="fechaInicio"
-                (ionInput)="onFechaInicioChange($event)">
-              </ion-input>
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-md="5">
-            <ion-item>
-              <ion-label position="stacked">Fecha fin:</ion-label>
-              <ion-input 
-                type="datetime-local" 
-                [value]="fechaFin"
-                (ionInput)="onFechaFinChange($event)">
-              </ion-input>
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-md="2" class="ion-align-self-end">
-            <ion-button 
-              size="small" 
-              fill="clear" 
-              color="medium"
-              (click)="limpiarFiltrosFecha()"
-              expand="block">
-              Limpiar
-            </ion-button>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-card-content>
-  </ion-card>
-
-  <!-- Vista de Gráfico -->
-  <ion-card color="light" class="grafico-container" *ngIf="vistaGrafico">
-    <ion-card-header>
-      <ion-card-title>📊 Gráfico de {{ tipoSeleccionado }}</ion-card-title>
-      <ion-card-subtitle>{{ medicionesFiltradas.length }} mediciones</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      <div class="grafico-simple">
-        <div class="grafico-puntos" 
-             [style.--color-primario]="obtenerColorGrafico()"
-             [attr.data-tipo]="tipoSeleccionado">
-          <div class="punto-container" 
-               *ngFor="let dato of datosGrafico; let i = index"
-               [style.left.%]="(i / (datosGrafico.length - 1)) * 100"
-               [style.bottom.%]="calcularPorcentajeAltura(dato.valor)"
-               (mouseenter)="mostrarTooltipEnPunto($event, dato, i)"
-               (mouseleave)="ocultarTooltip()">
-            <div class="punto" [class]="tipoSeleccionado"></div>
-          </div>
-          <!-- Líneas conectoras -->
-          <svg class="lineas-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polyline 
-              [attr.points]="obtenerPuntosLinea()"
-              [attr.stroke]="obtenerColorGrafico()"
-              stroke-width="0.5"
-              fill="none" />
-          </svg>
+      <!-- Agrupación por fecha -->
+      <div *ngFor="let grupo of apuntesAgrupados" class="grupo-fecha">
+        <div class="fecha-separador">
+          <h3>{{ grupo.fecha }}</h3>
+          <ion-chip color="secondary">
+            <ion-label>{{ grupo.apuntes.length }} apuntes</ion-label>
+          </ion-chip>
         </div>
-        <div class="etiquetas-x">
-          <span *ngFor="let dato of datosGrafico" class="etiqueta-x">
-            {{ dato.fecha }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Tooltip -->
-      <div class="tooltip-custom" 
-           *ngIf="mostrarTooltip && tooltipData"
-           [style.left.px]="tooltipPosition.x"
-           [style.top.px]="tooltipPosition.y"
-           [style.background-color]="obtenerColorGrafico()">
-        <div class="tooltip-content">
-          <div class="tooltip-fecha">{{ tooltipData.fecha }}</div>
-          <div class="tooltip-valor">
-            {{ tooltipData.valor }} {{ tooltipData.unidad }}
-          </div>
-          <div class="tooltip-tipo">{{ tooltipData.tipo | titlecase }}</div>
-        </div>
+        
+        <ion-list lines="full">
+          <ion-item 
+            *ngFor="let apunte of grupo.apuntes; let i = index; trackBy: trackByApunte" 
+            class="item-apunte"
+            button
+            (click)="verDetalleApunte(apunte)">
+            
+            <div slot="start" class="numero-apunte">
+              <ion-chip color="tertiary">
+                <ion-label>#{{ grupo.apuntes.length - i }}</ion-label>
+              </ion-chip>
+            </div>
+            
+            <ion-label>
+              <h2>{{ apunte.fecha | date: 'HH:mm:ss' }}</h2>
+              <div class="valores-inline">
+                <div class="valor-up-inline">
+                  <span class="label">UP:</span>
+                  <span class="valor" [class.cambio]="i < grupo.apuntes.length - 1 && apunte.up !== grupo.apuntes[i + 1].up">
+                    {{ apunte.up }}
+                  </span>
+                </div>
+                <div class="valor-down-inline">
+                  <span class="label">DOWN:</span>
+                  <span class="valor" [class.cambio]="i < grupo.apuntes.length - 1 && apunte.down !== grupo.apuntes[i + 1].down">
+                    {{ apunte.down }}
+                  </span>
+                </div>
+              </div>
+            </ion-label>
+            
+            <div slot="end" class="cambios-indicador">
+              <ion-icon 
+                name="trending-up" 
+                color="success" 
+                *ngIf="i < grupo.apuntes.length - 1 && (apunte.up > grupo.apuntes[i + 1].up || apunte.down > grupo.apuntes[i + 1].down)">
+              </ion-icon>
+              <ion-icon 
+                name="trending-down" 
+                color="danger" 
+                *ngIf="i < grupo.apuntes.length - 1 && (apunte.up < grupo.apuntes[i + 1].up || apunte.down < grupo.apuntes[i + 1].down)">
+              </ion-icon>
+              <ion-icon 
+                name="remove" 
+                color="medium" 
+                *ngIf="i < grupo.apuntes.length - 1 && apunte.up === grupo.apuntes[i + 1].up && apunte.down === grupo.apuntes[i + 1].down">
+              </ion-icon>
+            </div>
+          </ion-item>
+        </ion-list>
       </div>
     </ion-card-content>
   </ion-card>
 
-  <!-- Vista de Lista (Historial) -->
-  <ion-card color="light" class="bloque-historial" *ngIf="!vistaGrafico">
+  <!-- Estadísticas resumen -->
+  <ion-card color="light" class="estadisticas-card" *ngIf="apuntesFiltrados && apuntesFiltrados.length > 0">
     <ion-card-header>
-      <ion-card-title>📜 Historial de mediciones: {{tipoSeleccionado}}</ion-card-title>
+      <ion-card-title>📊 Estadísticas del período</ion-card-title>
     </ion-card-header>
     <ion-card-content>
-      <ion-list lines="full">
-        <ion-item *ngFor="let medicion of medicionesFiltradas.slice(1); let i = index; trackBy: trackByFecha" class="item-historial">
-          <ion-label>
-            <h2>N°{{ medicionesFiltradas.length - (i + 1) }}</h2>
-            <p>Fecha: {{ medicion.fecha | date: 'dd/MM/yyyy HH:mm' }}</p>
-            <p>Valor: {{ obtenerValorMedicion(medicion) }}</p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
+      <ion-row>
+        <ion-col size="6">
+          <div class="estadistica-item">
+            <h4>UP</h4>
+            <p>Máximo: <strong>{{ estadisticas.upMax }}</strong></p>
+            <p>Mínimo: <strong>{{ estadisticas.upMin }}</strong></p>
+            <p>Promedio: <strong>{{ estadisticas.upPromedio }}</strong></p>
+          </div>
+        </ion-col>
+        <ion-col size="6">
+          <div class="estadistica-item">
+            <h4>DOWN</h4>
+            <p>Máximo: <strong>{{ estadisticas.downMax }}</strong></p>
+            <p>Mínimo: <strong>{{ estadisticas.downMin }}</strong></p>
+            <p>Promedio: <strong>{{ estadisticas.downPromedio }}</strong></p>
+          </div>
+        </ion-col>
+      </ion-row>
     </ion-card-content>
   </ion-card>
-</ng-container>
 
-  <!-- Si no hay mediciones -->
-  <ion-text color="medium" *ngIf="!mediciones || mediciones.length === 0">
-    <p class="ion-text-center">No hay mediciones de {{tipoSeleccionado}} disponibles</p>
-  </ion-text>
-  
-  <!-- Botón de Home -->
-  <ion-button expand="block" color="primary" (click)="volverAlHome()" class="boton-home">
-    🏠 Volver al Home
-  </ion-button>
+  <!-- Si no hay apuntes -->
+  <ion-card color="light" *ngIf="!apuntes || apuntes.length === 0">
+    <ion-card-content>
+      <div class="no-data">
+        <ion-icon name="document-text-outline" size="large" color="medium"></ion-icon>
+        <p>No hay apuntes disponibles para este módulo</p>
+        <ion-button fill="outline" color="primary" (click)="cargarApuntes()">
+          <ion-icon name="refresh" slot="start"></ion-icon>
+          Actualizar
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Botones de navegación -->
+  <div class="botones-navegacion">
+    <ion-button 
+      expand="block" 
+      fill="outline" 
+      color="medium" 
+      (click)="volverAlModulo()"
+      class="boton-navegacion">
+      <ion-icon name="arrow-back" slot="start"></ion-icon>
+      Volver al Módulo
+    </ion-button>
+    
+    <ion-button 
+      expand="block" 
+      color="primary" 
+      (click)="volverAlHome()"
+      class="boton-navegacion">
+      <ion-icon name="home" slot="start"></ion-icon>
+      Ir al Home
+    </ion-button>
+  </div>
 </ion-content>
-
-
-
-  

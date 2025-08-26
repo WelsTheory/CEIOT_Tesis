@@ -4,6 +4,16 @@ import { firstValueFrom } from 'rxjs';
 import { Modulo } from '../listado-modulos/modulo';
 import { BehaviorSubject } from 'rxjs';
 
+// Interface para los apuntes
+export interface Apunte {
+  apunteId: number;
+  fecha: string;
+  up: number;
+  down: number;
+  moduloId: number;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -77,5 +87,20 @@ export class ModuloService {
       this._http.get<{up: number, down: number, fecha?: string}>(`http://localhost:8000/modulo/${moduloId}/apunte`)
     );
   }
-
+  // Nuevo método para obtener el historial de apuntes
+  getHistorialApuntes(moduloId: number): Promise<Apunte[]> {
+    return firstValueFrom(
+      this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/historial-apuntes`)
+    );
+  }
+  // Método para obtener apuntes por rango de fechas
+  getApuntesPorFecha(moduloId: number, fechaDesde: string, fechaHasta: string): Promise<Apunte[]> {
+    const params = {
+      fechaDesde,
+      fechaHasta
+    };
+    return firstValueFrom(
+      this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/apuntes`, { params })
+    );
+  }
 }

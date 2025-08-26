@@ -30,4 +30,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./mediciones/mediciones.page').then((m) => m.MedicionesPage),
   },
+  {
+    path: 'modulo/:id/apuntes',
+    loadComponent: () =>
+      import('./apuntes/apuntes.page').then((m) => m.HistorialApuntesPage),
+  },
 ];

@@ -1,151 +1,45 @@
-/* === TOOLTIP MEJORADO === */
-.tooltip-custom {
-  position: absolute;
-  z-index: 1000;
-  padding: 10px 14px;
-  border-radius: 8px;
-  color: white;
-  font-size: 12px;
-  min-width: 120px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  transform: translateX(-50%) translateY(-105%); /* Más cerca pero sin tocar el cursor */
-  pointer-events: none;
-  opacity: 0.95;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.15);
-}
-
-.tooltip-custom::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -6px;
-  border-width: 6px;
-  border-style: solid;
-  border-color: inherit transparent transparent transparent;
-}
-
-.tooltip-content {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.tooltip-fecha {
-  font-weight: 600;
-  font-size: 11px;
-  opacity: 0.9;
-}
-
-.tooltip-valor {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 2px 0;
-}
-
-.tooltip-tipo {
-  font-size: 10px;
-  opacity: 0.8;
-  text-transform: capitalize;
-  font-weight: 500;
-}
-
-/* === PUNTOS DEL GRÁFICO === */
-.punto-container {
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  position: absolute; /* Asegurar posición correcta */
-}
-
-.punto-container:hover {
-  transform: scale(1.3);
-  z-index: 50;
-}
-
-.punto {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-.punto.temperatura {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-  border: 1px solid rgba(255,255,255,0.4);
-}
-
-.punto.presion {
-  background: linear-gradient(135deg, #4ecdc4, #44a08d);
-  border: 1px solid rgba(255,255,255,0.4);
-}
-
-.punto-container:hover .punto {
-  box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-  .tooltip-custom {
-    min-width: 110px;
-    font-size: 11px;
-    transform: translateX(-50%) translateY(-110%); /* Un poco más separado en móvil */
-  }
-  
-  .tooltip-valor {
-    font-size: 15px;
-  }
-  
-  .punto-container:hover {
-    transform: scale(1.2); /* Menos escala en móvil */
-  }
-}
-/* Estilos para los filtros de fecha */
-.filtros-container {
+// Información del módulo
+.modulo-info-card {
   margin-bottom: 16px;
-}
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
-ion-card[color="light"] {
-  margin-bottom: 16px;
-}
+  ion-card-header {
+    padding-bottom: 8px;
 
-/* Responsividad para móviles */
-@media (max-width: 768px) {
-  .tooltip-custom {
-    min-width: 100px;
-    font-size: 11px;
-  }
-  
-  .etiquetas-x .etiqueta-x {
-    font-size: 10px;
-  }
-}
-
-.filtros-container {
-  margin-bottom: 16px;
-
-  ion-segment {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  ion-segment-button {
-    --indicator-color: var(--ion-color-primary);
-    --color-checked: white;
-    --background-checked: var(--ion-color-primary);
-    
-    ion-label {
+    ion-card-title {
+      font-size: 1.3rem;
       font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+
+    ion-card-subtitle {
+      color: var(--ion-color-medium);
       font-size: 0.9rem;
+      font-weight: 500;
+    }
+  }
+
+  .valores-actuales {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+
+    .valor-item {
+      ion-chip {
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
     }
   }
 }
 
-.ultima-medicion {
+// Último apunte destacado
+.ultimo-apunte {
+  margin-bottom: 16px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid var(--ion-color-success);
 
   ion-card-header {
     padding-bottom: 8px;
@@ -153,6 +47,7 @@ ion-card[color="light"] {
     ion-card-title {
       font-size: 1.2rem;
       font-weight: 600;
+      color: var(--ion-color-success);
     }
 
     ion-card-subtitle {
@@ -161,196 +56,273 @@ ion-card[color="light"] {
     }
   }
 
-  .valor-destacado {
+  .valores-destacados {
+    display: flex;
+    justify-content: space-around;
     text-align: center;
-    
-    span {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--ion-color-primary);
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .valor-up,
+    .valor-down {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ion-color-medium);
+      }
+
+      .valor {
+        font-size: 2rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    .valor-up .valor {
+      color: var(--ion-color-success);
+    }
+
+    .valor-down .valor {
+      color: var(--ion-color-warning);
     }
   }
 }
 
-.vista-toggle {
+// Filtros de fecha
+.filtros-card {
   margin-bottom: 16px;
-  
-  ion-button {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  ion-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  ion-item {
+    --background: transparent;
+    --border-color: var(--ion-color-light-shade);
+    --inner-padding-end: 0;
+    margin-bottom: 8px;
+    border-radius: 8px;
+
+    ion-label {
+      font-weight: 500;
+      color: var(--ion-color-dark);
+    }
+
+    ion-datetime {
+      --color: var(--ion-color-primary);
+    }
+  }
+}
+
+// Historial de apuntes
+.historial-card {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  ion-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    ion-chip {
+      margin-left: auto;
+    }
+  }
+}
+
+// Agrupación por fecha
+.grupo-fecha {
+  margin-bottom: 20px;
+
+  .fecha-separador {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 2px solid var(--ion-color-light-shade);
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+
+    ion-chip {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+// Items de apuntes
+.item-apunte {
+  --background: transparent;
+  --color: var(--ion-color-dark);
+  margin-bottom: 4px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    --background: var(--ion-color-light-tint);
+    transform: translateX(2px);
+  }
+
+  .numero-apunte {
+    margin-right: 8px;
+
+    ion-chip {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+  }
+
+  ion-label {
+    h2 {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: var(--ion-color-primary);
+    }
+
+    .valores-inline {
+      display: flex;
+      gap: 16px;
+
+      .valor-up-inline,
+      .valor-down-inline {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .label {
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: var(--ion-color-medium);
+        }
+
+        .valor {
+          font-weight: 600;
+          font-size: 0.9rem;
+          padding: 2px 6px;
+          border-radius: 4px;
+          transition: all 0.3s ease;
+
+          &.cambio {
+            background-color: var(--ion-color-warning-tint);
+            color: var(--ion-color-warning);
+            font-weight: 700;
+          }
+        }
+      }
+
+      .valor-up-inline .valor {
+        color: var(--ion-color-success);
+      }
+
+      .valor-down-inline .valor {
+        color: var(--ion-color-warning);
+      }
+    }
+  }
+
+  .cambios-indicador {
+    display: flex;
+    align-items: center;
+
+    ion-icon {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+// Estadísticas
+.estadisticas-card {
+  margin-bottom: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  ion-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .estadistica-item {
+    text-align: center;
+    padding: 8px;
+
+    h4 {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+
+    p {
+      margin: 4px 0;
+      font-size: 0.9rem;
+      color: var(--ion-color-dark);
+
+      strong {
+        color: var(--ion-color-primary);
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// No hay datos
+.no-data {
+  text-align: center;
+  padding: 20px;
+
+  ion-icon {
+    margin-bottom: 16px;
+    opacity: 0.6;
+  }
+
+  p {
+    color: var(--ion-color-medium);
+    font-size: 1rem;
+    margin-bottom: 16px;
+  }
+}
+
+// Botones de navegación
+.botones-navegacion {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .boton-navegacion {
     --border-radius: 12px;
     font-weight: 600;
-    
-    ion-icon {
-      margin-right: 8px;
-    }
   }
 }
 
-.grafico-container {
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  
-  ion-card-header {
-    ion-card-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--ion-color-secondary);
-    }
-  }
-  
-  .grafico-simple {
-    width: 100%;
-    height: 350px;
-    position: relative;
-    
-    .grafico-puntos {
-      position: relative;
-      height: 280px;
-      background: linear-gradient(to top, #f8f9fa 0%, #ffffff 100%);
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      overflow: hidden;
-      
-      .punto-container {
-        position: absolute;
-        transform: translateX(-50%);
-        z-index: 10;
-        
-        .punto {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          border: 3px solid white;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          
-          &:hover {
-            transform: scale(1.4);
-            z-index: 20;
-          }
-          
-          &.temperatura {
-            background-color: #ff6b6b;
-          }
-          
-          &.presion {
-            background-color: #4ecdc4;
-          }
-        }
-      }
-      
-      .lineas-svg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 5;
-      }
-      
-      // Líneas de cuadrícula
-      &::before {
-        content: '';
-        position: absolute;
-        top: 20%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: rgba(0,0,0,0.1);
-      }
-      
-      &::after {
-        content: '';
-        position: absolute;
-        top: 40%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: rgba(0,0,0,0.1);
-      }
-    }
-    
-    .etiquetas-x {
-      display: flex;
-      justify-content: space-between;
-      height: 60px;
-      align-items: flex-start;
-      padding: 5px 0;
-      
-      .etiqueta-x {
-        font-size: 10px;
-        color: #666;
-        transform: rotate(-45deg);
-        transform-origin: center;
-        white-space: nowrap;
-        text-align: center;
-        flex: 1;
-        margin-top: 10px;
-      }
-    }
-  }
+// Animaciones
+.modulo-info-card,
+.ultimo-apunte,
+.filtros-card,
+.historial-card,
+.estadisticas-card {
+  animation: slideInUp 0.4s ease-out;
 }
 
-.bloque-historial {
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
-  ion-card-header {
-    ion-card-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-  }
-
-  .item-historial {
-    --background: transparent;
-    --color: var(--ion-color-dark);
-
-    ion-label{
-      h2 {
-        font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 4px;
-        color: var(--ion-color-primary);
-      }
-
-      p {
-        margin: 2px 0;
-        font-size: 0.9rem;
-        color: var(--ion-color-dark);
-        &:last-child {
-          font-weight: 600;
-          color: var(--ion-color-primary);
-        }
-      }
-    }
-    &:hover {
-      --background: var(--ion-color-light-tint);
-    }
-  }
-}
-
-.boton-home {
-  margin-top: 20px;
-  font-weight: 600px;
-  --border-radius: 12px;
-}
-
-.filtros-container,
-.ultima-medicion,
-.vista-toggle,
-.grafico-container,
-.bloque-historial {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -358,19 +330,96 @@ ion-card[color="light"] {
   }
 }
 
-// Responsive design para el gráfico
+.item-apunte {
+  animation: fadeInLeft 0.3s ease-out;
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Responsive design
 @media (max-width: 768px) {
-  .grafico-container {
-    .chart-wrapper {
-      height: 300px;
+  .valores-actuales {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .valores-destacados {
+    flex-direction: column;
+    gap: 16px;
+
+    .valor-up,
+    .valor-down {
+      .valor {
+        font-size: 1.8rem;
+      }
+    }
+  }
+
+  .fecha-separador {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .valores-inline {
+    flex-direction: column;
+    gap: 8px !important;
+  }
+
+  .botones-navegacion {
+    .boton-navegacion {
+      margin: 0;
     }
   }
 }
 
 @media (max-width: 480px) {
-  .grafico-container {
-    .chart-wrapper {
-      height: 250px;
+  .modulo-info-card {
+    margin: 8px 0;
+
+    ion-card-title {
+      font-size: 1.1rem;
+    }
+  }
+
+  .ultimo-apunte {
+    .valores-destacados {
+      .valor-up,
+      .valor-down {
+        .valor {
+          font-size: 1.5rem;
+        }
+      }
+    }
+  }
+
+  .item-apunte {
+    ion-label {
+      h2 {
+        font-size: 0.9rem;
+      }
+
+      .valores-inline {
+        .valor-up-inline,
+        .valor-down-inline {
+          .label {
+            font-size: 0.75rem;
+          }
+
+          .valor {
+            font-size: 0.85rem;
+          }
+        }
+      }
     }
   }
 }
