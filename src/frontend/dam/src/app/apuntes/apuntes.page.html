@@ -28,6 +28,64 @@
     </ion-card-content>
   </ion-card>
 
+  <!-- Filtros de fecha -->
+  <ion-card color="light" class="filtros-card">
+    <ion-card-header>
+      <ion-card-title>🗓️ Filtrar por fecha</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-row>
+        <ion-col size="6">
+          <ion-item>
+            <ion-label position="stacked">Desde:</ion-label>
+            <ion-datetime 
+              [(ngModel)]="fechaDesde" 
+              presentation="date"
+              (ionChange)="filtrarPorFechas()"
+              locale="es-ES">
+            </ion-datetime>
+          </ion-item>
+        </ion-col>
+        <ion-col size="6">
+          <ion-item>
+            <ion-label position="stacked">Hasta:</ion-label>
+            <ion-datetime 
+              [(ngModel)]="fechaHasta" 
+              presentation="date"
+              (ionChange)="filtrarPorFechas()"
+              locale="es-ES">
+            </ion-datetime>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size="12">
+          <ion-button 
+            expand="block" 
+            fill="outline" 
+            color="primary" 
+            (click)="actualizarManualmente()">
+            <ion-icon name="refresh" slot="start"></ion-icon>
+            Actualizar datos
+          </ion-button>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col size="12">
+          <ion-button 
+            expand="block" 
+            fill="clear" 
+            color="medium" 
+            size="small"
+            (click)="limpiarFiltros()">
+            <ion-icon name="close" slot="start"></ion-icon>
+            Limpiar filtros
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-card-content>
+  </ion-card>
+
   <!-- Lista de apuntes ordenados por fecha -->
   <ion-card color="light" class="historial-card" *ngIf="apuntesFiltrados && apuntesFiltrados.length > 0">
     <ion-card-header>

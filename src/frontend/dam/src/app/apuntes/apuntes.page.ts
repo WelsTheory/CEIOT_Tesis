@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -80,7 +80,7 @@ interface Estadisticas {
     FormsModule
   ],
 })
-export class HistorialApuntesPage implements OnInit {
+export class HistorialApuntesPage implements OnInit, OnDestroy {
   moduloId!: number;
   modulo!: Modulo;
   apuntes: Apunte[] = [];
@@ -100,6 +100,10 @@ export class HistorialApuntesPage implements OnInit {
     downMin: 0,
     downPromedio: '0.0'
   };
+
+  // Control de actualización automática
+  private intervaloActualizacion: any;
+  ultimaActualizacion: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -121,9 +125,57 @@ export class HistorialApuntesPage implements OnInit {
     if (this.moduloId) {
       await this.cargarModulo();
       await this.cargarApuntes();
+      this.actualizarTiempoActualizacion();
+      
+      // Configurar actualización automática cada 5 minutos para sincronizar con los datos
+      this.iniciarActualizacionAutomatica();
     } else {
       console.error('No se pudo obtener el ID del módulo');
       this.router.navigate(['/home']);
+    }
+  }
+
+  ngOnDestroy() {
+    // Limpiar el intervalo cuando se destruye el componente
+    if (this.intervaloActualizacion) {
+      clearInterval(this.intervaloActualizacion);
+      console.log('🛑 Intervalo de actualización automática detenido');
+    }
+  }
+
+  iniciarActualizacionAutomatica() {
+    // Actualizar cada 5 minutos y 30 segundos (para captar los nuevos datos de Beam)
+    const intervalo = 5 * 60 * 1000 + 30 * 1000; // 5 min 30 seg en milisegundos
+    
+    this.intervaloActualizacion = setInterval(async () => {
+      console.log('🔄 Actualización automática de apuntes...');
+      try {
+        await this.cargarApuntes();
+        this.actualizarTiempoActualizacion();
+        console.log('✅ Apuntes actualizados automáticamente');
+      } catch (error) {
+        console.error('❌ Error en actualización automática:', error);
+      }
+    }, intervalo);
+    
+    console.log('⏰ Actualización automática configurada cada 5 min 30 seg');
+  }
+
+  actualizarTiempoActualizacion() {
+    this.ultimaActualizacion = new Date().toLocaleString('es-ES');
+  }
+
+  // Método manual para actualizar (botón de refresh)
+  async actualizarManualmente() {
+    console.log('🔄 Actualización manual solicitada...');
+    try {
+      await this.cargarApuntes();
+      this.actualizarTiempoActualizacion();
+      console.log('✅ Actualización manual completada');
+      // Puedes mostrar un toast o mensaje de éxito aquí
+    } catch (error) {
+      console.error('❌ Error en actualización manual:', error);
+      // Puedes mostrar un toast o mensaje de error aquí
     }
   }
 
@@ -138,20 +190,26 @@ export class HistorialApuntesPage implements OnInit {
 
   async cargarApuntes() {
     try {
-      // Aquí deberías llamar a tu servicio real para obtener los apuntes
-      // Por ahora, genero datos de ejemplo
+      console.log('🔄 Cargando apuntes reales de la tabla Beam para módulo:', this.moduloId);
+      
+      // Cargar datos reales de la tabla Beam a través del servicio
       this.apuntes = await this.moduloService.getHistorialApuntes(this.moduloId);
       
-      // Si no hay datos reales, generar datos de ejemplo
-      if (!this.apuntes || this.apuntes.length === 0) {
+      if (this.apuntes && this.apuntes.length > 0) {
+        console.log('✅ Apuntes reales cargados exitosamente:', this.apuntes.length, 'registros');
+        console.log('📊 Primer apunte:', this.apuntes[0]);
+      } else {
+        console.log('⚠️  No se encontraron apuntes reales, usando datos de ejemplo');
         this.apuntes = this.generarDatosEjemplo();
       }
       
       this.filtrarPorFechas();
-      console.log('Apuntes cargados:', this.apuntes);
+      
     } catch (error) {
-      console.error('Error al cargar los apuntes:', error);
-      // Generar datos de ejemplo en caso de error
+      console.error('❌ Error al cargar apuntes de la tabla Beam:', error);
+      console.log('🔧 Usando datos de ejemplo como respaldo');
+      
+      // En caso de error con la BD, usar datos de ejemplo como respaldo
       this.apuntes = this.generarDatosEjemplo();
       this.filtrarPorFechas();
     }
