@@ -109,16 +109,17 @@ export class HomePage implements OnInit {
               const ultima = await this.moduloService.getUltimaMedicion(d.moduloId);
               const nuevoValorTemp = ultima?.valor_temp ?? '—';
               const nuevoValorPress = ultima?.valor_press ?? '—';
-              // OBTENER ULTIMO APUNTE
-              const valores_apunte = await this.moduloService.getUltimoApunte(d.moduloId);
-              const nuevoValorUP = valores_apunte?.valor_up ?? 0.0;
-              const nuevoValorDOWN = valores_apunte?.valor_down ?? 0.0;
+              
               if (d.medicionTempActual !== nuevoValorTemp) {
                 d.medicionTempActual = nuevoValorTemp; // actualiza lo que ya usas en el HTML
               }
               if (d.medicionPressActual !== nuevoValorPress) {
                 d.medicionPressActual = nuevoValorPress; // actualiza lo que ya usas en el HTML
               }
+              // OBTENER ULTIMO APUNTE
+              const valores_apunte = await this.moduloService.getApunte(d.moduloId);
+              const nuevoValorUP = valores_apunte?.valor_up ?? 0.0;
+              const nuevoValorDOWN = valores_apunte?.valor_down ?? 0.0;
               if(d.valor_up !== nuevoValorUP){
                 d.valor_up = nuevoValorUP;
               }

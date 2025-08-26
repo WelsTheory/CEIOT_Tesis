@@ -50,8 +50,9 @@ export class ModuloPage implements OnInit{
   }
   async cargarApunte() {
     try {
-      this.ultimoApunte = await this.moduloService.getApunte(this.moduloId);
-      console.log('Apunte cargado:', this.ultimoApunte);
+      const apunte = await this.moduloService.getApunte(this.moduloId);
+      console.log('Apunte cargado:', apunte);
+      this.ultimoApunte = apunte;
     } catch (error) {
       console.error('Error al cargar el apunte:', error);
     }
