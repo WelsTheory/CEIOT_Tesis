@@ -7,27 +7,6 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Información del módulo -->
-  <ion-card color="light" class="modulo-info-card" *ngIf="modulo">
-    <ion-card-header>
-      <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-      <ion-card-subtitle>{{ modulo.ubicacion }} - Versión {{ modulo.version }}</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      <div class="valores-actuales">
-        <div class="valor-item up">
-          <ion-chip color="success">
-            <ion-label>UP: {{ modulo.up }}</ion-label>
-          </ion-chip>
-        </div>
-        <div class="valor-item down">
-          <ion-chip color="warning">
-            <ion-label>DOWN: {{ modulo.down }}</ion-label>
-          </ion-chip>
-        </div>
-      </div>
-    </ion-card-content>
-  </ion-card>
 
   <!-- Último apunte destacado -->
   <ion-card color="light" class="ultimo-apunte" *ngIf="apuntes && apuntes.length > 0">
@@ -46,51 +25,6 @@
           <span class="valor">{{ apuntes[0].down }}</span>
         </div>
       </div>
-    </ion-card-content>
-  </ion-card>
-
-  <!-- Filtros de fecha -->
-  <ion-card color="light" class="filtros-card">
-    <ion-card-header>
-      <ion-card-title>🗓️ Filtrar por fecha</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-row>
-        <ion-col size="6">
-          <ion-item>
-            <ion-label position="stacked">Desde:</ion-label>
-            <ion-datetime 
-              [(ngModel)]="fechaDesde" 
-              presentation="date"
-              (ionChange)="filtrarPorFechas()"
-              locale="es-ES">
-            </ion-datetime>
-          </ion-item>
-        </ion-col>
-        <ion-col size="6">
-          <ion-item>
-            <ion-label position="stacked">Hasta:</ion-label>
-            <ion-datetime 
-              [(ngModel)]="fechaHasta" 
-              presentation="date"
-              (ionChange)="filtrarPorFechas()"
-              locale="es-ES">
-            </ion-datetime>
-          </ion-item>
-        </ion-col>
-      </ion-row>
-      <ion-row>
-        <ion-col size="12">
-          <ion-button 
-            expand="block" 
-            fill="outline" 
-            color="medium" 
-            (click)="limpiarFiltros()">
-            <ion-icon name="refresh" slot="start"></ion-icon>
-            Limpiar filtros
-          </ion-button>
-        </ion-col>
-      </ion-row>
     </ion-card-content>
   </ion-card>
 
@@ -165,33 +99,6 @@
           </ion-item>
         </ion-list>
       </div>
-    </ion-card-content>
-  </ion-card>
-
-  <!-- Estadísticas resumen -->
-  <ion-card color="light" class="estadisticas-card" *ngIf="apuntesFiltrados && apuntesFiltrados.length > 0">
-    <ion-card-header>
-      <ion-card-title>📊 Estadísticas del período</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-row>
-        <ion-col size="6">
-          <div class="estadistica-item">
-            <h4>UP</h4>
-            <p>Máximo: <strong>{{ estadisticas.upMax }}</strong></p>
-            <p>Mínimo: <strong>{{ estadisticas.upMin }}</strong></p>
-            <p>Promedio: <strong>{{ estadisticas.upPromedio }}</strong></p>
-          </div>
-        </ion-col>
-        <ion-col size="6">
-          <div class="estadistica-item">
-            <h4>DOWN</h4>
-            <p>Máximo: <strong>{{ estadisticas.downMax }}</strong></p>
-            <p>Mínimo: <strong>{{ estadisticas.downMin }}</strong></p>
-            <p>Promedio: <strong>{{ estadisticas.downPromedio }}</strong></p>
-          </div>
-        </ion-col>
-      </ion-row>
     </ion-card-content>
   </ion-card>
 
