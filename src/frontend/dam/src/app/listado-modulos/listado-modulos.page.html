@@ -23,7 +23,7 @@
               <h4>Estado:</h4>
               <ng-container *ngIf="estadoReset !== null; else cargandoReset">
                 <ion-chip [color]="estadoReset ? 'success' : 'danger'">
-                  {{ estadoReset ? 'Abierto' : 'Cerrado' }}
+                  {{ estadoReset ? 'Encendido' : 'Apagado' }}
                 </ion-chip>
               </ng-container>
               <ng-template #cargandoReset>
@@ -136,7 +136,7 @@
     </ion-button>
     
     <ion-button expand="block" 
-               color="tertiary" 
+               color="primary" 
                (click)="verMediciones()"
                class="boton-principal">
       📊 Historial Mediciones

@@ -57,7 +57,7 @@
   margin-bottom: 16px;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-left: 4px solid var(--ion-color-success);
+  border-left: 4px solid var(--ion-color-primary);
 
   ion-card-header {
     padding-bottom: 8px;
@@ -65,7 +65,7 @@
     ion-card-title {
       font-size: 1.2rem;
       font-weight: 600;
-      color: var(--ion-color-success);
+      color: var(--ion-color-text);
     }
 
     ion-card-subtitle {
@@ -239,7 +239,7 @@
       }
 
       .valor-up-inline .valor {
-        color: var(--ion-color-success);
+        color: var(--ion-color-primary);
       }
 
       .valor-down-inline .valor {

@@ -26,8 +26,8 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }} hPa</span>
+                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
 
@@ -50,11 +50,10 @@
                     </div>
                   </div>
                 </div>
-                <br>
                 <div class="botones">
                   <ion-button fill="outline" size="small"
                     (click)="verMediciones(modulo.moduloId)">
-                    Historial
+                    DATA
                   </ion-button>
 
                   <ion-button color="primary" size="small"
@@ -88,8 +87,8 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
+                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
 
@@ -112,11 +111,10 @@
                     </div>
                   </div>
                 </div>
-                <br>
                 <div class="botones">
                   <ion-button fill="outline" size="small"
                     (click)="verMediciones(modulo.moduloId)">
-                    Historial
+                    DATA
                   </ion-button>
 
                   <ion-button color="primary" size="small"
@@ -150,8 +148,8 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
+                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
 
@@ -174,11 +172,10 @@
                     </div>
                   </div>
                 </div>
-                <br>
                 <div class="botones">
                   <ion-button fill="outline" size="small"
                     (click)="verMediciones(modulo.moduloId)">
-                    Historial
+                    DATA
                   </ion-button>
 
                   <ion-button color="primary" size="small"
@@ -212,8 +209,8 @@
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }} °C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }} Bar</span>
+                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
 
@@ -236,11 +233,10 @@
                     </div>
                   </div>
                 </div>
-                <br>
                 <div class="botones">
                   <ion-button fill="outline" size="small"
                     (click)="verMediciones(modulo.moduloId)">
-                    Historial
+                    DATA
                   </ion-button>
 
                   <ion-button color="primary" size="small"
@@ -255,14 +251,12 @@
       </ion-grid>
     </div>
   </div>
-  <ion-row class="acciones-globales">
-    <ion-col size="12" class="ion-text-right">
-      <ion-button fill="solid" color="success" size="small" (click)="encenderTodos()">
-        Encender Todos
-      </ion-button>
-      <ion-button fill="solid" color="danger" size="small" (click)="apagarTodos()">
-        Apagar Todos
-      </ion-button>
-    </ion-col>
-  </ion-row>    
+  <div class="acciones-globales-bottom">
+    <ion-button fill="solid" color="success" size="small" (click)="encenderTodos()">
+      Encender Módulos
+    </ion-button>
+    <ion-button fill="solid" color="danger" size="small" (click)="apagarTodos()">
+      Apagar Módulos
+    </ion-button>
+  </div>
 </ion-content>

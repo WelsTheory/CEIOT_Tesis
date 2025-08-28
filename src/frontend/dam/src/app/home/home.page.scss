@@ -30,17 +30,43 @@
   gap: 8px;
 }
 
-.acciones-globales {
-  margin-top: 20px;
-  padding: 0 16px;
-
+// Eliminar o comentar la clase .acciones-globales existente y usar esta:
+.acciones-globales-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  
+  // Estilo del contenedor
+  padding: 4px 4px;
+  margin-top: 5px; // Espacio desde el último contenido
+  // Estilos de los botones
   ion-button {
-    margin-left: 10px;
-    border-radius: 12px;
-    font-weight: 500;
+    min-width: 140px;
+    --border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+    
+    &:first-child {
+      margin-right: 0;
+    }
   }
 }
 
+
+// Ajustar el contenido para que no se tape con los botones fijos
+ion-content {
+  --padding-bottom: 50px; // Espacio en la parte inferior
+}
 
 .cuadrantes-container {
   padding: 16px 10px;
@@ -128,96 +154,105 @@
     .card-body {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
+      align-items: center;
+      gap: 8px;
+      min-height: 60px;
       
       // Información del modulo a la izquierda
       .modulo-info-left {
         flex: 1;
         display: flex;
         flex-direction: column;
+        justify-content: center;
         gap: 6px;
         
         .info-item {
           display: flex;
           flex-direction: column;
-          align-content: center;
-          gap: 2px;
-          
-          .label {
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--ion-color-medium);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
+          align-content: flex-start;
+          gap: 4px;
           
           .value {
             font-size: 0.8rem;
             font-weight: 500;
             color: var(--ion-color-text);
             word-break: break-word;
+            line-height: 1.2;
           }
         }
       }
       
       // Mediciones a la derecha - Botones de apunte mejorados
-.mediciones-right {
-  display: flex;
-  flex-direction: column;
-  gap: 0px; // Sin gap para que estén pegados
-  min-width: 80px;
-  
-  .modulo-item {
-    padding: 8px 10px;
-    border: 1px solid var(--ion-color-light);
-    background: var(--ion-color-primary);
-    transition: all 0.3s ease;
-    
-    // Botón UP - Redondeo solo en la parte superior
-    &.up {
-      border-top-left-radius: 5px;
-      border-top-right-radius: 5px;
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3); // Borde sutil para separar
-    }
-    
-    // Botón DOWN - Redondeo solo en la parte inferior
-    &.down {
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-      border-bottom-left-radius: 5px;
-      border-bottom-right-radius: 5px;
-      border-top: 1px solid rgba(0, 0, 0, 0.2); // Borde sutil para separar
-    }
+      .mediciones-right {
+        display: flex;
+        flex-direction: column;
+        gap: 0px; // Sin gap para que estén pegados
+        min-width: 80px;
+        align-self: center;
+        
+        .modulo-item {
+          padding: 8px 10px;
+          border: 1px solid var(--ion-color-light);
+          background: var(--ion-color-primary);
+          transition: all 0.3s ease;
+          
+          // Botón UP - Redondeo solo en la parte superior
+          &.up {
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            //border-bottom: 1px solid rgba(255, 255, 255, 0.3); // Borde sutil para separar
+          }
+          
+          // Botón DOWN - Redondeo solo en la parte inferior
+          &.down {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            //border-top: 1px solid rgba(0, 0, 0, 0.2); // Borde sutil para separar
+          }
 
-    
-    
-    .medicion-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      
-      .posicion-label {
-        font-size: 0.7rem;
-        font-weight: bold;
-        color: var(--ion-color-medium);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      
-      .temperatura {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: white;
-        text-align: center;
-        line-height: 1.2;
+          
+          
+          .medicion-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            
+            .posicion-label {
+              font-size: 0.7rem;
+              font-weight: bold;
+              color: var(--ion-color-medium);
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .temperatura {
+              font-size: 0.85rem;
+              font-weight: 600;
+              color: white;
+              text-align: center;
+            }
+          }
+        }
       }
     }
-  }
-}
+    .botones {
+      display: flex;
+      justify-content: flex-start; // Cambiar de space-between a flex-start
+      gap: 4px; // Espacio fijo entre botones
+      padding: 0; // Eliminar padding extra
+      margin-top: 12px; // Espacio desde el contenido superior
+      
+      ion-button {
+        flex: 0 0 auto; // No expandir los botones
+        min-width: 80px; // Ancho mínimo consistente
+        --padding-start: 4px;
+        --padding-end:4px;
+      }
     }
   }
 }
@@ -226,9 +261,14 @@
 @media (max-width: 768px) {
   .modulo-card {
     ion-card-content {
+      padding: 16px;
       .card-body {
-        flex-direction: column;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         gap: 12px;
+        min-height: 60px;
+        margin-bottom: 16px;
         
         .mediciones-right {
           flex-direction: row;
@@ -256,7 +296,7 @@
   .modulo-card {
     ion-card-header {
       ion-card-title {
-        font-size: 0.9rem;
+        font-size: 0.7rem;
       }
     }
     
@@ -288,6 +328,23 @@
           }
         }
       }
+    }
+  }
+}
+
+// Responsive: En pantallas pequeñas
+@media (max-width: 480px) {
+  .acciones-globales-fijas {
+    bottom: 15px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+    width: calc(100% - 20px);
+    
+    ion-button {
+      flex: 1;
+      min-width: auto;
+      font-size: 0.85rem;
     }
   }
 }
