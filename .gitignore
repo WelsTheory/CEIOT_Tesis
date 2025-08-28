@@ -91,3 +91,10 @@ db/data/
 src/frontend/js
 
 .angular/
+
+.key
+.crt
+.srl
+.csr
+
+mqtt/data

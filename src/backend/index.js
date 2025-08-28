@@ -6,7 +6,7 @@ var express = require('express');
 var cors = require('cors');
 const jwt = require('jsonwebtoken');
 var pool = require('./mysql-connector');
-const mqtt = require('mqtt');
+const mqtt = require('mqtt'); // ← Nueva importación MQTT
 
 // Importación de rutas personalizadas para modulos
 const routerModulos = require('./modulos/index');
@@ -20,7 +20,8 @@ const MQTT_TOPICS = {
     SENSOR_DATA: 'sensores/data',
     CONTROL_COMMANDS: 'control/commands',
     DEVICE_STATUS: 'dispositivos/estado',
-    MEASUREMENTS: 'mediciones/nuevas'
+    MEASUREMENTS: 'mediciones/nuevas',
+    APUNTE_DATA: 'apunte/data'  // ← Nuevo topic para apuntes
 };
 
 // Crear cliente MQTT con reintentos
@@ -54,6 +55,13 @@ function connectMQTT() {
                 console.log('📡 Suscrito a:', MQTT_TOPICS.DEVICE_STATUS);
             }
         });
+        
+        // Suscribirse al nuevo topic de apuntes
+        mqttClient.subscribe(MQTT_TOPICS.APUNTE_DATA, (err) => {
+            if (!err) {
+                console.log('📡 Suscrito a:', MQTT_TOPICS.APUNTE_DATA);
+            }
+        });
     });
 
     mqttClient.on('message', function (topic, message) {
@@ -71,6 +79,9 @@ function connectMQTT() {
                     break;
                 case MQTT_TOPICS.DEVICE_STATUS:
                     handleDeviceStatus(data);
+                    break;
+                case MQTT_TOPICS.APUNTE_DATA:
+                    handleApunteData(data);  // ← Nuevo handler
                     break;
             }
         } catch (error) {
@@ -139,6 +150,58 @@ function handleDeviceStatus(data) {
     // Aquí puedes manejar cambios de estado de dispositivos
 }
 
+function handleApunteData(data) {
+    console.log('🎯 Procesando datos de apunte:', data);
+    
+    // Validar que tenga los datos necesarios
+    if (data.moduloId && (data.up !== undefined || data.down !== undefined)) {
+        const moduloId = parseInt(data.moduloId);
+        
+        // Construir query dinámicamente según qué valores se envíen
+        let updateFields = [];
+        let params = [];
+        
+        if (data.up !== undefined) {
+            updateFields.push('up = ?');
+            params.push(parseFloat(data.up));
+        }
+        
+        if (data.down !== undefined) {
+            updateFields.push('down = ?');
+            params.push(parseFloat(data.down));
+        }
+        
+        // Agregar moduloId al final para la cláusula WHERE
+        params.push(moduloId);
+        
+        const query = `UPDATE Modulos SET ${updateFields.join(', ')} WHERE moduloId = ?`;
+        
+        console.log('📝 Query a ejecutar:', query, params);
+        
+        pool.query(query, params, (error, result) => {
+            if (error) {
+                console.error('❌ Error actualizando apunte MQTT:', error);
+            } else if (result.affectedRows === 0) {
+                console.warn('⚠️ No se encontró módulo con ID:', moduloId);
+            } else {
+                console.log('✅ Apunte MQTT actualizado para módulo', moduloId);
+                
+                // Publicar confirmación si MQTT está conectado
+                if (mqttConnected && mqttClient) {
+                    mqttClient.publish('apunte/confirmacion', JSON.stringify({
+                        status: 'updated',
+                        moduloId: moduloId,
+                        up: data.up,
+                        down: data.down,
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+            }
+        });
+    } else {
+        console.warn('⚠️ Mensaje de apunte incompleto:', data);
+    }
+}
 
 // Configuración de CORS (qué orígenes y métodos están permitidos)
 const corsOptions = {
@@ -183,79 +246,53 @@ var authenticator = function (req, res, next) {
 //=======[ Generador de Mediciones Aleatorias ]================================
 // Función que genera mediciones aleatorias y las guarda en la BD
 const generarMediciones = () => {
-    console.log('Intentando obtener modulos para generar mediciones...');
+    console.log('🎲 Generando mediciones aleatorias...');
     // Query para obtener todos los modulos
     const queryModulos = 'SELECT moduloId FROM Modulos';
-    // Query para insertar una medición
-    const queryInsertMedicion = `
-        INSERT INTO Mediciones (moduloId, fecha, valor_temp, valor_press)
-        VALUES (?, NOW(), ?, ?)`;
-    // Consulta a la base de datos
-    pool.query(queryModulos, (err, modulos) => {
-        if (err) {
-            console.error('Error al obtener modulos:', err);
+    
+    pool.query(queryModulos, (error, modulos) => {
+        if (error) {
+            console.error('Error obteniendo módulos:', error);
             return;
         }
-        // Para cada modulo, genera una medición aleatoria
-        modulos.forEach(({ moduloId }) => {
-            const valor1 = (Math.random() * 100).toFixed(2);
-            const valor2 = (Math.random() * 99).toFixed(2);
-            pool.query(queryInsertMedicion, [moduloId, valor1,valor2], (err) => {
-                if (err) {
-                    console.error(`Error al registrar medición para modulo ${moduloId}:`, err);
-                } else {
-                    console.log(`Medición registrada para modulo ${moduloId}: ${valor1} y ${valor2}`);
-                }
-            });
-        });
-    });
-};
 
-const generarApuntes = () => {
-    console.log('Intentando obtener apuntes de módulos...');
-    
-    // Valores permitidos según las restricciones de la BD
-    const valoresPermitidos = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5];
-    
-    // Query para obtener todos los modulos existentes
-    const queryModulos = 'SELECT moduloId FROM Modulos';
-    
-    // Query para insertar una medición
-    const queryInsertApuntes = `
-        INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down)
-        VALUES (?, NOW(), ?, ?)`;
-    
-    // Consulta a la base de datos
-    pool.query(queryModulos, (err, modulos) => {
-        if (err) {
-            console.error('Error al obtener los módulos:', err);
-            return;
-        }
-        
-        // Para cada modulo, genera una medición aleatoria
-        modulos.forEach(({ moduloId }) => {
-            // Generar valores aleatorios de los valores permitidos
-            const valor_up = valoresPermitidos[Math.floor(Math.random() * valoresPermitidos.length)];
-            const valor_down = valoresPermitidos[Math.floor(Math.random() * valoresPermitidos.length)];
+        modulos.forEach(modulo => {
+            const temperatura = (Math.random() * 30 + 10).toFixed(1); // 10-40°C
+            const presion = (Math.random() * 50 + 990).toFixed(1);    // 990-1040 hPa
             
-            pool.query(queryInsertApuntes, [moduloId, valor_up, valor_down], (err) => {
-                if (err) {
-                    console.error(`Error al registrar el apunte para modulo ${moduloId}:`, err);
-                } else {
-                    console.log(`Apunte registrado para modulo ${moduloId}: ${valor_up} y ${valor_down}`);
+            // Insertar en BD
+            const queryInsertMedicion = `
+                INSERT INTO Mediciones (moduloId, fecha, valor_temp, valor_press)
+                VALUES (?, NOW(), ?, ?)`;
+                
+            pool.query(queryInsertMedicion, [modulo.moduloId, temperatura, presion], (err) => {
+                if (!err) {
+                    console.log(`✅ Medición generada para módulo ${modulo.moduloId}`);
+                    
+                    // También publicar via MQTT si está conectado
+                    if (mqttConnected && mqttClient) {
+                        const mqttMessage = {
+                            moduloId: modulo.moduloId,
+                            temperatura: parseFloat(temperatura),
+                            presion: parseFloat(presion),
+                            timestamp: new Date().toISOString(),
+                            source: 'auto_generated'
+                        };
+                        
+                        mqttClient.publish(MQTT_TOPICS.SENSOR_DATA, JSON.stringify(mqttMessage));
+                    }
                 }
             });
         });
     });
 };
 
-// Inicia la generación periódica de mediciones
+// Inicializar generador de mediciones después de un tiempo
 setTimeout(() => {
-    console.log('Iniciando generación periódica de mediciones...');
     setInterval(() => {
-        console.log('Generando nuevas mediciones...');
+        console.log('🕒 Generando nuevas mediciones...');
         generarMediciones();
-        generarApuntes();
+        // generarApuntes(); // Si tienes esta función definida en algún lado
     }, 300000); // cada 5 minutos
 }, 10000); // retraso inicial de 10 segundos
 
@@ -319,7 +356,53 @@ app.post('/modulo/:id/control', authenticator, (req, res) => {
     });
 });
 
-//=======[ Rutas de la API ]====================================================
+// ====== NUEVA RUTA PARA APUNTES ======
+// Actualizar apuntes (up/down) de un módulo específico
+app.post('/modulo/:id/apunte', authenticator, (req, res) => {
+    if (!mqttConnected || !mqttClient) {
+        return res.status(503).json({ error: 'MQTT no está conectado' });
+    }
+    
+    const moduloId = req.params.id;
+    const { up, down } = req.body;
+    
+    // Validar que al menos uno de los valores se envíe
+    if (up === undefined && down === undefined) {
+        return res.status(400).json({ error: 'Se requiere al menos up o down' });
+    }
+    
+    // Validar rangos (según tu constraint de BD: 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5)
+    const validValues = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5];
+    
+    if (up !== undefined && !validValues.includes(parseFloat(up))) {
+        return res.status(400).json({ error: 'Valor up inválido. Debe ser: 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5' });
+    }
+    
+    if (down !== undefined && !validValues.includes(parseFloat(down))) {
+        return res.status(400).json({ error: 'Valor down inválido. Debe ser: 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5' });
+    }
+    
+    const apunteMessage = {
+        moduloId: parseInt(moduloId),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Solo agregar los campos que se envíen
+    if (up !== undefined) apunteMessage.up = parseFloat(up);
+    if (down !== undefined) apunteMessage.down = parseFloat(down);
+    
+    mqttClient.publish(MQTT_TOPICS.APUNTE_DATA, JSON.stringify(apunteMessage), (error) => {
+        if (error) {
+            console.error('Error enviando datos de apunte:', error);
+            res.status(500).json({ error: 'Error enviando datos de apunte' });
+        } else {
+            console.log('📤 Datos de apunte enviados:', apunteMessage);
+            res.status(200).json({ success: true, apunte: apunteMessage });
+        }
+    });
+});
+
+//=======[ Rutas de la API originales ]=====================================
 app.post('/login', (req, res) => {
     if (req.body) {
         var userData = req.body;
@@ -340,7 +423,13 @@ app.post('/login', (req, res) => {
 
 // Ruta raíz (respuesta simple)
 app.get('/', function (req, res) {
-    res.status(200).send({ mensaje: 'Hola DAM con MQTT' });
+    res.status(200).send({ 
+        mensaje: 'Hola DAM con MQTT',
+        mqtt: {
+            connected: mqttConnected,
+            broker: MQTT_BROKER_URL
+        }
+    });
 });
 
 // Ruta protegida de prueba (requiere autenticación)
@@ -368,12 +457,12 @@ app.get('/devices', authenticator, function (req, res) {
 });
 
 // Rutas adicionales para /modulo (importadas de otro módulo)
-//app.use('/modulo', authenticator, routermodulos);
 app.use('/modulo', authenticator, routerModulos);
 
 //=======[ Server Listener ]===================================================
 // Inicia el servidor en el puerto configurado
 app.listen(PORT, function (req, res) {
+    console.log(`🚀 NodeJS API running correctly on port ${PORT}`);
     console.log(`📡 MQTT integration initializing...`);
     
     // Inicializar MQTT después de que el servidor esté listo
@@ -391,6 +480,4 @@ process.on('SIGINT', () => {
     process.exit();
 });
 
-
 //=======[ End of file ]=======================================================
-
