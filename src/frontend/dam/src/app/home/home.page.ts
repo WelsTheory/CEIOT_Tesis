@@ -43,15 +43,22 @@ export class HomePage implements OnInit {
   private refreshMedicionesInterval: any;
   private mqttSubscription!: Subscription;
 
+  // Variables de debug
+  ultimaActualizacionMqtt: Date | null = null;
+  mqttConnected: boolean = false;
+
   constructor(
     private moduloService: ModuloService, // Servicio para cargar modulos
     private mqttService: MqttService,
     private router: Router 
-  ) {}
+  ) {
+    addIcons({ leaf, restaurant, flower, home, bed, hardwareChip });
+  }
 
   // Método que se ejecuta al inicializar el componente
   async ngOnInit() {
     try {
+      console.log('🏠 Inicializando HomePage...');
       // Cargar datos iniciales
       await this.cargarModulosIniciales();
       
@@ -122,9 +129,12 @@ export class HomePage implements OnInit {
   }
 
   private configurarSuscripciones() {
-    // Suscripción existente para cambios de estado
+    console.log('📡 Configurando suscripciones...');
+    
+    // Suscripción a cambios de estado de válvulas
     this.sub = this.moduloService.resetState$.subscribe(change => {
       if (change) {
+        console.log('🔄 Cambio de estado de válvula recibido:', change);
         this.modulos = this.modulos.map(d =>
           d.moduloId === change.id
             ? { ...d, estadoReset: change.estado }
@@ -133,28 +143,53 @@ export class HomePage implements OnInit {
       }
     });
 
-    // ← NUEVA SUSCRIPCIÓN MQTT PARA ACTUALIZACIONES EN TIEMPO REAL
+    // Suscripción a estado de conexión MQTT
+    this.mqttService.connectionStatus$.subscribe(connected => {
+      this.mqttConnected = connected;
+      console.log('📡 Estado MQTT:', connected ? 'Conectado' : 'Desconectado');
+    });
+
+    // ⭐ SUSCRIPCIÓN PRINCIPAL PARA ACTUALIZACIONES DE APUNTES
     this.mqttSubscription = this.mqttService.apunteUpdates$.subscribe(apunteUpdate => {
       if (apunteUpdate && apunteUpdate.moduloId) {
         console.log('🎯 Actualización de apunte recibida via MQTT:', apunteUpdate);
+        this.ultimaActualizacionMqtt = new Date();
         
         // Actualizar el módulo específico en tiempo real
-        this.modulos = this.modulos.map(modulo => {
-          if (modulo.moduloId === apunteUpdate.moduloId) {
-            return {
-              ...modulo,
-              up: apunteUpdate.up !== undefined ? apunteUpdate.up : modulo.up,
-              down: apunteUpdate.down !== undefined ? apunteUpdate.down : modulo.down,
-              // Opcionalmente mostrar indicador de actualización
-              ultimaActualizacion: new Date().toLocaleTimeString()
-            };
-          }
-          return modulo;
-        });
+        const moduloIndex = this.modulos.findIndex(m => m.moduloId === apunteUpdate.moduloId);
         
-        console.log('✅ Vista actualizada en tiempo real para módulo', apunteUpdate.moduloId);
+        if (moduloIndex !== -1) {
+          const moduloAnterior = { ...this.modulos[moduloIndex] };
+          
+          // Actualizar valores
+          this.modulos[moduloIndex] = {
+            ...this.modulos[moduloIndex],
+            up: apunteUpdate.up !== undefined ? apunteUpdate.up : this.modulos[moduloIndex].up,
+            down: apunteUpdate.down !== undefined ? apunteUpdate.down : this.modulos[moduloIndex].down,
+            ultimaActualizacion: new Date().toLocaleTimeString(),
+            // Flag para indicar que hubo cambios
+            actualizado: true
+          };
+          
+          console.log('✅ Módulo actualizado en vista:');
+          console.log('  - Módulo ID:', apunteUpdate.moduloId);
+          console.log('  - UP: ', moduloAnterior.up, '→', this.modulos[moduloIndex].up);
+          console.log('  - DOWN:', moduloAnterior.down, '→', this.modulos[moduloIndex].down);
+          
+          // Opcional: Remover flag de actualizado después de unos segundos
+          setTimeout(() => {
+            if (this.modulos[moduloIndex]) {
+              this.modulos[moduloIndex].actualizado = false;
+            }
+          }, 3000);
+          
+        } else {
+          console.warn('⚠️ Módulo no encontrado en la lista:', apunteUpdate.moduloId);
+        }
       }
     });
+    
+    console.log('✅ Suscripciones configuradas');
   }
 
   private iniciarActualizacionPeriodica() {
@@ -162,53 +197,74 @@ export class HomePage implements OnInit {
     this.refreshMedicionesInterval = setInterval(async () => {
       try {
         await Promise.all(
-          this.modulos.map(async (d) => {
+          this.modulos.map(async (modulo) => {
             try {
-              const ultima = await this.moduloService.getUltimaMedicion(d.moduloId);
+              const ultima = await this.moduloService.getUltimaMedicion(modulo.moduloId);
               const nuevoValorTemp = ultima?.valor_temp ?? '—';
               const nuevoValorPress = ultima?.valor_press ?? '—';
               
-              if (d.medicionTempActual !== nuevoValorTemp) {
-                d.medicionTempActual = nuevoValorTemp;
+              if (modulo.medicionTempActual !== nuevoValorTemp) {
+                modulo.medicionTempActual = nuevoValorTemp;
               }
-              if (d.medicionPressActual !== nuevoValorPress) {
-                d.medicionPressActual = nuevoValorPress;
+              if (modulo.medicionPressActual !== nuevoValorPress) {
+                modulo.medicionPressActual = nuevoValorPress;
               }
               
-              // Para apuntes, primero verificar si no hay actualización MQTT reciente
-              // Solo actualizar desde API si han pasado más de 10 segundos
-              const tiempoSinActualizacionMqtt = this.tiempoDesdeUltimaActualizacionMqtt();
-              if (tiempoSinActualizacionMqtt > 10000) { // 10 segundos
-                const valor_apunte = await this.moduloService.getApunte(d.moduloId);
-                const nuevoValorUP = valor_apunte?.up ?? 0.0;
-                const nuevoValorDOWN = valor_apunte?.down ?? 0.0;
+              // Solo actualizar apuntes si no hay conexión MQTT activa
+              if (!this.mqttConnected) {
+                console.log(`📊 MQTT desconectado, actualizando apuntes via API para módulo ${modulo.moduloId}`);
+                const apunte = await this.moduloService.getApunte(modulo.moduloId);
                 
-                if (d.up !== nuevoValorUP || d.down !== nuevoValorDOWN) {
-                  d.up = nuevoValorUP;
-                  d.down = nuevoValorDOWN;
+                if (apunte) {
+                  if (modulo.up !== apunte.up) {
+                    console.log(`📈 UP actualizado módulo ${modulo.moduloId}: ${modulo.up} → ${apunte.up}`);
+                    modulo.up = apunte.up;
+                  }
+                  
+                  if (modulo.down !== apunte.down) {
+                    console.log(`📉 DOWN actualizado módulo ${modulo.moduloId}: ${modulo.down} → ${apunte.down}`);
+                    modulo.down = apunte.down;
+                  }
                 }
               }
               
             } catch (error) {
-              console.error(`Error actualizando módulo ${d.moduloId}:`, error);
+              console.error(`❌ Error actualizando módulo ${modulo.moduloId}:`, error);
             }
           })
         );
+        
+        console.log('✅ Actualización periódica completada');
+        
       } catch (error) {
-        console.error('Error en actualización periódica:', error);
+        console.error('❌ Error en actualización periódica:', error);
       }
-    }, 30000); // Cada 30 segundos en lugar de 5 segundos
+    }, 5000);
+    
+    console.log('✅ Actualización periódica configurada (cada 2 minutos)');
   }
 
-  private tiempoDesdeUltimaActualizacionMqtt(): number {
-    // Implementar lógica para rastrear la última actualización MQTT
-    // Por simplicidad, retornamos un número grande para permitir actualizaciones API inicialmente
-    return 60000;
+  // Método para refrescar manualmente
+  async refrescarDatos() {
+    console.log('🔄 Refresh manual solicitado...');
+    
+    try {
+      await this.cargarModulosIniciales();
+      console.log('✅ Datos refrescados manualmente');
+    } catch (error) {
+      console.error('❌ Error en refresh manual:', error);
+    }
   }
 
-  // Método auxiliar para mostrar estado de conexión MQTT (opcional)
-  get mqttConnected(): boolean {
-    return this.mqttService.isConnected();
+  // Getter para mostrar estado de conexión en el template si quieres
+  get estadoMqtt(): string {
+    return this.mqttConnected ? 'Conectado' : 'Desconectado';
+  }
+
+  get tiempoUltimaActualizacionMqtt(): string {
+    return this.ultimaActualizacionMqtt 
+      ? this.ultimaActualizacionMqtt.toLocaleTimeString() 
+      : 'Nunca';
   }
 
   navigateToModule(modulo: any) {

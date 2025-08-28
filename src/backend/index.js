@@ -157,7 +157,7 @@ function handleApunteData(data) {
     if (data.moduloId && (data.up !== undefined || data.down !== undefined)) {
         const moduloId = parseInt(data.moduloId);
         
-        // Construir query dinámicamente según qué valores se envíen
+        // PASO 1: Actualizar tabla Modulos (valores por defecto)
         let updateFields = [];
         let params = [];
         
@@ -171,38 +171,92 @@ function handleApunteData(data) {
             params.push(parseFloat(data.down));
         }
         
-        // Agregar moduloId al final para la cláusula WHERE
         params.push(moduloId);
+        const queryModulos = `UPDATE Modulos SET ${updateFields.join(', ')} WHERE moduloId = ?`;
         
-        const query = `UPDATE Modulos SET ${updateFields.join(', ')} WHERE moduloId = ?`;
+        console.log('📝 Actualizando tabla Modulos:', queryModulos, params);
         
-        console.log('📝 Query a ejecutar:', query, params);
-        
-        pool.query(query, params, (error, result) => {
+        pool.query(queryModulos, params, (error, result) => {
             if (error) {
-                console.error('❌ Error actualizando apunte MQTT:', error);
-            } else if (result.affectedRows === 0) {
+                console.error('❌ Error actualizando Modulos:', error);
+                return;
+            } 
+            
+            if (result.affectedRows === 0) {
                 console.warn('⚠️ No se encontró módulo con ID:', moduloId);
-            } else {
-                console.log('✅ Apunte MQTT actualizado para módulo', moduloId);
+                return;
+            }
+            
+            console.log('✅ Tabla Modulos actualizada para módulo', moduloId);
+            
+            // PASO 2: Insertar registro histórico en tabla Beam
+            const up = data.up !== undefined ? parseFloat(data.up) : null;
+            const down = data.down !== undefined ? parseFloat(data.down) : null;
+            
+            // Si no se proporciona uno de los valores, obtenerlo de la tabla Modulos
+            if (up === null || down === null) {
+                const queryGetCurrent = `SELECT up, down FROM Modulos WHERE moduloId = ?`;
                 
-                // Publicar confirmación si MQTT está conectado
-                if (mqttConnected && mqttClient) {
-                    mqttClient.publish('apunte/confirmacion', JSON.stringify({
-                        status: 'updated',
-                        moduloId: moduloId,
-                        up: data.up,
-                        down: data.down,
-                        timestamp: new Date().toISOString()
-                    }));
-                }
+                pool.query(queryGetCurrent, [moduloId], (err, currentResult) => {
+                    if (err) {
+                        console.error('❌ Error obteniendo valores actuales:', err);
+                        return;
+                    }
+                    
+                    if (currentResult.length > 0) {
+                        const currentValues = currentResult[0];
+                        const finalUp = up !== null ? up : parseFloat(currentValues.up);
+                        const finalDown = down !== null ? down : parseFloat(currentValues.down);
+                        
+                        insertIntoBeam(moduloId, finalUp, finalDown, data);
+                    }
+                });
+            } else {
+                insertIntoBeam(moduloId, up, down, data);
             }
         });
-    } else {
-        console.warn('⚠️ Mensaje de apunte incompleto:', data);
     }
 }
 
+// Función auxiliar para insertar en tabla Beam
+function insertIntoBeam(moduloId, up, down, originalData) {
+    const queryBeam = `INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down) VALUES (?, NOW(), ?, ?)`;
+    const beamParams = [moduloId, up, down];
+    
+    console.log('📝 Insertando en tabla Beam:', queryBeam, beamParams);
+    
+    pool.query(queryBeam, beamParams, (errorBeam, resultBeam) => {
+        if (errorBeam) {
+            console.error('❌ Error insertando en Beam:', errorBeam);
+        } else {
+            console.log('✅ Registro insertado en tabla Beam para módulo', moduloId);
+            console.log('📊 Datos guardados: UP =', up, ', DOWN =', down);
+            
+            // PASO 3: Publicar confirmación con ID del registro creado
+            if (mqttConnected && mqttClient) {
+                const confirmacion = {
+                    status: 'updated',
+                    moduloId: moduloId,
+                    up: up,
+                    down: down,
+                    beamId: resultBeam.insertId,
+                    timestamp: new Date().toISOString(),
+                    source: 'mqtt_update'
+                };
+                
+                console.log('📤 Enviando confirmación MQTT:', confirmacion);
+                
+                mqttClient.publish('apunte/confirmacion', JSON.stringify(confirmacion), (pubError) => {
+                    if (pubError) {
+                        console.error('❌ Error publicando confirmación:', pubError);
+                    } else {
+                        console.log('✅ Confirmación MQTT enviada correctamente');
+                    }
+                });
+            }
+        }
+    });
+}
 // Configuración de CORS (qué orígenes y métodos están permitidos)
 const corsOptions = {
     origin: '*',

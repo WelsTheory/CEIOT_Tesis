@@ -145,7 +145,7 @@ export class HistorialApuntesPage implements OnInit, OnDestroy {
 
   iniciarActualizacionAutomatica() {
     // Actualizar cada 5 minutos y 30 segundos (para captar los nuevos datos de Beam)
-    const intervalo = 5 * 60 * 1000 + 30 * 1000; // 5 min 30 seg en milisegundos
+    const intervalo = 5 * 1000; // 5 min 30 seg en milisegundos
     
     this.intervaloActualizacion = setInterval(async () => {
       console.log('🔄 Actualización automática de apuntes...');

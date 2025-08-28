@@ -14,12 +14,15 @@
 
   <link rel="icon" type="image/png" href="assets/icon/favicon.png" />
 
-  <!-- add to homescreen for ios -->
+  <!-- AGREGAR ESTAS LÍNEAS PARA MQTT -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+
+  <!-- Add to homescreen for Chrome on Android. Fallback for manifest.json -->
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Add to homescreen for Safari on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-
-  <!-- MQTT.js para WebSocket -->
-  <script src="https://unpkg.com/mqtt@5.0.0/dist/mqtt.min.js"></script>
 </head>
 
 <body>
