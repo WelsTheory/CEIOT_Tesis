@@ -111,6 +111,15 @@
       color: var(--ion-color-primary);
       text-align: center;
     }
+    ion-card-subtitle{
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--ion-color-medium);
+      text-align: center;
+      font-style: italic;
+      margin: 0;
+    }
+
   }
   
   ion-card-content {
@@ -132,6 +141,7 @@
         .info-item {
           display: flex;
           flex-direction: column;
+          align-content: center;
           gap: 2px;
           
           .label {
@@ -143,89 +153,71 @@
           }
           
           .value {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: white;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--ion-color-text);
             word-break: break-word;
           }
         }
       }
       
-      // Mediciones a la derecha
-      .mediciones-right {
-        display: flex;
-        flex-direction: column;
-        gap: 0px;
-        min-width: 80px;
-        
-        .modulo-item {
-          padding: 8px 10px;
-          border-radius: 2px;
-          border: 1px solid var(--ion-color-light);
-          background: #2e8857;
-          transition: all 0.3s ease;
-          
-          &.up {
-            border-top: 3px;
-            border-bottom: 1px;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-          }
-          
-          &.down {
-            border-bottom: 3px;
-            border-top: none;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
-          }
+      // Mediciones a la derecha - Botones de apunte mejorados
+.mediciones-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0px; // Sin gap para que estén pegados
+  min-width: 80px;
+  
+  .modulo-item {
+    padding: 8px 10px;
+    border: 1px solid var(--ion-color-light);
+    background: var(--ion-color-primary);
+    transition: all 0.3s ease;
+    
+    // Botón UP - Redondeo solo en la parte superior
+    &.up {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3); // Borde sutil para separar
+    }
+    
+    // Botón DOWN - Redondeo solo en la parte inferior
+    &.down {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      border-top: 1px solid rgba(0, 0, 0, 0.2); // Borde sutil para separar
+    }
 
-          &.activo {
-            //background: var(--ion-color-success-tint);
-            //border-color: var(--ion-color-success);
-            
-            .medicion-container {
-              .posicion-label {
-                color: var(--ion-color-success);
-              }
-              
-              .temperatura {
-                color: white;
-                font-weight: bold;
-              }
-            }
-          }
-          
-          .medicion-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            
-            .posicion-label {
-              font-size: 0.7rem;
-              font-weight: bold;
-              color: var(--ion-color-medium);
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            
-            .temperatura {
-              font-size: 0.8rem;
-              font-weight: 600;
-              color: white;
-              text-align: center;
-            }
-          }
-        }
-        
-        .up {
-          border-top: 1px solid var(--ion-color-tertiary);
-        }
-        
-        .down {
-          border-bottom: 1px solid var(--ion-color-secondary);
-        }
+    
+    
+    .medicion-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      
+      .posicion-label {
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: var(--ion-color-medium);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
+      
+      .temperatura {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+        text-align: center;
+        line-height: 1.2;
+      }
+    }
+  }
+}
     }
   }
 }
