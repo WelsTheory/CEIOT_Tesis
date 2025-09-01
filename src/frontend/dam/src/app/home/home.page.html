@@ -1,3 +1,4 @@
+<!-- src/app/home/home.page.html - COMPLETO -->
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title class="ion-text-center">Módulos de ABS</ion-title>
@@ -6,45 +7,77 @@
 </ion-header>
 
 <ion-content>
+  <!-- Navegación para tablet/móvil -->
+  <div class="navegacion-cuadrantes" *ngIf="mostrarNavegacion">
+    <ion-button 
+      fill="clear" 
+      class="nav-button" 
+      [class.active]="cuadranteActivo === 'norte'"
+      (click)="cambiarCuadrante('norte')">
+      <span class="badge" >N</span>
+    </ion-button>
+    <ion-button 
+      fill="clear" 
+      class="nav-button"
+      [class.active]="cuadranteActivo === 'este'" 
+      (click)="cambiarCuadrante('este')">
+      <span class="badge" >E</span>
+    </ion-button>
+    <ion-button 
+      fill="clear" 
+      class="nav-button"
+      [class.active]="cuadranteActivo === 'oeste'" 
+      (click)="cambiarCuadrante('oeste')">
+      <span class="badge">O</span>
+    </ion-button>
+    <ion-button 
+      fill="clear" 
+      class="nav-button"
+      [class.active]="cuadranteActivo === 'sur'" 
+      (click)="cambiarCuadrante('sur')">
+      <span class="badge">S</span>
+    </ion-button>
+  </div>
+
   <div class="cuadrantes-container">
     <!-- CUADRANTE NORTE -->
-    <div class="cuadrante">
+    <div class="cuadrante cuadrante-norte" 
+         [class.cuadrante-activo]="esCuadranteActivo('norte')"
+         [style.display]="esCuadranteActivo('norte') ? 'block' : 'none'">
       <h3>Cuadrante Norte</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let modulo of getModulosNorte()">
+          <ion-col *ngFor="let modulo of getModulosNorte()">
             <ion-card class="modulo-card">
               <img [src]="modulo.estadoReset 
-                    ? 'assets/img/version2.png' 
-                    : 'assets/img/version1.png'"  
-              alt="Modulo"/>
+                        ? 'assets/img/version2.png' 
+                        : 'assets/img/version1.png'"  
+                    alt="Modulo"/>
               <ion-card-header>
                 <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'Version 1' }}</ion-card-subtitle>
+                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
                   <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
 
                   <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
                     <!-- modulo UP -->
-                    <div class="modulo-item up" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
 
                     <!-- modulo DOWN -->
-                    <div class="modulo-item down" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -52,14 +85,11 @@
                   </div>
                 </div>
                 <div class="botones">
-                  <ion-button fill="outline" size="small"
-                    (click)="verMediciones(modulo.moduloId)">
+                  <ion-button fill="outline" size="small" (click)="verMediciones(modulo.moduloId)">
                     DATA
                   </ion-button>
-
-                  <ion-button color="primary" size="small"
-                    (click)="verDetalle(modulo.moduloId)">
-                    +Info
+                  <ion-button color="primary" size="small" (click)="verDetalle(modulo.moduloId)">
+                    INFO
                   </ion-button>
                 </div>
               </ion-card-content>
@@ -68,44 +98,39 @@
         </ion-row>  
       </ion-grid>
     </div>
+    
     <!-- CUADRANTE ESTE -->
-    <div class="cuadrante">
-      <h3>Cuadrante ESTE</h3>
+    <div class="cuadrante cuadrante-este" 
+         [class.cuadrante-activo]="esCuadranteActivo('este')"
+         [style.display]="esCuadranteActivo('este') ? 'block' : 'none'">
+      <h3>Cuadrante Este</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let modulo of getModulosEste()">
+          <ion-col *ngFor="let modulo of getModulosEste()">
             <ion-card class="modulo-card">
               <img [src]="modulo.estadoReset 
-                    ? 'assets/img/version2.png' 
-                    : 'assets/img/version1.png'"  
-              alt="Modulo"/>
+                        ? 'assets/img/version2.png' 
+                        : 'assets/img/version1.png'"  
+                    alt="Modulo"/>
               <ion-card-header>
                 <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'Version 1' }}</ion-card-subtitle>
+                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
-
-                  <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- modulo UP -->
-                    <div class="modulo-item up" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
-
-                    <!-- modulo DOWN -->
-                    <div class="modulo-item down" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -113,14 +138,11 @@
                   </div>
                 </div>
                 <div class="botones">
-                  <ion-button fill="outline" size="small"
-                    (click)="verMediciones(modulo.moduloId)">
+                  <ion-button fill="outline" size="small" (click)="verMediciones(modulo.moduloId)">
                     DATA
                   </ion-button>
-
-                  <ion-button color="primary" size="small"
-                    (click)="verDetalle(modulo.moduloId)">
-                    +Info
+                  <ion-button color="primary" size="small" (click)="verDetalle(modulo.moduloId)">
+                    INFO
                   </ion-button>
                 </div>
               </ion-card-content>
@@ -129,44 +151,39 @@
         </ion-row>  
       </ion-grid>
     </div>
-    <!-- CUADRANTE OESTE-->
-    <div class="cuadrante">
-      <h3>Cuadrante OESTE</h3>
+
+    <!-- CUADRANTE OESTE -->
+    <div class="cuadrante cuadrante-oeste" 
+         [class.cuadrante-activo]="esCuadranteActivo('oeste')"
+         [style.display]="esCuadranteActivo('oeste') ? 'block' : 'none'">
+      <h3>Cuadrante Oeste</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let modulo of getModulosOeste()">
+          <ion-col *ngFor="let modulo of getModulosOeste()">
             <ion-card class="modulo-card">
               <img [src]="modulo.estadoReset 
-                    ? 'assets/img/version2.png' 
-                    : 'assets/img/version1.png'"  
-              alt="Modulo"/>
+                        ? 'assets/img/version2.png' 
+                        : 'assets/img/version1.png'"  
+                    alt="Modulo"/>
               <ion-card-header>
                 <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'Version 1' }}</ion-card-subtitle>
+                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
-
-                  <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- modulo UP -->
-                    <div class="modulo-item up" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
-
-                    <!-- modulo DOWN -->
-                    <div class="modulo-item down" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -174,14 +191,11 @@
                   </div>
                 </div>
                 <div class="botones">
-                  <ion-button fill="outline" size="small"
-                    (click)="verMediciones(modulo.moduloId)">
+                  <ion-button fill="outline" size="small" (click)="verMediciones(modulo.moduloId)">
                     DATA
                   </ion-button>
-
-                  <ion-button color="primary" size="small"
-                    (click)="verDetalle(modulo.moduloId)">
-                    +Info
+                  <ion-button color="primary" size="small" (click)="verDetalle(modulo.moduloId)">
+                    INFO
                   </ion-button>
                 </div>
               </ion-card-content>
@@ -190,44 +204,39 @@
         </ion-row>  
       </ion-grid>
     </div>
+
     <!-- CUADRANTE SUR -->
-    <div class="cuadrante">
+    <div class="cuadrante cuadrante-sur" 
+         [class.cuadrante-activo]="esCuadranteActivo('sur')"
+         [style.display]="esCuadranteActivo('sur') ? 'block' : 'none'">
       <h3>Cuadrante Sur</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
-          <ion-col size="3" *ngFor="let modulo of getModulosSur()">
+          <ion-col *ngFor="let modulo of getModulosSur()">
             <ion-card class="modulo-card">
               <img [src]="modulo.estadoReset 
-                    ? 'assets/img/version2.png' 
-                    : 'assets/img/version1.png'"  
-              alt="Modulo"/>
+                        ? 'assets/img/version2.png' 
+                        : 'assets/img/version1.png'"  
+                    alt="Modulo"/>
               <ion-card-header>
                 <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'Version 1' }}</ion-card-subtitle>
+                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
-                  <!-- Información del modulo a la izquierda -->
                   <div class="modulo-info-left">
                     <div class="info-item">
-                      <span class="value">T: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
-                      <span class="value">P: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
+                      <span class="value">Temp: {{ modulo.medicionTempActual || 'N/A' }}°C</span>
+                      <span class="value">Pres: {{ modulo.medicionPressActual || 'N/A' }}hPa</span>
                     </div>
                   </div>
-
-                  <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
-                    <!-- modulo UP -->
-                    <div class="modulo-item up" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
-
-                    <!-- modulo DOWN -->
-                    <div class="modulo-item down" 
-                         [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -235,14 +244,11 @@
                   </div>
                 </div>
                 <div class="botones">
-                  <ion-button fill="outline" size="small"
-                    (click)="verMediciones(modulo.moduloId)">
+                  <ion-button fill="outline" size="small" (click)="verMediciones(modulo.moduloId)">
                     DATA
                   </ion-button>
-
-                  <ion-button color="primary" size="small"
-                    (click)="verDetalle(modulo.moduloId)">
-                    +Info
+                  <ion-button color="primary" size="small" (click)="verDetalle(modulo.moduloId)">
+                    INFO
                   </ion-button>
                 </div>
               </ion-card-content>
@@ -252,6 +258,8 @@
       </ion-grid>
     </div>
   </div>
+
+  <!-- Botones principales -->
   <div class="acciones-globales-bottom">
     <ion-button fill="solid" color="success" size="small" (click)="encenderTodos()">
       Encender Módulos
