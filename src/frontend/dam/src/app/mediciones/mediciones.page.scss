@@ -315,20 +315,44 @@ ion-card[color="light"] {
         font-size: 1rem;
         margin-bottom: 4px;
         color: var(--ion-color-primary);
+        transition: color 0.3s ease;
       }
 
       p {
         margin: 2px 0;
         font-size: 0.9rem;
-        color: var(--ion-color-dark);
+        color: var(--ion-color-text);
         &:last-child {
           font-weight: 600;
-          color: var(--ion-color-primary);
+          --color: var(--ion-color-text);
+
         }
       }
     }
     &:hover {
-      --background: var(--ion-color-light-tint);
+      --background: var(--ion-color-step-950);
+      transform: translateY(-2px); // Efecto de elevación sutil
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); // Sombra más pronunciada
+      
+    // Cambiar colores del texto en hover
+      ion-label {
+        h2 {
+          color: var(--ion-color-primary-shade); // Color más oscuro para mejor contraste
+        }
+        
+        p {
+          color: var(--ion-color-contrast); // Color más oscuro para mejor legibilidad
+          
+          &:last-child {
+            color: var(--ion-color-contrast); // Color más oscuro para mejor legibilidad
+          }
+        }
+      }
+    }
+    // Estado activo/presionado
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
   }
 }
@@ -359,25 +383,18 @@ ion-card[color="light"] {
 }
 
 // Responsive design para el gráfico
-// Gráficos más responsive
-.grafico-container {
-  .chart-wrapper {
-    height: 400px;
-    
-    @media (max-width: 1024px) {
-      height: 350px;
-    }
-    
-    @media (max-width: 768px) {
+@media (max-width: 768px) {
+  .grafico-container {
+    .chart-wrapper {
       height: 300px;
     }
-    
-    @media (max-width: 480px) {
+  }
+}
+
+@media (max-width: 480px) {
+  .grafico-container {
+    .chart-wrapper {
       height: 250px;
-    }
-    
-    @media (max-width: 360px) {
-      height: 220px;
     }
   }
 }
