@@ -40,17 +40,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   
   // Estilo del contenedor
-  padding: 4px 4px;
+  padding: 8px 12px;
   margin-top: 5px; // Espacio desde el último contenido
   // Estilos de los botones
   ion-button {
-    min-width: 140px;
+    min-width: 120px;
     --border-radius: 8px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     --padding-start: 16px;
     --padding-end: 16px;
     --padding-top: 12px;
@@ -58,6 +58,12 @@
     
     &:first-child {
       margin-right: 0;
+    }
+    @media (max-width: 480px) {
+      min-width: 100px;
+      font-size: 0.8rem;
+      --padding-start: 12px;
+      --padding-end: 12px;
     }
   }
 }
@@ -71,26 +77,24 @@ ion-content {
 .cuadrantes-container {
   padding: 16px 10px;
   display: grid;
-  grid-template-columns: 1fr 1fr;  // 2 columnas en pantallas grandes
   gap: 20px;
   
-  // Tablet y pantallas medianas (768px o menos)
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;    // 1 columna en pantallas medianas/pequeñas
-    gap: 16px;
+  // Breakpoints mejorados
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); // Auto-ajuste
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr); // 2 columnas en desktop pequeño
   }
   
-  // Móviles pequeños (opcional, para mayor control)
-  @media (max-width: 480px) {
-    padding: 8px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; // 1 columna en tablet
+    padding: 12px 8px;
     gap: 12px;
   }
-  img {
-    width: 100% !important;
-    height: 40px;
-    object-fit: contain; // muestra toda la imagen aunque no llene el ancho
-    padding: 5px;
-    background: #f5f5f5; // fondo gris claro para que no se vea vacío
+  
+  @media (max-width: 480px) {
+    padding: 8px 4px;
+    gap: 8px;
   }
 }
 
@@ -187,11 +191,11 @@ ion-content {
         display: flex;
         flex-direction: column;
         gap: 0px; // Sin gap para que estén pegados
-        min-width: 80px;
+        min-width: 90px;
         align-self: center;
         
         .modulo-item {
-          padding: 8px 10px;
+          padding: 10px 12px;
           border: 1px solid var(--ion-color-light);
           background: var(--ion-color-primary);
           transition: all 0.3s ease;
@@ -231,8 +235,9 @@ ion-content {
             }
             
             .temperatura {
-              font-size: 0.85rem;
+              font-size: 0.9rem;
               font-weight: 600;
+              line-height: 1.2;
               color: white;
               text-align: center;
             }
@@ -346,5 +351,29 @@ ion-content {
       min-width: auto;
       font-size: 0.85rem;
     }
+  }
+}
+
+// Para módulos con mejor responsive
+.modulo-card {
+  background: var(--card-background);
+  color: var(--text-primary);
+  
+  .modulo-item {
+    background: var(--ion-color-primary);
+    
+    .temperatura {
+      color: var(--ion-color-primary-contrast);
+    }
+  }
+}
+
+// Para gráficos en dark mode
+.chart-wrapper {
+  background: var(--card-background);
+  
+  // Los gráficos necesitarán colores dinámicos
+  .recharts-cartesian-axis-tick-value {
+    fill: var(--text-secondary) !important;
   }
 }

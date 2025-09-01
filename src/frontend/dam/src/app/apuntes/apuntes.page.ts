@@ -26,6 +26,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModuloService } from '../services/modulo.service';
 import { Modulo } from '../listado-modulos/modulo';
+import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
 
 // Interfaces para tipado
 interface Apunte {
@@ -77,7 +78,8 @@ interface Estadisticas {
     IonDatetime,
     IonGrid,
     CommonModule,
-    FormsModule
+    FormsModule,
+    ThemeToggleComponent
   ],
 })
 export class HistorialApuntesPage implements OnInit, OnDestroy {

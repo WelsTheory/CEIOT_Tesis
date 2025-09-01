@@ -1,0 +1,20 @@
+/* src/app/components/theme-toggle/theme-toggle.component.scss */
+.theme-toggle-btn {
+    --color: var(--ion-color-medium);
+    --hover-color: var(--ion-color-primary);
+    transition: all 0.3s ease;
+  }
+  
+  .theme-toggle-btn:hover {
+    --color: var(--ion-color-primary);
+    transform: scale(1.1);
+  }
+  
+  ion-icon {
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .theme-toggle-btn:hover ion-icon {
+    transform: rotate(20deg);
+  }

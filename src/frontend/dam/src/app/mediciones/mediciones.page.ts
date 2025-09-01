@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ModuloService } from '../services/modulo.service';
+import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
 
 import {
   IonContent,
@@ -25,7 +26,7 @@ import {
   IonInput,          // Agregar para filtros de fecha
   IonGrid,           // Agregar para layout
   IonRow,            // Agregar para layout
-  IonCol             // Agregar para layout     
+  IonCol,            // Agregar para layout     
 } from '@ionic/angular/standalone';
 
 import { addIcons } from 'ionicons';
@@ -59,7 +60,8 @@ import { barChart, list, calendar } from 'ionicons/icons';
     IonInput,          // Agregar para filtros de fecha
     IonGrid,           // Agregar para layout
     IonRow,            // Agregar para layout
-    IonCol             // Agregar para layout
+    IonCol,             // Agregar para layout
+    ThemeToggleComponent
  ]
 })
 export class MedicionesPage implements OnInit {

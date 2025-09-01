@@ -10,8 +10,7 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { addIcons } from 'ionicons';
 import { leaf, restaurant, flower, home, bed, hardwareChip } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
-
-
+import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-home',
@@ -34,6 +33,7 @@ import { Subscription } from 'rxjs';
     IonLabel,
     IonButton,
     CommonModule,
+    ThemeToggleComponent
   ], schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 

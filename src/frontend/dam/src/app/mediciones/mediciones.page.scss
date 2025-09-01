@@ -359,18 +359,25 @@ ion-card[color="light"] {
 }
 
 // Responsive design para el gráfico
-@media (max-width: 768px) {
-  .grafico-container {
-    .chart-wrapper {
+// Gráficos más responsive
+.grafico-container {
+  .chart-wrapper {
+    height: 400px;
+    
+    @media (max-width: 1024px) {
+      height: 350px;
+    }
+    
+    @media (max-width: 768px) {
       height: 300px;
     }
-  }
-}
-
-@media (max-width: 480px) {
-  .grafico-container {
-    .chart-wrapper {
+    
+    @media (max-width: 480px) {
       height: 250px;
+    }
+    
+    @media (max-width: 360px) {
+      height: 220px;
     }
   }
 }
