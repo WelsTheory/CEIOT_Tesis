@@ -1,116 +1,57 @@
-.device-card {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  img {
-    width: 100% !important;
-    height: 80px;
-    object-fit: contain; // muestra toda la imagen aunque no llene el ancho
-    padding: 5px;
-    background: #f5f5f5; // fondo gris claro para que no se vea vacío
-  }
-}
-
-.measurement {
-  display: flex;
-  align-items: center;
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  color: var(--ion-color-primary);
-}
-
-.measurement ion-icon {
-  margin-right: 6px;
-}
-
-.botones {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-// Eliminar o comentar la clase .acciones-globales existente y usar esta:
-.acciones-globales-bottom {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  
-  // Estilo del contenedor
-  padding: 4px 4px;
-  margin-top: 5px; // Espacio desde el último contenido
-  // Estilos de los botones
-  ion-button {
-    min-width: 140px;
-    --border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    --padding-start: 16px;
-    --padding-end: 16px;
-    --padding-top: 12px;
-    --padding-bottom: 12px;
-    
-    &:first-child {
-      margin-right: 0;
-    }
-  }
-}
-
-
-// Ajustar el contenido para que no se tape con los botones fijos
-ion-content {
-  --padding-bottom: 50px; // Espacio en la parte inferior
-}
-/*
-
-*/
 .cuadrantes-container {
   padding: 16px 10px;
   display: grid;
-  //grid-template-columns: 1fr 1fr;  // 2 columnas en pantallas grandes
-  gap: 20px;
-
+  grid-template-columns: 1fr 1fr;  // 2 columnas en pantallas grandes
+  gap: 12px;
   img {
     width: 100% !important;
     height: 40px;
     object-fit: contain; // muestra toda la imagen aunque no llene el ancho
     padding: 5px;
     background: #f5f5f5; // fondo gris claro para que no se vea vacío
-  }
-  
-  // DESKTOP GRANDE (>1200px): Grid 2x2 cómodo
-  @media (min-width: 1201px){
+  }  
+   // DESKTOP GRANDE (>1200px): Grid 2x2 cómodo
+   @media (min-width: 1647px){
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
     grid-template-areas:
       "norte este"
       "oeste sur";
-    height: calc(100vh - 140px);
     gap: 24px;
+  }
+
+  // DESKTOP GRANDE (>1200px): Grid 2x2 cómodo
+  @media (min-width: 1201px) and (max-width: 1646px){
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas:
+      "norte"
+      "este"
+      "oeste" 
+      "sur";
+    gap: 24px;
+    padding-left: 50px;
+    padding-right: 50px;
   }
   
   // DESKTOP MEDIANO (901px-1200px): Grid 2x2 compacto pero cómodo
   @media (min-width: 901px) and (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
     grid-template-areas:
-      "norte este"
-      "oeste sur";
-    height: calc(100vh - 140px);
-    gap: 16px;
-    padding: 12px;
+      "norte"
+      "este"
+      "oeste" 
+      "sur";
+    gap: 24px;
+    padding-left: 30px;
+    padding-right: 30px;
   }
   
   // RANGO PROBLEMÁTICO ARREGLADO (769px-900px): Grid vertical con más espacio
   @media (min-width: 769px) and (max-width: 900px) {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: 1fr;
     grid-template-areas:
       "norte"
       "este"
@@ -118,164 +59,99 @@ ion-content {
       "sur";
     height: auto;
     gap: 20px;
-    padding: 16px 12px;
-    
-    // Los cuadrantes tienen altura fija para evitar aplastamiento
-    .cuadrante {
-      min-height: 450px !important;
-    }
+    padding-left: 50px;
+    padding-right: 50px;
   }
-  
-  // TABLET (481px-768px): Un cuadrante visible con navegación
-  @media (min-width: 481px) and (max-width: 768px) {
+
+  // RANGO PROBLEMÁTICO ARREGLADO (482px-768px): Grid vertical con más espacio
+  @media (min-width: 482px) and (max-width: 768px) {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
-    height: calc(100vh - 200px);
+    grid-template-areas:
+      "norte"
+      "este"
+      "oeste"
+      "sur";
+    height: auto;
     gap: 16px;
     padding: 12px;
-    
-    .cuadrante:not(.cuadrante-activo) {
-      display: none;
-    }
-    
-    .cuadrante {
-      min-height: calc(100vh - 250px) !important;
-    }
   }
-  
+ 
   // MÓVIL (320px-480px): Layout optimizado para móvil
-  @media (max-width: 480px) {
+  @media (max-width: 481px) {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
-    height: calc(100vh - 180px);
+    height: auto;
     gap: 12px;
-    padding: 8px;
-    
-    .cuadrante:not(.cuadrante-activo) {
-      display: none;
-    }
-    
-    .cuadrante {
-      min-height: calc(100vh - 220px) !important;
-    }
+    padding: 6px;
   }
 }
-
-.cuadrante-norte{grid-area: norte;}
-.cuadrante-sur{grid-area: sur;}
-.cuadrante-este{grid-area: este;}
-.cuadrante-oeste{grid-area: oeste;}
 
 .cuadrante {
   border: 2px solid var(--ion-color-light);
   border-radius: 12px;
-  padding: 16px;
+  padding: 10px;
   background: var(--ion-color-light-shade);
   min-height: 500px;              // Altura mínima para mantener consistencia
-  
   // DESKTOP GRANDE
   @media (min-width: 1201px) {
     padding: 20px;
-    min-height: 400px;
   }
-  
+
   // DESKTOP MEDIANO
   @media (min-width: 901px) and (max-width: 1200px) {
-    padding: 16px;
-    min-height: 380px;
+    padding: 25px 30px 20px 30px;
   }
   
   // RANGO ARREGLADO (769px-900px)
   @media (min-width: 769px) and (max-width: 900px) {
-    padding: 18px;
-    min-height: 450px; // Más altura para evitar aplastamiento
+    padding: 25px 30px 20px 30px;
   }
   
   // TABLET
   @media (min-width: 481px) and (max-width: 768px) {
-    padding: 16px;
-    min-height: calc(100vh - 250px);
+    
   }
   
   // MÓVIL
   @media (max-width: 480px) {
-    padding: 12px;
-    min-height: calc(100vh - 220px);
+    padding: 2px;
+    
   }
-  
   h3 {
     text-align: center;
-    color: var(--ion-color-primary);
+    color: var(--ion-color-primary); 
     font-weight: bold;
-    margin-bottom: 16px;
-    font-size: 1.2rem;
+    margin-bottom: 2px;
+    margin-top: 0;
+    font-size: 1.6rem;
     text-transform: uppercase;
     letter-spacing: 1px;
+
     // DESKTOP
     @media (min-width: 901px) {
-      font-size: 1.2rem;
-      margin-bottom: 16px;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
     }
     
     // RANGO ARREGLADO (769px-900px)
     @media (min-width: 769px) and (max-width: 900px) {
-      font-size: 1.3rem;
-      margin-bottom: 20px;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
     }
     
     // TABLET
     @media (min-width: 481px) and (max-width: 768px) {
-      font-size: 1.4rem;
-      margin-bottom: 24px;
+      font-size: 1.5rem;
+      margin-top: 8px;
+      margin-bottom: 8px;
     }
     
     // MÓVIL
     @media (max-width: 480px) {
-      font-size: 1.2rem;
-      margin-bottom: 16px;
-    }
-  }
-}
-
-// Grid interno de cada cuadrante con breakpoints específicos
-.cuadrante-grid {
-  ion-row {
-    ion-col {
-      padding: 4px;
-      
-      // DESKTOP GRANDE: 3 columnas
-      @media (min-width: 1201px) {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-      }
-      
-      // DESKTOP MEDIANO: 3 columnas pero más compactas
-      @media (min-width: 901px) and (max-width: 1200px) {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-        padding: 3px;
-      }
-      
-      // RANGO ARREGLADO (769px-900px): 2 columnas para mejor distribución
-      @media (min-width: 769px) and (max-width: 900px) {
-        flex: 0 0 50%;
-        max-width: 50%;
-        padding: 6px;
-      }
-      
-      // TABLET: 1 columna
-      @media (min-width: 481px) and (max-width: 768px) {
-        flex: 0 0 100%;
-        max-width: 100%;
-        padding: 6px;
-      }
-      
-      // MÓVIL: 1 columna
-      @media (max-width: 480px) {
-        flex: 0 0 100%;
-        max-width: 100%;
-        padding: 4px;
-      }
+      font-size: 1.4rem;
+      margin-top: 8px;
+      margin-bottom: 0;
     }
   }
 }
@@ -284,63 +160,51 @@ ion-content {
   margin: 0;
   border-radius: 8px;
   box-shadow: 0 2px 8px #0000001a;
-  
   ion-card-header {
-    // DESKTOP
-    @media (min-width: 901px) {
-      padding: 12px 16px 8px 16px;
-    }
-    
-    // RANGO ARREGLADO (769px-900px): Más espacio
-    @media (min-width: 769px) and (max-width: 900px) {
-      padding: 16px 20px 12px 20px;
-    }
-    
-    // TABLET
-    @media (min-width: 481px) and (max-width: 768px) {
-      padding: 16px 20px 12px 20px;
-    }
-    
-    // MÓVIL
-    @media (max-width: 480px) {
-      padding: 12px 16px 8px 16px;
-    }
-   
+    padding: 10px 10px 8px 10px;
     ion-card-title {
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: 600;
       color: var(--ion-color-primary);
       text-align: center;
-      // DESKTOP
-      @media (min-width: 901px) {
-        font-size: 0.9rem;
+      // DESKTOP GRANDE
+      @media (min-width: 1201px) and (max-width: 1646px){
+        font-size: 1.1rem;
+      }
+       // DESKTOP
+       @media (min-width: 901px) and (max-width: 1200px) {
+        font-size: 1.2rem;
       }
       
       // RANGO ARREGLADO (769px-900px)
       @media (min-width: 769px) and (max-width: 900px) {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
       }
       
       // TABLET
       @media (min-width: 481px) and (max-width: 768px) {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
       }
       
       // MÓVIL
       @media (max-width: 480px) {
-        font-size: 1rem;
+        font-size: 1.2rem;
       }
     }
     ion-card-subtitle{
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 400;
       color: var(--ion-color-medium);
       text-align: center;
       font-style: italic;
       margin: 0;
-      // DESKTOP
-      @media (min-width: 901px) {
-        font-size: 0.75rem;
+      // DESKTOP GRANDE
+      @media (min-width: 1201px) and (max-width: 1646px){
+        font-size: 0.8rem;
+      }
+       // DESKTOP
+       @media (min-width: 901px) and (max-width: 1200px) {
+        font-size: 0.8.5rem;
       }
       
       // RANGO ARREGLADO (769px-900px)
@@ -360,41 +224,54 @@ ion-content {
     }
 
   }
-  
   ion-card-content {
-    // DESKTOP
-    @media (min-width: 901px) {
+    padding: 10px 14px 14px 10px;
+     // DESKTOP GRANDE
+     @media (min-width: 1201px) and (max-width: 1646px){
       padding: 8px 16px 16px 16px;
     }
-    
-    // RANGO ARREGLADO (769px-900px): Más padding
+     // DESKTOP
+     @media (min-width: 901px) and (max-width: 1200px) {
+      padding: 8px 16px 16px 16px;
+    }
+    // RANGO ARREGLADO (769px-900px)
     @media (min-width: 769px) and (max-width: 900px) {
-      padding: 12px 20px 20px 20px;
+      padding: 12px 22px 22px 22px;
     }
-    
     // TABLET
-    @media (min-width: 481px) and (max-width: 768px) {
-      padding: 16px 24px 24px 24px;
+    @media (min-width: 539px) and (max-width: 768px) {
+      padding: 16px 24px 24px 24px;;
     }
-    
+    // TABLET
+    @media (min-width: 480px) and (max-width: 538px) {
+      padding: 15px 16px 16px 16px;;
+    }
     // MÓVIL
     @media (max-width: 480px) {
-      padding: 12px 16px 16px 16px;
+      padding: 10px 12px 12px 12px;
     }
-    
     .card-body {
       display: flex;
-      justify-content: space-between;
       align-items: center;
       gap: 8px;
       min-height: 60px;
-
-      // DESKTOP
-      @media (min-width: 901px) {
+      width: 100%;
+       // DESKTOP GRANDE
+      @media (min-width: 1201px) and (max-width: 1646px){
         min-height: 60px;
         gap: 8px;
       }
-      
+      // DESKTOP
+      @media (min-width: 990px) and (max-width: 1200px)  {
+        min-height: 60px;
+        gap: 8px;
+      }
+      // DESKTOP
+      @media (min-width: 901px) and (max-width: 989px)  {
+        min-height: 60px;
+        width: 100%;
+        gap: 8px;
+      }
       // RANGO ARREGLADO (769px-900px): Más altura para evitar aplastamiento
       @media (min-width: 769px) and (max-width: 900px) {
         min-height: 80px;
@@ -402,97 +279,82 @@ ion-content {
       }
       
       // TABLET
-      @media (min-width: 481px) and (max-width: 768px) {
+      @media (min-width: 539px) and (max-width: 768px) {
         min-height: 100px;
-        gap: 20px;
+        gap: 4px;
+      }
+      // TABLET
+      @media (min-width: 492px) and (max-width: 538px) {
+        gap: 3px;
       }
       
       // MÓVIL
-      @media (max-width: 480px) {
-        min-height: 80px;
-        gap: 12px;
+      @media (max-width: 491px) {
+        min-height: 60px;
+        gap: 1px;
       }
-      
-      // Información del modulo a la izquierda
       .modulo-info-left {
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        gap: 6px;
-        
+        align-self: left;
+        gap: 10px;
         .info-item .value{
-          font-weight: 500;
+          font-weight: 400;
+          font-size: 0.85rem;
           color: var(--ion-color-text);
-          /*display: flex;
-          flex-direction: column;
-          align-content: flex-start;
-          gap: 4px;
-          
-          .value {
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: var(--ion-color-text);
-            word-break: break-word;
-            line-height: 1.2;
-          }*/
-
-          // DESKTOP
-          @media (min-width: 901px) {
-            font-size: 0.8rem;
-          }
-          
-          // RANGO ARREGLADO (769px-900px)
-          @media (min-width: 769px) and (max-width: 900px) {
-            font-size: 1rem;
-          }
-          
-          // TABLET
-          @media (min-width: 481px) and (max-width: 768px) {
+          // DESKTOP GRANDE
+          @media (min-width: 1201px) and (max-width: 1646px){
             font-size: 1.2rem;
           }
-          
-          // MÓVIL
-          @media (max-width: 480px) {
+          // DESKTOP
+          @media (min-width: 990px) and (max-width: 1200px)  {
+            font-size: 1rem;
+          }
+          // RANGO ARREGLADO (769px-900px): Más altura para evitar aplastamiento
+          @media (min-width: 769px) and (max-width: 989px) {
+            font-size: 1.2rem;
+          }
+          // TABLET
+          @media (min-width: 530px) and (max-width: 768px) {
+            font-size: 1.1rem;
+          }
+          // TABLET
+          @media (min-width: 492px) and (max-width: 529px) {
             font-size: 0.9rem;
+          }
+          // MÓVIL
+          @media (max-width: 491px) {
+            font-size: 1rem;
           }
         }
       }
-      
-      // Mediciones a la derecha - Botones de apunte mejorados
       .mediciones-right {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0px; // Sin gap para que estén pegados
-        min-width: 80px;
-        align-self: center;
-
+        gap: 0px;
+        width: 100%;
         // DESKTOP
         @media (min-width: 901px) {
-          min-width: 90px;
+          min-width: 80px;
         }
-        
         // RANGO ARREGLADO (769px-900px): Más ancho
         @media (min-width: 769px) and (max-width: 900px) {
-          min-width: 120px;
+          max-width: 140px;
         }
-        
         // TABLET
         @media (min-width: 481px) and (max-width: 768px) {
-          min-width: 140px;
+          max-width: 120px;
         }
-        
         // MÓVIL
         @media (max-width: 480px) {
-          min-width: 100px;
+          max-width: 100px;
         }
-        
         .modulo-item {
-          padding: 8px 10px;
+          padding: 8px 8px;
           border: 1px solid var(--ion-color-light);
           background: var(--ion-color-primary);
-          transition: all 0.3s ease;
-
           // DESKTOP
           @media (min-width: 901px) {
             padding: 8px 10px;
@@ -512,256 +374,99 @@ ion-content {
           @media (max-width: 480px) {
             padding: 10px 12px;
           }
-          
-          // Botón UP - Redondeo solo en la parte superior
           &.up {
             border-top-left-radius: 5px;
             border-top-right-radius: 5px;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
-            //border-bottom: 1px solid rgba(255, 255, 255, 0.3); // Borde sutil para separar
           }
-          
-          // Botón DOWN - Redondeo solo en la parte inferior
           &.down {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
             border-bottom-left-radius: 5px;
             border-bottom-right-radius: 5px;
-            //border-top: 1px solid rgba(0, 0, 0, 0.2); // Borde sutil para separar
           }
-
-          .medicion-container .temperatura{
-            font-weight: 600;
-            color: white;
-            text-align: center;
-            // DESKTOP
-            @media (min-width: 901px) {
-              font-size: 0.85rem;
-            }
-            
-            // RANGO ARREGLADO (769px-900px)
-            @media (min-width: 769px) and (max-width: 900px) {
-              font-size: 1rem;
-            }
-            
-            // TABLET
-            @media (min-width: 481px) and (max-width: 768px) {
-              font-size: 1.1rem;
-            }
-            
-            // MÓVIL
-            @media (max-width: 480px) {
-              font-size: 0.9rem;
-            }
-            /*display: flex;
+          .medicion-container {
+            display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
-            
-            .posicion-label {
-              font-size: 0.7rem;
-              font-weight: bold;
-              color: var(--ion-color-medium);
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            
+            gap: 0px;
             .temperatura {
-              font-size: 0.85rem;
+              font-size: 1rem;
               font-weight: 600;
               color: white;
               text-align: center;
-            }*/
+              @media (min-width: 901px) {
+                font-size: 0.85rem;
+              }
+              
+              // RANGO ARREGLADO (769px-900px)
+              @media (min-width: 769px) and (max-width: 900px) {
+                font-size: 0.9rem;
+              }
+              // TABLET
+              @media (min-width: 586px) and (max-width: 768px) {
+                font-size: 1rem;
+              }
+              
+              // TABLET
+              @media (min-width: 481px) and (max-width: 585px) {
+                font-size: 0.85rem;
+                font-weight: 500;
+              }
+              
+              // MÓVIL
+              @media (max-width: 480px) {
+                font-size: 0.8rem;
+              }
+            }
           }
         }
       }
     }
     .botones {
       display: flex;
-      justify-content: flex-start; // Cambiar de space-between a flex-start
-      //gap: 4px; // Espacio fijo entre botones
-      //padding: 0; // Eliminar padding extra
-      margin-top: 8px; // Espacio desde el contenido superior
-
-      // DESKTOP
-      @media (min-width: 901px) {
-        gap: 6px;
-        margin-top: 8px;
-      }
-      
-      // RANGO ARREGLADO (769px-900px): Más espacio entre botones
-      @media (min-width: 769px) and (max-width: 900px) {
-        gap: 12px;
-        margin-top: 16px;
-      }
-      
-      // TABLET
-      @media (min-width: 481px) and (max-width: 768px) {
-        gap: 16px;
-        margin-top: 20px;
-      }
-      
-      // MÓVIL
-      @media (max-width: 480px) {
-        gap: 8px;
-        margin-top: 12px;
-      }
-      
-      
+      gap: 1px; // Espacio fijo entre botones
+      padding: 0; // Eliminar padding extra
+      margin-top: 12px; // Espacio desde el contenido superior
+      align-items: center; // Centrar botones
+      width: 100%; // Ancho total de la pantalla
       ion-button {
-        flex: 1;
-        // DESKTOP
-        @media (min-width: 901px) {
-          font-size: 0.75rem;
-          --padding-start: 8px;
-          --padding-end: 8px;
-        }
-        
-        // RANGO ARREGLADO (769px-900px): Botones más grandes
-        @media (min-width: 769px) and (max-width: 900px) {
-          font-size: 0.9rem;
-          --padding-start: 16px;
-          --padding-end: 16px;
-          --padding-top: 8px;
-          --padding-bottom: 8px;
-        }
-        
-        // TABLET
-        @media (min-width: 481px) and (max-width: 768px) {
-          font-size: 1rem;
-          --padding-start: 20px;
-          --padding-end: 20px;
-          --padding-top: 12px;
-          --padding-bottom: 12px;
-        }
-        
-        // MÓVIL
-        @media (max-width: 480px) {
-          font-size: 0.8rem;
-          --padding-start: 12px;
-          --padding-end: 12px;
-        }
-        /*flex: 0 0 auto; // No expandir los botones
-        min-width: 80px; // Ancho mínimo consistente
+        width: 100%; // Ancho total de la pantalla
         --padding-start: 4px;
-        --padding-end:4px;*/
-      }
-    }
-  }
-  img {
-    width: 100% !important;
-    object-fit: contain;
-    padding: 5px;
-    background: #f5f5f5;
-    
-    // DESKTOP
-    @media (min-width: 901px) {
-      height: 60px;
-    }
-    
-    // RANGO ARREGLADO (769px-900px)
-    @media (min-width: 769px) and (max-width: 900px) {
-      height: 70px;
-    }
-    
-    // TABLET
-    @media (min-width: 481px) and (max-width: 768px) {
-      height: 80px;
-    }
-    
-    // MÓVIL
-    @media (max-width: 480px) {
-      height: 60px;
-    }
-  }
-}
-
-// Navegación de cuadrantes mejorada
-.navegacion-cuadrantes {
-  .nav-button {
-    position: relative;
-    
-    .badge {
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      background: var(--ion-color-danger);
-      color: white;
-      border-radius: 50%;
-      min-width: 18px;
-      height: 18px;
-      font-size: 0.6rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-      
-      @media (max-width: 480px) {
-        min-width: 16px;
-        height: 16px;
-        font-size: 0.55rem;
-        top: -1px;
-        right: -1px;
+        --padding-end:4px;
       }
     }
   }
 }
 
-// Botones principales ajustados
 .acciones-globales-bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
   display: flex;
   justify-content: center;
   align-items: center;
-  
-  // DESKTOP
-  @media (min-width: 901px) {
-    padding: 8px 16px;
-    gap: 12px;
+  gap: 12px;
+  padding: 4px 4px;
+  margin-top: 5px; // Espacio desde el último contenido
+  ion-button {
+    min-width: 140px;
+    --border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
     
-    ion-button {
-      min-width: 140px;
-      font-size: 0.9rem;
+    &:first-child {
+      margin-right: 0;
     }
   }
-  
-  // RANGO ARREGLADO (769px-900px): Botones más grandes
-  @media (min-width: 769px) and (max-width: 900px) {
-    padding: 12px 20px;
-    gap: 16px;
-    
-    ion-button {
-      min-width: 160px;
-      font-size: 1rem;
-      --padding-top: 12px;
-      --padding-bottom: 12px;
-    }
-  }
-  
-  // TABLET
-  @media (min-width: 481px) and (max-width: 768px) {
-    padding: 16px 24px;
-    gap: 20px;
-    
-    ion-button {
-      min-width: 140px;
-      font-size: 1rem;
-      --padding-top: 14px;
-      --padding-bottom: 14px;
-    }
-  }
-  
-  // MÓVIL
-  @media (max-width: 480px) {
-    padding: 12px 16px;
-    gap: 12px;
-    
-    ion-button {
-      min-width: 110px;
-      font-size: 0.85rem;
-      --padding-start: 12px;
-      --padding-end: 12px;
-    }
-  }
+}
+
+ion-content {
+  --padding-bottom: 50px; // Espacio en la parte inferior
 }
