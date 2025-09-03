@@ -214,7 +214,7 @@ export class HomePage implements OnInit {
   private evaluarTamañoPantalla() {
     const ancho = window.innerWidth;
     
-    if (ancho >= 769) {
+    if (ancho >= 901) {
       // Desktop: Mostrar todos los cuadrantes
       this.cuadranteActivo = 'todos';
       this.mostrarNavegacion = false;
@@ -231,7 +231,7 @@ export class HomePage implements OnInit {
 
   // Método mejorado para cambiar cuadrante
   cambiarCuadrante(cuadrante: string) {
-    if (window.innerWidth < 769) {
+    if (window.innerWidth < 901) {
       this.cuadranteActivo = cuadrante;
       console.log('Cambiando a cuadrante:', cuadrante);
       
@@ -242,7 +242,7 @@ export class HomePage implements OnInit {
 
   // Verificar si un cuadrante debe estar activo
   esCuadranteActivo(cuadrante: string): boolean {
-    return window.innerWidth >= 769 || this.cuadranteActivo === cuadrante;
+    return window.innerWidth >= 901 || this.cuadranteActivo === cuadrante;
   }
 
   // Obtener clase CSS para cuadrante
