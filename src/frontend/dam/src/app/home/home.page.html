@@ -8,7 +8,7 @@
 
 <ion-content>
   <!-- Navegación para tablet/móvil -->
-  <!--<div class="navegacion-cuadrantes" *ngIf="mostrarNavegacion">
+  <div class="navegacion-cuadrantes" *ngIf="mostrarNavegacion">
     <ion-button 
       fill="clear" 
       class="nav-button" 
@@ -37,11 +37,13 @@
       (click)="cambiarCuadrante('sur')">
       <span class="badge">S</span>
     </ion-button>
-  </div>-->
+  </div>
 
   <div class="cuadrantes-container">
     <!-- CUADRANTE NORTE -->
-    <div class="cuadrante">
+    <div class="cuadrante cuadrante-norte" 
+    [class.cuadrante-activo]="esCuadranteActivo('norte')"
+    [style.display]="esCuadranteActivo('norte') ? 'block' : 'none'">
       <h3>Cuadrante Norte</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
@@ -100,7 +102,9 @@
     </div>
     
     <!-- CUADRANTE ESTE -->
-    <div class="cuadrante">
+    <div class="cuadrante cuadrante-este" 
+    [class.cuadrante-activo]="esCuadranteActivo('este')"
+    [style.display]="esCuadranteActivo('este') ? 'block' : 'none'">
       <h3>Cuadrante Este</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
@@ -153,7 +157,9 @@
     </div>
 
     <!-- CUADRANTE OESTE -->
-    <div class="cuadrante">
+    <div class="cuadrante cuadrante-oeste" 
+    [class.cuadrante-activo]="esCuadranteActivo('oeste')"
+    [style.display]="esCuadranteActivo('oeste') ? 'block' : 'none'">
       <h3>Cuadrante Oeste</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>
@@ -206,7 +212,9 @@
     </div>
 
     <!-- CUADRANTE SUR -->
-    <div class="cuadrante">
+    <div class="cuadrante cuadrante-sur" 
+    [class.cuadrante-activo]="esCuadranteActivo('sur')"
+    [style.display]="esCuadranteActivo('sur') ? 'block' : 'none'">
       <h3>Cuadrante Sur</h3>
       <ion-grid class="cuadrante-grid">
         <ion-row>

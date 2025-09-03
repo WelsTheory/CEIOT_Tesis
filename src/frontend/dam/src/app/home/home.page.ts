@@ -69,6 +69,8 @@ export class HomePage implements OnInit {
       
       // Iniciar actualización periódica (reducir frecuencia ya que MQTT será en tiempo real)
       this.iniciarActualizacionPeriodica();
+
+      this.configurarResponsive();
       
     } catch (error) {
       console.error('Error al inicializar home:', error);
@@ -192,6 +194,98 @@ export class HomePage implements OnInit {
     });
     
     console.log('✅ Suscripciones configuradas');
+  }
+
+  // Configurar responsive con breakpoints específicos
+  private configurarResponsive() {
+    this.evaluarTamañoPantalla();
+    
+    // Escuchar cambios de tamaño con debounce
+    let resizeTimer: any;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        this.evaluarTamañoPantalla();
+      }, 150);
+    });
+  }
+
+  // Evaluar tamaño de pantalla y ajustar comportamiento
+  private evaluarTamañoPantalla() {
+    const ancho = window.innerWidth;
+    
+    if (ancho >= 769) {
+      // Desktop: Mostrar todos los cuadrantes
+      this.cuadranteActivo = 'todos';
+      this.mostrarNavegacion = false;
+      console.log('Modo Desktop: Todos los cuadrantes visibles');
+    } else {
+      // Tablet/Móvil: Mostrar navegación y un cuadrante
+      this.mostrarNavegacion = true;
+      if (this.cuadranteActivo === 'todos') {
+        this.cuadranteActivo = 'norte'; // Default
+      }
+      console.log(`Modo ${ancho <= 480 ? 'Móvil' : 'Tablet'}: Cuadrante ${this.cuadranteActivo}`);
+    }
+  }
+
+  // Método mejorado para cambiar cuadrante
+  cambiarCuadrante(cuadrante: string) {
+    if (window.innerWidth < 769) {
+      this.cuadranteActivo = cuadrante;
+      console.log('Cambiando a cuadrante:', cuadrante);
+      
+      // Scroll suave al top para mejor UX
+      document.querySelector('ion-content')?.scrollToTop(300);
+    }
+  }
+
+  // Verificar si un cuadrante debe estar activo
+  esCuadranteActivo(cuadrante: string): boolean {
+    return window.innerWidth >= 769 || this.cuadranteActivo === cuadrante;
+  }
+
+  // Obtener clase CSS para cuadrante
+  getClaseCuadrante(cuadrante: string): string {
+    const clases = [`cuadrante-${cuadrante}`];
+    
+    if (this.esCuadranteActivo(cuadrante)) {
+      clases.push('cuadrante-activo');
+    }
+    
+    return clases.join(' ');
+  }
+  // Métodos adicionales para mejor UX
+  
+  // Obtener número de módulos por cuadrante (para mostrar en navegación)
+  getNumeroModulos(cuadrante: string): number {
+    switch(cuadrante.toLowerCase()) {
+      case 'norte': return this.getModulosNorte().length;
+      case 'este': return this.getModulosEste().length;
+      case 'oeste': return this.getModulosOeste().length;
+      case 'sur': return this.getModulosSur().length;
+      default: return 0;
+    }
+  }
+
+  // Obtener información del cuadrante activo
+  getInfoCuadranteActivo() {
+    return {
+      nombre: this.cuadranteActivo.charAt(0).toUpperCase() + this.cuadranteActivo.slice(1),
+      cantidad: this.getNumeroModulos(this.cuadranteActivo),
+      modulos: this.getModulosPorCuadrante(this.cuadranteActivo)
+    };
+  }
+
+  // Obtener módulos de un cuadrante específico
+  getModulosPorCuadrante(cuadrante: string) {
+    switch(cuadrante.toLowerCase()) {
+      case 'norte': return this.getModulosNorte();
+      case 'este': return this.getModulosEste();
+      case 'oeste': return this.getModulosOeste();
+      case 'sur': return this.getModulosSur();
+      default: return [];
+    }
   }
 
   private iniciarActualizacionPeriodica() {

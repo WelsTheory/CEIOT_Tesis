@@ -1,3 +1,10 @@
+.ion-text-center{
+  font-size: 32px;
+  font-weight: 600;
+  padding-top: 2px;
+  padding-right: 0;
+}
+
 .cuadrantes-container {
   padding: 16px 10px;
   display: grid;
@@ -366,8 +373,12 @@
           }
           
           // TABLET
-          @media (min-width: 481px) and (max-width: 768px) {
-            padding: 16px 20px;
+          @media (min-width: 510px) and (max-width: 768px) {
+            padding: 10px 14px;
+          }
+          // TABLET
+          @media (min-width: 481px) and (max-width: 509px) {
+            padding: 10px 12px;
           }
           
           // MÓVIL
@@ -410,9 +421,14 @@
               }
               
               // TABLET
-              @media (min-width: 481px) and (max-width: 585px) {
+              @media (min-width: 510px) and (max-width: 585px) {
                 font-size: 0.85rem;
-                font-weight: 500;
+                font-weight: 600;
+              }
+              // TABLET
+              @media (min-width: 481px) and (max-width: 509px) {
+                font-size: 0.8rem;
+                font-weight: 600;
               }
               
               // MÓVIL
@@ -428,9 +444,32 @@
       display: flex;
       gap: 1px; // Espacio fijo entre botones
       padding: 0; // Eliminar padding extra
-      margin-top: 12px; // Espacio desde el contenido superior
+      margin-top: 11px; // Espacio desde el contenido superior
       align-items: center; // Centrar botones
       width: 100%; // Ancho total de la pantalla
+      // DESKTOP
+      @media (min-width: 901px) {
+        gap: 6px;
+        margin-top: 10px;
+      }
+      
+      // RANGO ARREGLADO (769px-900px): Más espacio entre botones
+      @media (min-width: 769px) and (max-width: 900px) {
+        gap: 12px;
+        margin-top: 10px;
+      }
+      
+      // TABLET
+      @media (min-width: 481px) and (max-width: 768px) {
+        gap: 8px;
+        margin-top: 10px;
+      }
+      
+      // MÓVIL
+      @media (max-width: 480px) {
+        gap: 6px;
+        margin-top: 12px;
+      }
       ion-button {
         width: 100%; // Ancho total de la pantalla
         --padding-start: 4px;
@@ -451,6 +490,9 @@
   gap: 12px;
   padding: 4px 4px;
   margin-top: 5px; // Espacio desde el último contenido
+  min-width: 18px;
+  height: 18px;
+  padding-top: 20px;
   ion-button {
     min-width: 140px;
     --border-radius: 8px;
@@ -469,4 +511,37 @@
 
 ion-content {
   --padding-bottom: 50px; // Espacio en la parte inferior
+}
+
+// Navegación de cuadrantes mejorada
+.navegacion-cuadrantes {
+  padding: 10px 10px 0 10px;
+  align-self: center;
+  display: flex;
+  justify-content: center;
+  .nav-button {
+
+    .badge {
+      background: var(--ion-color-primary-shade);
+      color: white;
+      border-radius: 5%;
+      min-width: 80px;
+      height: 40px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      @media (min-width: 360px ) and (max-width: 480px) {
+        min-width: 55px;
+        height: 35px;
+        font-size: 1.1rem;
+      }
+      @media (max-width: 359px) {
+        min-width: 40px;
+        height: 30px;
+        font-size: 0.9rem;
+      }
+    }
+  }
 }
