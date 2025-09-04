@@ -54,8 +54,29 @@
                         : 'assets/img/version1.png'"  
                     alt="Modulo"/>
               <ion-card-header>
-                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                <div class="titulo-con-controles">
+                  <ion-button 
+                    fill="outline"
+                    size="small" 
+                    (click)="actualizarEstadoModulo(modulo.moduloId)"
+                    class="boton-actualizar"
+                    [disabled]="modulo.actualizandoEstado"
+                    slot="icon-only">
+                    F5
+                  </ion-button>
+                  <div class="titulo-central">
+                    <ion-card-title>{{ modulo.nombre }}</ion-card-title>
+                    <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                  </div>
+                  <div class="indicador-estado" 
+                       [class.online]="getEstadoConexion(modulo.moduloId) === 'ONLINE'"
+                       [class.offline]="getEstadoConexion(modulo.moduloId) === 'OFFLINE'"
+                       [class.timeout]="getEstadoConexion(modulo.moduloId) === 'TIMEOUT'"
+                       [class.desconocido]="getEstadoConexion(modulo.moduloId) === 'DESCONOCIDO'"
+                       [attr.title]="getTituloEstado(modulo.moduloId)">
+                    <ion-icon name="radio-button-on"></ion-icon>
+                  </div>
+                </div>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
@@ -70,14 +91,22 @@
                   <!-- Mediciones a la derecha -->
                   <div class="mediciones-right">
                     <!-- modulo UP -->
-                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" 
+                      [class.activo]="modulo.estadoReset"
+                      [class.correcto]="getEstadoApunte(modulo.moduloId, 'up') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'up') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'up') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
 
                     <!-- modulo DOWN -->
-                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" 
+                      [class.activo]="modulo.estadoReset"
+                      [class.correcto]="getEstadoApunte(modulo.moduloId, 'down') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'down') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'down') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -115,8 +144,30 @@
                         : 'assets/img/version1.png'"  
                     alt="Modulo"/>
               <ion-card-header>
-                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                <div class="titulo-con-controles">
+                  <ion-button 
+                    fill="outline"
+                    size="small" 
+                    (click)="actualizarEstadoModulo(modulo.moduloId)"
+                    class="boton-actualizar"
+                    [disabled]="modulo.actualizandoEstado"
+                    slot="icon-only">
+                    F5
+                  </ion-button>
+                  <div class="titulo-central">
+                    <ion-card-title>{{ modulo.nombre }}</ion-card-title>
+                    <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                  </div>
+                  <div class="indicador-estado" 
+                       [class.online]="getEstadoConexion(modulo.moduloId) === 'ONLINE'"
+                       [class.offline]="getEstadoConexion(modulo.moduloId) === 'OFFLINE'"
+                       [class.timeout]="getEstadoConexion(modulo.moduloId) === 'TIMEOUT'"
+                       [class.desconocido]="getEstadoConexion(modulo.moduloId) === 'DESCONOCIDO'"
+                       [attr.title]="getTituloEstado(modulo.moduloId)">
+                    <ion-icon name="radio-button-on"></ion-icon>
+                  </div>
+                </div>
+                
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
@@ -127,12 +178,21 @@
                     </div>
                   </div>
                   <div class="mediciones-right">
-                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" 
+                    [class.activo]="modulo.estadoReset"
+                    [class.correcto]="getEstadoApunte(modulo.moduloId, 'up') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'up') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'up') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
-                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" 
+                    [class.activo]="modulo.estadoReset"
+                    [class.activo]="modulo.estadoReset"
+                         [class.correcto]="getEstadoApunte(modulo.moduloId, 'down') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'down') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'down') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -170,8 +230,29 @@
                         : 'assets/img/version1.png'"  
                     alt="Modulo"/>
               <ion-card-header>
-                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                <div class="titulo-con-controles">
+                  <ion-button 
+                    fill="outline"
+                    size="small" 
+                    (click)="actualizarEstadoModulo(modulo.moduloId)"
+                    class="boton-actualizar"
+                    [disabled]="modulo.actualizandoEstado"
+                    slot="icon-only">
+                    F5
+                  </ion-button>
+                  <div class="titulo-central">
+                    <ion-card-title>{{ modulo.nombre }}</ion-card-title>
+                    <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                  </div>
+                  <div class="indicador-estado" 
+                       [class.online]="getEstadoConexion(modulo.moduloId) === 'ONLINE'"
+                       [class.offline]="getEstadoConexion(modulo.moduloId) === 'OFFLINE'"
+                       [class.timeout]="getEstadoConexion(modulo.moduloId) === 'TIMEOUT'"
+                       [class.desconocido]="getEstadoConexion(modulo.moduloId) === 'DESCONOCIDO'"
+                       [attr.title]="getTituloEstado(modulo.moduloId)">
+                    <ion-icon name="radio-button-on"></ion-icon>
+                  </div>
+                </div>
               </ion-card-header>
               <ion-card-content>
                 <div class="card-body">
@@ -182,12 +263,21 @@
                     </div>
                   </div>
                   <div class="mediciones-right">
-                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" 
+                      [class.activo]="modulo.estadoReset"
+                      [class.correcto]="getEstadoApunte(modulo.moduloId, 'up') === 'correcto'"
+                      [class.mismatch]="getEstadoApunte(modulo.moduloId, 'up') === 'mismatch'"
+                      [class.desconectado]="getEstadoApunte(modulo.moduloId, 'up') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
-                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" 
+                      [class.activo]="modulo.estadoReset"
+                      [class.activo]="modulo.estadoReset"
+                         [class.correcto]="getEstadoApunte(modulo.moduloId, 'down') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'down') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'down') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -225,10 +315,32 @@
                         : 'assets/img/version1.png'"  
                     alt="Modulo"/>
               <ion-card-header>
-                <ion-card-title>{{ modulo.nombre }}</ion-card-title>
-                <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                <div class="titulo-con-controles">
+                  <ion-button 
+                    fill="outline"
+                    size="small" 
+                    (click)="actualizarEstadoModulo(modulo.moduloId)"
+                    class="boton-actualizar"
+                    [disabled]="modulo.actualizandoEstado"
+                    slot="icon-only">
+                    F5
+                  </ion-button>
+                  <div class="titulo-central">
+                    <ion-card-title>{{ modulo.nombre }}</ion-card-title>
+                    <ion-card-subtitle>Versión: {{ modulo.version || 'V1' }}</ion-card-subtitle>
+                  </div>
+                  <div class="indicador-estado" 
+                       [class.online]="getEstadoConexion(modulo.moduloId) === 'ONLINE'"
+                       [class.offline]="getEstadoConexion(modulo.moduloId) === 'OFFLINE'"
+                       [class.timeout]="getEstadoConexion(modulo.moduloId) === 'TIMEOUT'"
+                       [class.desconocido]="getEstadoConexion(modulo.moduloId) === 'DESCONOCIDO'"
+                       [attr.title]="getTituloEstado(modulo.moduloId)">
+                    <ion-icon name="radio-button-on"></ion-icon>
+                  </div>
+                </div>
               </ion-card-header>
               <ion-card-content>
+                
                 <div class="card-body">
                   <div class="modulo-info-left">
                     <div class="info-item">
@@ -237,12 +349,20 @@
                     </div>
                   </div>
                   <div class="mediciones-right">
-                    <div class="modulo-item up" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item up" 
+                      [class.activo]="modulo.estadoReset"
+                      [class.correcto]="getEstadoApunte(modulo.moduloId, 'up') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'up') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'up') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">UP: {{ modulo.up }}</span>
                       </div>
                     </div>
-                    <div class="modulo-item down" [class.activo]="modulo.estadoReset">
+                    <div class="modulo-item down" 
+                      [class.activo]="modulo.estadoReset"
+                      [class.correcto]="getEstadoApunte(modulo.moduloId, 'down') === 'correcto'"
+                         [class.mismatch]="getEstadoApunte(modulo.moduloId, 'down') === 'mismatch'"
+                         [class.desconectado]="getEstadoApunte(modulo.moduloId, 'down') === 'desconectado'">
                       <div class="medicion-container">
                         <span class="temperatura">DW: {{ modulo.down }}</span>
                       </div>
@@ -274,6 +394,19 @@
     </ion-button>
     <ion-button fill="solid" color="danger" size="small" (click)="apagarTodos()">
       Apagar Módulos
+    </ion-button>
+    <ion-button 
+      fill="solid" 
+      color="warning" 
+      size="small" 
+      (click)="actualizarEstadoTodos()"
+      [disabled]="actualizandoEstadoGeneral">
+      <ion-icon 
+        [name]="actualizandoEstadoGeneral ? 'refresh' : 'pulse-outline'" 
+        [class.spinning]="actualizandoEstadoGeneral"
+        slot="start">
+      </ion-icon>
+      {{ actualizandoEstadoGeneral ? 'Actualizando...' : 'STATUS' }}
     </ion-button>
   </div>
 </ion-content>

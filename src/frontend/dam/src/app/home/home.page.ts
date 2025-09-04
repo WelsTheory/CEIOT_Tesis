@@ -45,6 +45,11 @@ export class HomePage implements OnInit {
   private refreshMedicionesInterval: any;
   private mqttSubscription!: Subscription;
 
+  estadosConexion: Map<number, string> = new Map(); // moduloId -> estado
+  estadosApuntes: Map<number, {up: string, down: string}> = new Map(); // moduloId -> estados apuntes
+  actualizandoEstadoGeneral: boolean = false;
+  intervalosActualizacion: any[] = []; // Para limpiar intervalos
+
   // Variables de debug
   ultimaActualizacionMqtt: Date | null = null;
   mqttConnected: boolean = false;
@@ -71,6 +76,9 @@ export class HomePage implements OnInit {
       this.iniciarActualizacionPeriodica();
 
       this.configurarResponsive();
+
+      this.inicializarEstados();
+      this.configurarActualizacionAutomatica();
       
     } catch (error) {
       console.error('Error al inicializar home:', error);
@@ -88,6 +96,7 @@ export class HomePage implements OnInit {
     if (this.refreshMedicionesInterval) {
       clearInterval(this.refreshMedicionesInterval);
     }
+    this.limpiarIntervalos();
   }
 
   private async cargarModulosIniciales() {
@@ -227,6 +236,320 @@ export class HomePage implements OnInit {
       }
       console.log(`Modo ${ancho <= 480 ? 'Móvil' : 'Tablet'}: Cuadrante ${this.cuadranteActivo}`);
     }
+  }
+
+  /**
+   * Inicializar estados de conexión y apuntes para todos los módulos
+   */
+  private inicializarEstados() {
+    if (this.modulos) {
+      this.modulos.forEach(modulo => {
+        // Estado inicial como DESCONOCIDO
+        this.estadosConexion.set(modulo.moduloId, 'DESCONOCIDO');
+        this.estadosApuntes.set(modulo.moduloId, {up: 'desconocido', down: 'desconocido'});
+        
+        // Agregar propiedad para animación de carga
+        modulo.actualizandoEstado = false;
+      });
+    }
+  }
+
+  /**
+   * Configurar actualización automática de estados cada 30 segundos
+   */
+  private configurarActualizacionAutomatica() {
+    const intervalo = setInterval(() => {
+      this.actualizarEstadosTodos();
+    }, 30000); // 30 segundos
+    
+    this.intervalosActualizacion.push(intervalo);
+  }
+
+  /**
+   * Limpiar todos los intervalos al destruir el componente
+   */
+  private limpiarIntervalos() {
+    this.intervalosActualizacion.forEach(intervalo => clearInterval(intervalo));
+    this.intervalosActualizacion = [];
+  }
+
+  /**
+   * Obtener estado de conexión de un módulo específico
+   */
+  getEstadoConexion(moduloId: number): string {
+    return this.estadosConexion.get(moduloId) || 'DESCONOCIDO';
+  }
+
+  /**
+   * Obtener estado de apunte (UP o DOWN) de un módulo específico
+   */
+  getEstadoApunte(moduloId: number, tipo: 'up' | 'down'): string {
+    const estados = this.estadosApuntes.get(moduloId);
+    if (!estados) return 'desconocido';
+    return estados[tipo] || 'desconocido';
+  }
+
+  /**
+   * Obtener ícono apropiado para el estado del apunte
+   */
+  getIconoApunte(moduloId: number, tipo: 'up' | 'down'): string {
+    const estado = this.getEstadoApunte(moduloId, tipo);
+    
+    switch (estado) {
+      case 'correcto':
+        return 'checkmark-circle';
+      case 'mismatch':
+        return 'warning';
+      case 'desconectado':
+        return 'close-circle';
+      default:
+        return 'help-circle';
+    }
+  }
+
+  /**
+   * Obtener título descriptivo para el estado de conexión
+   */
+  getTituloEstado(moduloId: number): string {
+    const estado = this.getEstadoConexion(moduloId);
+    const fechaActualizacion = new Date().toLocaleTimeString();
+    
+    switch (estado) {
+      case 'ONLINE':
+        return `Módulo ${moduloId}: En línea (${fechaActualizacion})`;
+      case 'OFFLINE':
+        return `Módulo ${moduloId}: Desconectado (${fechaActualizacion})`;
+      case 'TIMEOUT':
+        return `Módulo ${moduloId}: Sin respuesta (${fechaActualizacion})`;
+      default:
+        return `Módulo ${moduloId}: Estado desconocido (${fechaActualizacion})`;
+    }
+  }
+
+  /**
+   * Actualizar estado de conexión de un módulo específico
+   */
+  async actualizarEstadoModulo(moduloId: number) {
+    const modulo = this.modulos.find(m => m.moduloId === moduloId);
+    if (!modulo) return;
+
+    try {
+      // Activar animación de carga
+      modulo.actualizandoEstado = true;
+      
+      console.log(`🔄 Actualizando estado del módulo ${moduloId}...`);
+      
+      // Simular consulta al backend para obtener estado actual
+      const estadoActual = await this.consultarEstadoModulo(moduloId);
+      const estadosApuntes = await this.verificarApuntesModulo(moduloId);
+      
+      // Actualizar estados
+      this.estadosConexion.set(moduloId, estadoActual.conexion);
+      this.estadosApuntes.set(moduloId, estadosApuntes);
+      
+      console.log(`✅ Estado actualizado - Módulo ${moduloId}: ${estadoActual.conexion}`);
+      
+      // Mostrar toast de confirmación
+      await this.mostrarToast(
+        `Módulo ${moduloId} actualizado: ${estadoActual.conexion}`, 
+        estadoActual.conexion === 'ONLINE' ? 'success' : 'warning'
+      );
+      
+    } catch (error) {
+      console.error(`❌ Error actualizando estado del módulo ${moduloId}:`, error);
+      
+      // En caso de error, marcar como desconectado
+      this.estadosConexion.set(moduloId, 'OFFLINE');
+      this.estadosApuntes.set(moduloId, {up: 'desconectado', down: 'desconectado'});
+      
+      await this.mostrarToast(`Error al actualizar módulo ${moduloId}`, 'danger');
+      
+    } finally {
+      // Desactivar animación de carga
+      modulo.actualizandoEstado = false;
+    }
+  }
+
+  /**
+   * Actualizar estado de todos los módulos (Botón STATUS)
+   */
+  async actualizarEstadoTodos() {
+    if (this.actualizandoEstadoGeneral) return;
+    
+    try {
+      this.actualizandoEstadoGeneral = true;
+      console.log('🔄 Actualizando estado de todos los módulos...');
+      
+      await this.mostrarToast('Actualizando estado de todos los módulos...', 'primary');
+      
+      // Actualizar todos los módulos en paralelo
+      const promesasActualizacion = this.modulos.map(modulo => 
+        this.actualizarEstadoModuloSilencioso(modulo.moduloId)
+      );
+      
+      await Promise.all(promesasActualizacion);
+      
+      // Contar estados
+      const conteoEstados = this.contarEstados();
+      
+      console.log('✅ Actualización masiva completada:', conteoEstados);
+      
+      await this.mostrarToast(
+        `Actualización completa: ${conteoEstados.online} online, ${conteoEstados.offline} offline, ${conteoEstados.timeout} timeout`, 
+        'success'
+      );
+      
+    } catch (error) {
+      console.error('❌ Error en actualización masiva:', error);
+      await this.mostrarToast('Error en la actualización masiva', 'danger');
+      
+    } finally {
+      this.actualizandoEstadoGeneral = false;
+    }
+  }
+
+  /**
+   * Actualizar estado de un módulo sin mostrar toast individual
+   */
+  private async actualizarEstadoModuloSilencioso(moduloId: number) {
+    try {
+      const estadoActual = await this.consultarEstadoModulo(moduloId);
+      const estadosApuntes = await this.verificarApuntesModulo(moduloId);
+      
+      this.estadosConexion.set(moduloId, estadoActual.conexion);
+      this.estadosApuntes.set(moduloId, estadosApuntes);
+      
+    } catch (error) {
+      console.error(`Error consultando módulo ${moduloId}:`, error);
+      this.estadosConexion.set(moduloId, 'OFFLINE');
+      this.estadosApuntes.set(moduloId, {up: 'desconectado', down: 'desconectado'});
+    }
+  }
+
+  /**
+   * Actualizar estados de todos los módulos (sin interfaz de usuario)
+   */
+  private async actualizarEstadosTodos() {
+    try {
+      const promesas = this.modulos.map(modulo => 
+        this.actualizarEstadoModuloSilencioso(modulo.moduloId)
+      );
+      
+      await Promise.all(promesas);
+      console.log('🔄 Actualización automática completada');
+      
+    } catch (error) {
+      console.error('❌ Error en actualización automática:', error);
+    }
+  }
+
+  /**
+   * Consultar estado actual de un módulo desde el backend
+   */
+  private async consultarEstadoModulo(moduloId: number): Promise<{conexion: string, ultimoHeartbeat: Date}> {
+    try {
+      // Aquí iría la llamada real al backend
+      // const response = await this.moduloService.getEstadoConexion(moduloId);
+      
+      // Por ahora, simulamos la respuesta
+      await this.delay(500 + Math.random() * 1000); // Simular latencia
+      
+      // Simular diferentes estados basado en el módulo ID
+      const estados = ['ONLINE', 'OFFLINE', 'TIMEOUT'];
+      const probabilidades = [0.7, 0.2, 0.1]; // 70% online, 20% offline, 10% timeout
+      
+      const random = Math.random();
+      let estadoSeleccionado = 'DESCONOCIDO';
+      
+      if (random < probabilidades[0]) {
+        estadoSeleccionado = 'ONLINE';
+      } else if (random < probabilidades[0] + probabilidades[1]) {
+        estadoSeleccionado = 'OFFLINE';
+      } else {
+        estadoSeleccionado = 'TIMEOUT';
+      }
+      
+      return {
+        conexion: estadoSeleccionado,
+        ultimoHeartbeat: new Date()
+      };
+      
+    } catch (error) {
+      console.error(`Error consultando estado del módulo ${moduloId}:`, error);
+      return {
+        conexion: 'OFFLINE',
+        ultimoHeartbeat: new Date()
+      };
+    }
+  }
+
+  /**
+   * Verificar estado de los apuntes UP/DOWN de un módulo
+   */
+  private async verificarApuntesModulo(moduloId: number): Promise<{up: string, down: string}> {
+    try {
+      // Aquí iría la llamada real al backend para verificar apuntes
+      // const response = await this.moduloService.verificarApuntes(moduloId);
+      
+      await this.delay(300 + Math.random() * 500);
+      
+      // Simular estados de apuntes
+      const estados = ['correcto', 'mismatch', 'desconectado'];
+      const probabilidades = [0.8, 0.15, 0.05]; // 80% correcto, 15% mismatch, 5% desconectado
+      
+      const getEstadoSimulado = () => {
+        const random = Math.random();
+        if (random < probabilidades[0]) return 'correcto';
+        if (random < probabilidades[0] + probabilidades[1]) return 'mismatch';
+        return 'desconectado';
+      };
+      
+      return {
+        up: getEstadoSimulado(),
+        down: getEstadoSimulado()
+      };
+      
+    } catch (error) {
+      console.error(`Error verificando apuntes del módulo ${moduloId}:`, error);
+      return {
+        up: 'desconectado',
+        down: 'desconectado'
+      };
+    }
+  }
+
+  /**
+   * Contar módulos por estado de conexión
+   */
+  private contarEstados(): {online: number, offline: number, timeout: number, desconocido: number} {
+    const conteo = {online: 0, offline: 0, timeout: 0, desconocido: 0};
+    
+    this.estadosConexion.forEach(estado => {
+      switch (estado) {
+        case 'ONLINE': conteo.online++; break;
+        case 'OFFLINE': conteo.offline++; break;
+        case 'TIMEOUT': conteo.timeout++; break;
+        default: conteo.desconocido++; break;
+      }
+    });
+    
+    return conteo;
+  }
+
+  /**
+   * Mostrar toast con mensaje
+   */
+  private async mostrarToast(mensaje: string, color: string = 'primary') {
+    // Aquí implementarías la lógica del toast
+    // Por ejemplo usando ToastController de Ionic
+    console.log(`Toast [${color}]: ${mensaje}`);
+  }
+
+  /**
+   * Delay para simulaciones
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   // Método mejorado para cambiar cuadrante
