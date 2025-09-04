@@ -507,12 +507,12 @@ export class HomePage implements OnInit, OnDestroy {
   // Métodos de navegación
   verDetalle(moduloId: number) {
     console.log(`Ver detalle del módulo: ${moduloId}`);
-    this.router.navigate([`/listado-modulos`, moduloId]);
+    this.router.navigate([`/modulo`, moduloId]);
   }
 
   verMediciones(moduloId: number) {
     console.log(`Ver mediciones del módulo: ${moduloId}`);
-    this.router.navigate([`/listado-modulos`, moduloId]);
+    this.router.navigate([`/modulo`, moduloId, 'mediciones']);
   }
 
   // Propiedades para debug MQTT
