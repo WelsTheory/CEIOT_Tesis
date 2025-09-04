@@ -1,6 +1,7 @@
+// src/app/home/home.page.ts - CON INTEGRACIÓN MQTT REAL
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ModuloService } from '../services/modulo.service';
-import { MqttService } from '../services/mqtt.service'; // ← Nueva importación
+import { MqttService, ModuloEstado } from '../services/mqtt.service'; // ← MQTT Service
 import { Modulo } from '../listado-modulos/modulo';
 import { Router } from '@angular/router';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonList, IonToolbar, IonHeader, IonTitle, IonItem, IonAvatar, IonIcon, IonLabel, IonButton } from '@ionic/angular/standalone';
@@ -11,6 +12,8 @@ import { addIcons } from 'ionicons';
 import { leaf, restaurant, flower, home, bed, hardwareChip } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
 import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
+import { ToastController } from '@ionic/angular';
+import { heart, logoApple, settingsSharp, star } from 'ionicons/icons';
 
 @Component({
   selector: 'app-home',
@@ -18,85 +21,339 @@ import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.co
   styleUrls: ['./home.page.scss'],
   standalone: true,
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonList,
-    IonItem,
-    IonAvatar,
-    IonIcon,
-    IonLabel,
-    IonButton,
-    CommonModule,
-    ThemeToggleComponent
-  ], schemas: [CUSTOM_ELEMENTS_SCHEMA],
+    IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardHeader, 
+    IonCardTitle, IonCardSubtitle, IonList, IonItem, IonAvatar, IonIcon, 
+    IonLabel, IonButton, CommonModule, ThemeToggleComponent
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-
-export class HomePage implements OnInit {
-  modulos: any[] = []; // Para almacenar modulos
-  cuadranteActivo: string = 'norte'; // Cuadrante seleccionado
-  mostrarNavegacion: boolean = false; // Controla la visibilidad del menú de navegación
-  private sub!: Subscription;
-  private refreshMedicionesInterval: any;
-  private mqttSubscription!: Subscription;
-
-  estadosConexion: Map<number, string> = new Map(); // moduloId -> estado
-  estadosApuntes: Map<number, {up: string, down: string}> = new Map(); // moduloId -> estados apuntes
+export class HomePage implements OnInit, OnDestroy {
+  modulos: any[] = [];
+  cuadranteActivo: string = 'norte';
+  mostrarNavegacion: boolean = false;
+  
+  // Estados de conexión y apuntes (ahora reales via MQTT)
+  estadosConexion: Map<number, string> = new Map();
+  estadosApuntes: Map<number, {up: string, down: string}> = new Map();
   actualizandoEstadoGeneral: boolean = false;
-  intervalosActualizacion: any[] = []; // Para limpiar intervalos
-
-  // Variables de debug
-  ultimaActualizacionMqtt: Date | null = null;
+  
+  // Suscripciones
+  private sub!: Subscription;
+  private mqttSubscription!: Subscription;
+  private medicionSubscription!: Subscription;
+  private refreshMedicionesInterval: any;
+  
+  // Estado MQTT
   mqttConnected: boolean = false;
+  ultimaActualizacionMqtt: Date | null = null;
 
   constructor(
-    private moduloService: ModuloService, // Servicio para cargar modulos
-    private mqttService: MqttService,
-    private router: Router 
+    private moduloService: ModuloService,
+    private mqttService: MqttService, // ← Inyectar MQTT Service
+    private router: Router,
+    private toastController: ToastController
   ) {
     addIcons({ leaf, restaurant, flower, home, bed, hardwareChip });
+    addIcons({ heart, logoApple, settingsSharp, star });
   }
 
-  // Método que se ejecuta al inicializar el componente
   async ngOnInit() {
     try {
-      console.log('🏠 Inicializando HomePage...');
+      console.log('🏠 Inicializando HomePage con MQTT...');
+      
       // Cargar datos iniciales
       await this.cargarModulosIniciales();
       
-      // Configurar suscripciones
-      this.configurarSuscripciones();
+      // Configurar suscripciones MQTT
+      this.configurarSuscripcionesMQTT();
       
-      // Iniciar actualización periódica (reducir frecuencia ya que MQTT será en tiempo real)
-      this.iniciarActualizacionPeriodica();
-
+      // Configurar responsive
       this.configurarResponsive();
-
+      
+      // Inicializar estados
       this.inicializarEstados();
-      this.configurarActualizacionAutomatica();
+      
+      // Reducir frecuencia de actualización periódica (MQTT será en tiempo real)
+      this.iniciarActualizacionPeriodica();
       
     } catch (error) {
-      console.error('Error al inicializar home:', error);
+      console.error('❌ Error al inicializar home:', error);
     }
   }
 
   ngOnDestroy() {
-    // Limpiar suscripciones y timers
-    if (this.sub) {
-      this.sub.unsubscribe();
+    this.limpiarSuscripciones();
+  }
+
+  private limpiarSuscripciones() {
+    if (this.sub) this.sub.unsubscribe();
+    if (this.mqttSubscription) this.mqttSubscription.unsubscribe();
+    if (this.medicionSubscription) this.medicionSubscription.unsubscribe();
+    if (this.refreshMedicionesInterval) clearInterval(this.refreshMedicionesInterval);
+  }
+
+  /**
+   * Configurar suscripciones MQTT para recibir estados en tiempo real
+   */
+  private configurarSuscripcionesMQTT() {
+    console.log('📡 Configurando suscripciones MQTT...');
+    
+    // Suscribirse al estado de conexión MQTT
+    this.mqttService.connectionStatus$.subscribe(connected => {
+      this.mqttConnected = connected;
+      console.log(`🔌 Estado MQTT: ${connected ? 'CONECTADO' : 'DESCONECTADO'}`);
+      
+      if (connected) {
+        // Solicitar estados iniciales cuando se conecte
+        setTimeout(() => {
+          this.mqttService.solicitarActualizacionTodos();
+        }, 1000);
+      }
+    });
+
+    // Suscribirse a actualizaciones de estado de módulos
+    this.mqttSubscription = this.mqttService.moduloEstados$.subscribe(estadoModulo => {
+      if (estadoModulo) {
+        this.procesarActualizacionEstadoMQTT(estadoModulo);
+      }
+    });
+
+    // Suscribirse a actualizaciones de mediciones
+    this.medicionSubscription = this.mqttService.medicionUpdates$.subscribe(medicion => {
+      if (medicion) {
+        this.procesarActualizacionMedicion(medicion);
+      }
+    });
+  }
+
+  /**
+   * Procesar actualización de estado recibida via MQTT
+   */
+  private procesarActualizacionEstadoMQTT(estadoModulo: ModuloEstado) {
+    const { moduloId } = estadoModulo;
+    
+    console.log(`📡 Actualizando estado MQTT - Módulo ${moduloId}:`, estadoModulo);
+    
+    // Actualizar estado de conexión
+    this.estadosConexion.set(moduloId, estadoModulo.estado_conexion);
+    
+    // Actualizar estados de apuntes
+    if (estadoModulo.apuntes) {
+      const { estado_up, estado_down } = estadoModulo.apuntes;
+      this.estadosApuntes.set(moduloId, {
+        up: estado_up || this.determinarEstadoApunte(estadoModulo, 'up'),
+        down: estado_down || this.determinarEstadoApunte(estadoModulo, 'down')
+      });
     }
-    if (this.mqttSubscription) {
-      this.mqttSubscription.unsubscribe();
+    
+    // Actualizar información técnica del módulo si está disponible
+    if (estadoModulo.info_tecnica) {
+      const modulo = this.modulos.find(m => m.moduloId === moduloId);
+      if (modulo && estadoModulo.info_tecnica.version_firmware) {
+        modulo.version = estadoModulo.info_tecnica.version_firmware;
+      }
     }
-    if (this.refreshMedicionesInterval) {
-      clearInterval(this.refreshMedicionesInterval);
+    
+    // Actualizar timestamp
+    this.ultimaActualizacionMqtt = new Date();
+    
+    // Marcar módulo como no actualizando si estaba en proceso
+    const modulo = this.modulos.find(m => m.moduloId === moduloId);
+    if (modulo) {
+      modulo.actualizandoEstado = false;
     }
-    this.limpiarIntervalos();
+  }
+
+  /**
+   * Procesar actualización de mediciones recibida via MQTT
+   */
+  private procesarActualizacionMedicion(medicion: any) {
+    const modulo = this.modulos.find(m => m.moduloId === medicion.moduloId);
+    if (modulo) {
+      modulo.medicionTempActual = medicion.temperatura?.toFixed(1) || modulo.medicionTempActual;
+      modulo.medicionPressActual = medicion.presion?.toFixed(1) || modulo.medicionPressActual;
+      
+      console.log(`🌡️ Mediciones actualizadas - Módulo ${medicion.moduloId}:`, {
+        temp: medicion.temperatura,
+        press: medicion.presion
+      });
+    }
+  }
+
+  /**
+   * Determinar estado de apunte basado en valores esperados vs actuales
+   */
+  private determinarEstadoApunte(estadoModulo: ModuloEstado, tipo: 'up' | 'down'): string {
+    if (estadoModulo.estado_conexion === 'OFFLINE') {
+      return 'desconectado';
+    }
+    
+    const apuntes = estadoModulo.apuntes;
+    if (!apuntes) return 'desconocido';
+    
+    const esperado = tipo === 'up' ? apuntes.up_esperado : apuntes.down_esperado;
+    const actual = tipo === 'up' ? apuntes.up_actual : apuntes.down_actual;
+    
+    if (esperado === undefined || actual === undefined) {
+      return 'desconocido';
+    }
+    
+    return esperado === actual ? 'correcto' : 'mismatch';
+  }
+
+  /**
+   * Actualizar estado de conexión de un módulo específico (via MQTT)
+   */
+  async actualizarEstadoModulo(moduloId: number) {
+    const modulo = this.modulos.find(m => m.moduloId === moduloId);
+    if (!modulo) return;
+
+    try {
+      // Activar animación de carga
+      modulo.actualizandoEstado = true;
+      
+      console.log(`🔄 Solicitando actualización MQTT del módulo ${moduloId}...`);
+      
+      // Solicitar actualización via MQTT
+      this.mqttService.solicitarActualizacionModulo(moduloId);
+      
+      // Timeout para desactivar animación si no hay respuesta
+      setTimeout(() => {
+        if (modulo.actualizandoEstado) {
+          modulo.actualizandoEstado = false;
+          this.mostrarToast(`Timeout actualizando módulo ${moduloId}`, 'warning');
+        }
+      }, 3000); // 10 segundos de timeout
+      
+    } catch (error) {
+      console.error(`❌ Error solicitando actualización del módulo ${moduloId}:`, error);
+      modulo.actualizandoEstado = false;
+      await this.mostrarToast(`Error al actualizar módulo ${moduloId}`, 'danger');
+    }
+  }
+
+  /**
+   * Actualizar estado de todos los módulos (Botón STATUS) - via MQTT
+   */
+  async actualizarEstadoTodos() {
+    if (this.actualizandoEstadoGeneral) return;
+    
+    try {
+      this.actualizandoEstadoGeneral = true;
+      console.log('🔄 Solicitando actualización masiva via MQTT...');
+      
+      await this.mostrarToast('Solicitando actualización de todos los módulos...', 'primary');
+      
+      // Solicitar actualización de todos los módulos via MQTT
+      this.mqttService.solicitarActualizacionTodos();
+      
+      // También marcar todos como actualizando
+      this.modulos.forEach(modulo => {
+        modulo.actualizandoEstado = true;
+      });
+      
+      // Timeout para completar la actualización masiva
+      setTimeout(() => {
+        this.actualizandoEstadoGeneral = false;
+        
+        // Desmarcar módulos que aún estén actualizando
+        this.modulos.forEach(modulo => {
+          if (modulo.actualizandoEstado) {
+            modulo.actualizandoEstado = false;
+          }
+        });
+        
+        // Mostrar resumen
+        const conteoEstados = this.contarEstados();
+        this.mostrarToast(
+          `Actualización completada: ${conteoEstados.online} online, ${conteoEstados.offline} offline`,
+          'success'
+        );
+        
+      }, 5000); // 15 segundos para completar actualización masiva
+      
+    } catch (error) {
+      console.error('❌ Error en actualización masiva MQTT:', error);
+      this.actualizandoEstadoGeneral = false;
+      await this.mostrarToast('Error en la actualización masiva', 'danger');
+    }
+  }
+
+  // ===================== MÉTODOS DE INTERFAZ (sin cambios) =====================
+  
+  getEstadoConexion(moduloId: number): string {
+    return this.estadosConexion.get(moduloId) || 'DESCONOCIDO';
+  }
+
+  getEstadoApunte(moduloId: number, tipo: 'up' | 'down'): string {
+    const estados = this.estadosApuntes.get(moduloId);
+    if (!estados) return 'desconocido';
+    return estados[tipo] || 'desconocido';
+  }
+
+  getIconoApunte(moduloId: number, tipo: 'up' | 'down'): string {
+    const estado = this.getEstadoApunte(moduloId, tipo);
+    
+    switch (estado) {
+      case 'correcto': return 'checkmark-circle';
+      case 'mismatch': return 'warning';
+      case 'desconectado': return 'close-circle';
+      default: return 'help-circle';
+    }
+  }
+
+  getTituloEstado(moduloId: number): string {
+    const estado = this.getEstadoConexion(moduloId);
+    const fechaActualizacion = this.ultimaActualizacionMqtt?.toLocaleTimeString() || 'No disponible';
+    
+    switch (estado) {
+      case 'ONLINE':
+        return `Módulo ${moduloId}: En línea (${fechaActualizacion})`;
+      case 'OFFLINE':
+        return `Módulo ${moduloId}: Desconectado (${fechaActualizacion})`;
+      case 'TIMEOUT':
+        return `Módulo ${moduloId}: Sin respuesta (${fechaActualizacion})`;
+      default:
+        return `Módulo ${moduloId}: Estado desconocido`;
+    }
+  }
+
+  private contarEstados(): {online: number, offline: number, timeout: number, desconocido: number} {
+    const conteo = {online: 0, offline: 0, timeout: 0, desconocido: 0};
+    
+    this.estadosConexion.forEach(estado => {
+      switch (estado) {
+        case 'ONLINE': conteo.online++; break;
+        case 'OFFLINE': conteo.offline++; break;
+        case 'TIMEOUT': conteo.timeout++; break;
+        default: conteo.desconocido++; break;
+      }
+    });
+    
+    return conteo;
+  }
+
+  private async mostrarToast(mensaje: string, color: string = 'primary') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 3000,
+      color: color,
+      position: 'bottom'
+    });
+    await toast.present();
+    console.log(`Toast [${color}]: ${mensaje}`);
+  }
+
+  // ===================== MÉTODOS EXISTENTES (sin cambios significativos) =====================
+
+  private inicializarEstados() {
+    if (this.modulos) {
+      this.modulos.forEach(modulo => {
+        this.estadosConexion.set(modulo.moduloId, 'DESCONOCIDO');
+        this.estadosApuntes.set(modulo.moduloId, {up: 'desconocido', down: 'desconocido'});
+        modulo.actualizandoEstado = false;
+      });
+    }
   }
 
   private async cargarModulosIniciales() {
@@ -117,442 +374,70 @@ export class HomePage implements OnInit {
           const apunte = await this.moduloService.getApunte(d.moduloId);
           up = apunte?.up ?? 0.0;
           down = apunte?.down ?? 0.0;
-        } catch (err) {
-          console.error(`Error cargando datos de ${d.moduloId}`, err);
-        }
-
-        try {
-          const estadoResponse = await this.moduloService.getEstadoReset(d.moduloId);
-          estadoReset = estadoResponse.estado;
-        } catch (err) {
-          console.error(`Error cargando estado válvula ${d.moduloId}`, err);
+          
+        } catch (error) {
+          console.error(`Error cargando datos del módulo ${d.moduloId}:`, error);
         }
 
         return {
           ...d,
-          ubicacion: d.ubicacion || 'Desconocida', 
-          up,
-          down,
           medicionTempActual,
           medicionPressActual,
-          estadoReset
+          estadoReset,
+          up,
+          down,
+          actualizandoEstado: false
         };
       })
     );
   }
 
-  private configurarSuscripciones() {
-    console.log('📡 Configurando suscripciones...');
-    
-    // Suscripción a cambios de estado de válvulas
-    this.sub = this.moduloService.resetState$.subscribe(change => {
-      if (change) {
-        console.log('🔄 Cambio de estado de válvula recibido:', change);
-        this.modulos = this.modulos.map(d =>
-          d.moduloId === change.id
-            ? { ...d, estadoReset: change.estado }
-            : d
-        );
-      }
-    });
-
-    // Suscripción a estado de conexión MQTT
-    this.mqttService.connectionStatus$.subscribe(connected => {
-      this.mqttConnected = connected;
-      console.log('📡 Estado MQTT:', connected ? 'Conectado' : 'Desconectado');
-    });
-
-    // ⭐ SUSCRIPCIÓN PRINCIPAL PARA ACTUALIZACIONES DE APUNTES
-    this.mqttSubscription = this.mqttService.apunteUpdates$.subscribe(apunteUpdate => {
-      if (apunteUpdate && apunteUpdate.moduloId) {
-        console.log('🎯 Actualización de apunte recibida via MQTT:', apunteUpdate);
-        this.ultimaActualizacionMqtt = new Date();
-        
-        // Actualizar el módulo específico en tiempo real
-        const moduloIndex = this.modulos.findIndex(m => m.moduloId === apunteUpdate.moduloId);
-        
-        if (moduloIndex !== -1) {
-          const moduloAnterior = { ...this.modulos[moduloIndex] };
-          
-          // Actualizar valores
-          this.modulos[moduloIndex] = {
-            ...this.modulos[moduloIndex],
-            up: apunteUpdate.up !== undefined ? apunteUpdate.up : this.modulos[moduloIndex].up,
-            down: apunteUpdate.down !== undefined ? apunteUpdate.down : this.modulos[moduloIndex].down,
-            ultimaActualizacion: new Date().toLocaleTimeString(),
-            // Flag para indicar que hubo cambios
-            actualizado: true
-          };
-          
-          console.log('✅ Módulo actualizado en vista:');
-          console.log('  - Módulo ID:', apunteUpdate.moduloId);
-          console.log('  - UP: ', moduloAnterior.up, '→', this.modulos[moduloIndex].up);
-          console.log('  - DOWN:', moduloAnterior.down, '→', this.modulos[moduloIndex].down);
-          
-          // Opcional: Remover flag de actualizado después de unos segundos
-          setTimeout(() => {
-            if (this.modulos[moduloIndex]) {
-              this.modulos[moduloIndex].actualizado = false;
+  private iniciarActualizacionPeriodica() {
+    // Reducir frecuencia ya que MQTT maneja las actualizaciones en tiempo real
+    this.refreshMedicionesInterval = setInterval(async () => {
+      try {
+        // Solo actualizar mediciones de la BD, no estados (esos vienen por MQTT)
+        await Promise.all(
+          this.modulos.map(async (modulo) => {
+            try {
+              const ultima = await this.moduloService.getUltimaMedicion(modulo.moduloId);
+              if (ultima) {
+                modulo.medicionTempActual = ultima.valor_temp ?? modulo.medicionTempActual;
+                modulo.medicionPressActual = ultima.valor_press ?? modulo.medicionPressActual;
+              }
+            } catch (error) {
+              // Error silencioso para no spam en consola
             }
-          }, 3000);
-          
-        } else {
-          console.warn('⚠️ Módulo no encontrado en la lista:', apunteUpdate.moduloId);
-        }
+          })
+        );
+      } catch (error) {
+        console.error('❌ Error en actualización periódica:', error);
       }
-    });
+    }, 120000); // Cada 2 minutos (MQTT maneja el tiempo real)
     
-    console.log('✅ Suscripciones configuradas');
+    console.log('⏰ Actualización periódica configurada cada 2 minutos (complementa MQTT)');
   }
 
-  // Configurar responsive con breakpoints específicos
   private configurarResponsive() {
-    this.evaluarTamañoPantalla();
-    
-    // Escuchar cambios de tamaño con debounce
-    let resizeTimer: any;
+    this.verificarTamanioPantalla();
     window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        this.evaluarTamañoPantalla();
-      }, 150);
+      this.verificarTamanioPantalla();
     });
   }
 
-  // Evaluar tamaño de pantalla y ajustar comportamiento
-  private evaluarTamañoPantalla() {
-    const ancho = window.innerWidth;
+  private verificarTamanioPantalla() {
+    this.mostrarNavegacion = window.innerWidth < 901;
     
-    if (ancho >= 901) {
-      // Desktop: Mostrar todos los cuadrantes
-      this.cuadranteActivo = 'todos';
-      this.mostrarNavegacion = false;
-      console.log('Modo Desktop: Todos los cuadrantes visibles');
-    } else {
-      // Tablet/Móvil: Mostrar navegación y un cuadrante
-      this.mostrarNavegacion = true;
-      if (this.cuadranteActivo === 'todos') {
-        this.cuadranteActivo = 'norte'; // Default
-      }
-      console.log(`Modo ${ancho <= 480 ? 'Móvil' : 'Tablet'}: Cuadrante ${this.cuadranteActivo}`);
+    if (!this.mostrarNavegacion) {
+      this.cuadranteActivo = 'norte';
     }
-  }
-
-  /**
-   * Inicializar estados de conexión y apuntes para todos los módulos
-   */
-  private inicializarEstados() {
-    if (this.modulos) {
-      this.modulos.forEach(modulo => {
-        // Estado inicial como DESCONOCIDO
-        this.estadosConexion.set(modulo.moduloId, 'DESCONOCIDO');
-        this.estadosApuntes.set(modulo.moduloId, {up: 'desconocido', down: 'desconocido'});
-        
-        // Agregar propiedad para animación de carga
-        modulo.actualizandoEstado = false;
-      });
-    }
-  }
-
-  /**
-   * Configurar actualización automática de estados cada 30 segundos
-   */
-  private configurarActualizacionAutomatica() {
-    const intervalo = setInterval(() => {
-      this.actualizarEstadosTodos();
-    }, 30000); // 30 segundos
     
-    this.intervalosActualizacion.push(intervalo);
-  }
-
-  /**
-   * Limpiar todos los intervalos al destruir el componente
-   */
-  private limpiarIntervalos() {
-    this.intervalosActualizacion.forEach(intervalo => clearInterval(intervalo));
-    this.intervalosActualizacion = [];
-  }
-
-  /**
-   * Obtener estado de conexión de un módulo específico
-   */
-  getEstadoConexion(moduloId: number): string {
-    return this.estadosConexion.get(moduloId) || 'DESCONOCIDO';
-  }
-
-  /**
-   * Obtener estado de apunte (UP o DOWN) de un módulo específico
-   */
-  getEstadoApunte(moduloId: number, tipo: 'up' | 'down'): string {
-    const estados = this.estadosApuntes.get(moduloId);
-    if (!estados) return 'desconocido';
-    return estados[tipo] || 'desconocido';
-  }
-
-  /**
-   * Obtener ícono apropiado para el estado del apunte
-   */
-  getIconoApunte(moduloId: number, tipo: 'up' | 'down'): string {
-    const estado = this.getEstadoApunte(moduloId, tipo);
-    
-    switch (estado) {
-      case 'correcto':
-        return 'checkmark-circle';
-      case 'mismatch':
-        return 'warning';
-      case 'desconectado':
-        return 'close-circle';
-      default:
-        return 'help-circle';
+    if (this.mostrarNavegacion) {
+      console.log(`📱 ${window.innerWidth < 768 ? 'Móvil' : 'Tablet'}: Cuadrante ${this.cuadranteActivo}`);
     }
   }
 
-  /**
-   * Obtener título descriptivo para el estado de conexión
-   */
-  getTituloEstado(moduloId: number): string {
-    const estado = this.getEstadoConexion(moduloId);
-    const fechaActualizacion = new Date().toLocaleTimeString();
-    
-    switch (estado) {
-      case 'ONLINE':
-        return `Módulo ${moduloId}: En línea (${fechaActualizacion})`;
-      case 'OFFLINE':
-        return `Módulo ${moduloId}: Desconectado (${fechaActualizacion})`;
-      case 'TIMEOUT':
-        return `Módulo ${moduloId}: Sin respuesta (${fechaActualizacion})`;
-      default:
-        return `Módulo ${moduloId}: Estado desconocido (${fechaActualizacion})`;
-    }
-  }
-
-  /**
-   * Actualizar estado de conexión de un módulo específico
-   */
-  async actualizarEstadoModulo(moduloId: number) {
-    const modulo = this.modulos.find(m => m.moduloId === moduloId);
-    if (!modulo) return;
-
-    try {
-      // Activar animación de carga
-      modulo.actualizandoEstado = true;
-      
-      console.log(`🔄 Actualizando estado del módulo ${moduloId}...`);
-      
-      // Simular consulta al backend para obtener estado actual
-      const estadoActual = await this.consultarEstadoModulo(moduloId);
-      const estadosApuntes = await this.verificarApuntesModulo(moduloId);
-      
-      // Actualizar estados
-      this.estadosConexion.set(moduloId, estadoActual.conexion);
-      this.estadosApuntes.set(moduloId, estadosApuntes);
-      
-      console.log(`✅ Estado actualizado - Módulo ${moduloId}: ${estadoActual.conexion}`);
-      
-      // Mostrar toast de confirmación
-      await this.mostrarToast(
-        `Módulo ${moduloId} actualizado: ${estadoActual.conexion}`, 
-        estadoActual.conexion === 'ONLINE' ? 'success' : 'warning'
-      );
-      
-    } catch (error) {
-      console.error(`❌ Error actualizando estado del módulo ${moduloId}:`, error);
-      
-      // En caso de error, marcar como desconectado
-      this.estadosConexion.set(moduloId, 'OFFLINE');
-      this.estadosApuntes.set(moduloId, {up: 'desconectado', down: 'desconectado'});
-      
-      await this.mostrarToast(`Error al actualizar módulo ${moduloId}`, 'danger');
-      
-    } finally {
-      // Desactivar animación de carga
-      modulo.actualizandoEstado = false;
-    }
-  }
-
-  /**
-   * Actualizar estado de todos los módulos (Botón STATUS)
-   */
-  async actualizarEstadoTodos() {
-    if (this.actualizandoEstadoGeneral) return;
-    
-    try {
-      this.actualizandoEstadoGeneral = true;
-      console.log('🔄 Actualizando estado de todos los módulos...');
-      
-      await this.mostrarToast('Actualizando estado de todos los módulos...', 'primary');
-      
-      // Actualizar todos los módulos en paralelo
-      const promesasActualizacion = this.modulos.map(modulo => 
-        this.actualizarEstadoModuloSilencioso(modulo.moduloId)
-      );
-      
-      await Promise.all(promesasActualizacion);
-      
-      // Contar estados
-      const conteoEstados = this.contarEstados();
-      
-      console.log('✅ Actualización masiva completada:', conteoEstados);
-      
-      await this.mostrarToast(
-        `Actualización completa: ${conteoEstados.online} online, ${conteoEstados.offline} offline, ${conteoEstados.timeout} timeout`, 
-        'success'
-      );
-      
-    } catch (error) {
-      console.error('❌ Error en actualización masiva:', error);
-      await this.mostrarToast('Error en la actualización masiva', 'danger');
-      
-    } finally {
-      this.actualizandoEstadoGeneral = false;
-    }
-  }
-
-  /**
-   * Actualizar estado de un módulo sin mostrar toast individual
-   */
-  private async actualizarEstadoModuloSilencioso(moduloId: number) {
-    try {
-      const estadoActual = await this.consultarEstadoModulo(moduloId);
-      const estadosApuntes = await this.verificarApuntesModulo(moduloId);
-      
-      this.estadosConexion.set(moduloId, estadoActual.conexion);
-      this.estadosApuntes.set(moduloId, estadosApuntes);
-      
-    } catch (error) {
-      console.error(`Error consultando módulo ${moduloId}:`, error);
-      this.estadosConexion.set(moduloId, 'OFFLINE');
-      this.estadosApuntes.set(moduloId, {up: 'desconectado', down: 'desconectado'});
-    }
-  }
-
-  /**
-   * Actualizar estados de todos los módulos (sin interfaz de usuario)
-   */
-  private async actualizarEstadosTodos() {
-    try {
-      const promesas = this.modulos.map(modulo => 
-        this.actualizarEstadoModuloSilencioso(modulo.moduloId)
-      );
-      
-      await Promise.all(promesas);
-      console.log('🔄 Actualización automática completada');
-      
-    } catch (error) {
-      console.error('❌ Error en actualización automática:', error);
-    }
-  }
-
-  /**
-   * Consultar estado actual de un módulo desde el backend
-   */
-  private async consultarEstadoModulo(moduloId: number): Promise<{conexion: string, ultimoHeartbeat: Date}> {
-    try {
-      // Aquí iría la llamada real al backend
-      // const response = await this.moduloService.getEstadoConexion(moduloId);
-      
-      // Por ahora, simulamos la respuesta
-      await this.delay(500 + Math.random() * 1000); // Simular latencia
-      
-      // Simular diferentes estados basado en el módulo ID
-      const estados = ['ONLINE', 'OFFLINE', 'TIMEOUT'];
-      const probabilidades = [0.7, 0.2, 0.1]; // 70% online, 20% offline, 10% timeout
-      
-      const random = Math.random();
-      let estadoSeleccionado = 'DESCONOCIDO';
-      
-      if (random < probabilidades[0]) {
-        estadoSeleccionado = 'ONLINE';
-      } else if (random < probabilidades[0] + probabilidades[1]) {
-        estadoSeleccionado = 'OFFLINE';
-      } else {
-        estadoSeleccionado = 'TIMEOUT';
-      }
-      
-      return {
-        conexion: estadoSeleccionado,
-        ultimoHeartbeat: new Date()
-      };
-      
-    } catch (error) {
-      console.error(`Error consultando estado del módulo ${moduloId}:`, error);
-      return {
-        conexion: 'OFFLINE',
-        ultimoHeartbeat: new Date()
-      };
-    }
-  }
-
-  /**
-   * Verificar estado de los apuntes UP/DOWN de un módulo
-   */
-  private async verificarApuntesModulo(moduloId: number): Promise<{up: string, down: string}> {
-    try {
-      // Aquí iría la llamada real al backend para verificar apuntes
-      // const response = await this.moduloService.verificarApuntes(moduloId);
-      
-      await this.delay(300 + Math.random() * 500);
-      
-      // Simular estados de apuntes
-      const estados = ['correcto', 'mismatch', 'desconectado'];
-      const probabilidades = [0.8, 0.15, 0.05]; // 80% correcto, 15% mismatch, 5% desconectado
-      
-      const getEstadoSimulado = () => {
-        const random = Math.random();
-        if (random < probabilidades[0]) return 'correcto';
-        if (random < probabilidades[0] + probabilidades[1]) return 'mismatch';
-        return 'desconectado';
-      };
-      
-      return {
-        up: getEstadoSimulado(),
-        down: getEstadoSimulado()
-      };
-      
-    } catch (error) {
-      console.error(`Error verificando apuntes del módulo ${moduloId}:`, error);
-      return {
-        up: 'desconectado',
-        down: 'desconectado'
-      };
-    }
-  }
-
-  /**
-   * Contar módulos por estado de conexión
-   */
-  private contarEstados(): {online: number, offline: number, timeout: number, desconocido: number} {
-    const conteo = {online: 0, offline: 0, timeout: 0, desconocido: 0};
-    
-    this.estadosConexion.forEach(estado => {
-      switch (estado) {
-        case 'ONLINE': conteo.online++; break;
-        case 'OFFLINE': conteo.offline++; break;
-        case 'TIMEOUT': conteo.timeout++; break;
-        default: conteo.desconocido++; break;
-      }
-    });
-    
-    return conteo;
-  }
-
-  /**
-   * Mostrar toast con mensaje
-   */
-  private async mostrarToast(mensaje: string, color: string = 'primary') {
-    // Aquí implementarías la lógica del toast
-    // Por ejemplo usando ToastController de Ionic
-    console.log(`Toast [${color}]: ${mensaje}`);
-  }
-
-  /**
-   * Delay para simulaciones
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // Método mejorado para cambiar cuadrante
+  // Métodos de navegación por cuadrantes
   cambiarCuadrante(cuadrante: string) {
     if (window.innerWidth < 901) {
       this.cuadranteActivo = cuadrante;
@@ -563,132 +448,10 @@ export class HomePage implements OnInit {
     }
   }
 
-  // Verificar si un cuadrante debe estar activo
   esCuadranteActivo(cuadrante: string): boolean {
     return window.innerWidth >= 901 || this.cuadranteActivo === cuadrante;
   }
 
-  // Obtener clase CSS para cuadrante
-  getClaseCuadrante(cuadrante: string): string {
-    const clases = [`cuadrante-${cuadrante}`];
-    
-    if (this.esCuadranteActivo(cuadrante)) {
-      clases.push('cuadrante-activo');
-    }
-    
-    return clases.join(' ');
-  }
-  // Métodos adicionales para mejor UX
-  
-  // Obtener número de módulos por cuadrante (para mostrar en navegación)
-  getNumeroModulos(cuadrante: string): number {
-    switch(cuadrante.toLowerCase()) {
-      case 'norte': return this.getModulosNorte().length;
-      case 'este': return this.getModulosEste().length;
-      case 'oeste': return this.getModulosOeste().length;
-      case 'sur': return this.getModulosSur().length;
-      default: return 0;
-    }
-  }
-
-  // Obtener información del cuadrante activo
-  getInfoCuadranteActivo() {
-    return {
-      nombre: this.cuadranteActivo.charAt(0).toUpperCase() + this.cuadranteActivo.slice(1),
-      cantidad: this.getNumeroModulos(this.cuadranteActivo),
-      modulos: this.getModulosPorCuadrante(this.cuadranteActivo)
-    };
-  }
-
-  // Obtener módulos de un cuadrante específico
-  getModulosPorCuadrante(cuadrante: string) {
-    switch(cuadrante.toLowerCase()) {
-      case 'norte': return this.getModulosNorte();
-      case 'este': return this.getModulosEste();
-      case 'oeste': return this.getModulosOeste();
-      case 'sur': return this.getModulosSur();
-      default: return [];
-    }
-  }
-
-  private iniciarActualizacionPeriodica() {
-    // Reducir la frecuencia ya que MQTT maneja las actualizaciones en tiempo real
-    this.refreshMedicionesInterval = setInterval(async () => {
-      try {
-        await Promise.all(
-          this.modulos.map(async (modulo) => {
-            try {
-              const ultima = await this.moduloService.getUltimaMedicion(modulo.moduloId);
-              const nuevoValorTemp = ultima?.valor_temp ?? '—';
-              const nuevoValorPress = ultima?.valor_press ?? '—';
-              
-              if (modulo.medicionTempActual !== nuevoValorTemp) {
-                modulo.medicionTempActual = nuevoValorTemp;
-              }
-              if (modulo.medicionPressActual !== nuevoValorPress) {
-                modulo.medicionPressActual = nuevoValorPress;
-              }
-              
-              // Solo actualizar apuntes si no hay conexión MQTT activa
-              if (!this.mqttConnected) {
-                console.log(`📊 MQTT desconectado, actualizando apuntes via API para módulo ${modulo.moduloId}`);
-                const apunte = await this.moduloService.getApunte(modulo.moduloId);
-                
-                if (apunte) {
-                  if (modulo.up !== apunte.up) {
-                    console.log(`📈 UP actualizado módulo ${modulo.moduloId}: ${modulo.up} → ${apunte.up}`);
-                    modulo.up = apunte.up;
-                  }
-                  
-                  if (modulo.down !== apunte.down) {
-                    console.log(`📉 DOWN actualizado módulo ${modulo.moduloId}: ${modulo.down} → ${apunte.down}`);
-                    modulo.down = apunte.down;
-                  }
-                }
-              }
-              
-            } catch (error) {
-              console.error(`❌ Error actualizando módulo ${modulo.moduloId}:`, error);
-            }
-          })
-        );
-        
-        console.log('✅ Actualización periódica completada');
-        
-      } catch (error) {
-        console.error('❌ Error en actualización periódica:', error);
-      }
-    }, 5000);
-    
-    console.log('✅ Actualización periódica configurada (cada 2 minutos)');
-  }
-
-  // Método para refrescar manualmente
-  async refrescarDatos() {
-    console.log('🔄 Refresh manual solicitado...');
-    
-    try {
-      await this.cargarModulosIniciales();
-      console.log('✅ Datos refrescados manualmente');
-    } catch (error) {
-      console.error('❌ Error en refresh manual:', error);
-    }
-  }
-
-  // Getter para mostrar estado de conexión en el template si quieres
-  get estadoMqtt(): string {
-    return this.mqttConnected ? 'Conectado' : 'Desconectado';
-  }
-
-  get tiempoUltimaActualizacionMqtt(): string {
-    return this.ultimaActualizacionMqtt 
-      ? this.ultimaActualizacionMqtt.toLocaleTimeString() 
-      : 'Nunca';
-  }
-
-  navigateToModule(modulo: any) {
-    this.router.navigate(['/listado-modulos', modulo.moduloId]);
-  }
   // Métodos para filtrar por cuadrante
   getModulosNorte() {
     return this.modulos?.filter(m => m.ubicacion === 'Norte') || [];
@@ -705,56 +468,61 @@ export class HomePage implements OnInit {
   getModulosOeste() {
     return this.modulos?.filter(m => m.ubicacion === 'Oeste') || [];
   }
-    // Encender todos los modulos
+
+  // Métodos de control de módulos
   async encenderTodos() {
     try {
       await Promise.all(
         this.modulos.map(async (d) => {
           try {
             await this.moduloService.abrirReset(d.moduloId);
-            d.estadoReset = true; // Actualiza localmente
+            d.estadoReset = true;
           } catch (err) {
-            console.error(`Error encendiendo módulos ${d.moduloId}`, err);
+            console.error(`Error encendiendo módulo ${d.moduloId}`, err);
           }
         })
       );
     } catch (err) {
-      console.error('Error al encender todas las módulos', err);
+      console.error('Error al encender todos los módulos', err);
     }
   }
 
-  // Apagar todos los modulos
   async apagarTodos() {
     try {
       await Promise.all(
         this.modulos.map(async (d) => {
           try {
             await this.moduloService.cerrarReset(d.moduloId);
-            d.estadoReset = false; // Actualiza localmente
+            d.estadoReset = false;
           } catch (err) {
-            console.error(`Error apagando modulo ${d.moduloId}`, err);
+            console.error(`Error apagando módulo ${d.moduloId}`, err);
           }
         })
       );
     } catch (err) {
-      console.error('Error al apagar todas las modulos', err);
+      console.error('Error al apagar todos los módulos', err);
     }
   }
 
-    
-
-  // Método para navegar a la página de detalles de un modulo
+  // Métodos de navegación
   verDetalle(moduloId: number) {
-    console.log(`Ver detalle del modulo: ${moduloId}`);
-    this.router.navigate([`/modulo`, moduloId]);
+    console.log(`Ver detalle del módulo: ${moduloId}`);
+    this.router.navigate([`/listado-modulos`, moduloId]);
   }
 
   verMediciones(moduloId: number) {
-    console.log(`Ver mediciones del modulo: ${moduloId}`);
-    this.router.navigate([`/modulo`, moduloId, 'mediciones']);
-    }
-    
+    console.log(`Ver mediciones del módulo: ${moduloId}`);
+    this.router.navigate([`/listado-modulos`, moduloId]);
+  }
+
+  // Propiedades para debug MQTT
+  get estadoMqtt(): string {
+    return this.mqttConnected ? 'Conectado' : 'Desconectado';
+  }
+
+  get tiempoUltimaActualizacionMqtt(): string {
+    return this.ultimaActualizacionMqtt 
+      ? this.ultimaActualizacionMqtt.toLocaleTimeString() 
+      : 'Nunca';
+  }
 }
-
-
-
