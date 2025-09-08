@@ -52,7 +52,7 @@
               <h4>Últimas Mediciones:</h4>
               
               <!-- Temperatura -->
-              <div class="medicion-item">
+              <div class="medicion-item temperatura-item">
                 <div class="medicion-header">
                   <span class="medicion-tipo">Temperatura:</span>
                 </div>
@@ -66,7 +66,7 @@
               </div>
 
               <!-- Presión -->
-              <div class="medicion-item">
+              <div class="medicion-item presion-item">
                 <div class="medicion-header">
                   <span class="medicion-tipo">Presión:</span>
                 </div>
@@ -77,6 +77,24 @@
                 <ng-template #noMedicionPres>
                   <p class="no-medicion">No disponible</p>
                 </ng-template>
+              </div>
+
+              <div class="sistema-info-section">
+                <h4>Información del Sistema:</h4>
+                <div class="sistema-items">
+                  <div class="sistema-item">
+                    <span class="sistema-label">🧠 Memoria Libre:</span>
+                    <span class="sistema-valor"> {{ modulo.memoriaLibre || 'N/A' }} KB</span>
+                  </div>
+                  <div class="sistema-item">
+                    <span class="sistema-label">🔥 Temp. Interna:</span>
+                    <span class="sistema-valor"> {{ modulo.temperaturaInterna || 'N/A' }} °C</span>
+                  </div>
+                  <div class="sistema-item">
+                    <span class="sistema-label">⚡ Voltaje:</span>
+                    <span class="sistema-valor"> {{ modulo.voltajeAlimentacion || 'N/A' }} V</span>
+                  </div>
+                </div>
               </div>
             </div>
           </ion-card-content>
@@ -92,6 +110,20 @@
               <ion-chip color="tertiary">
                 <ion-label>{{ modulo.version || 'Versión 1.0' }}</ion-label>
               </ion-chip>
+            </div>
+          </div>
+          <div class="info-tecnica-section">
+            <div class="info-tecnica-item">
+              <span class="info-label">🌐 IP:</span>
+              <span class="info-valor"> {{ modulo.direccionIP || 'N/A' }}</span>
+            </div>
+            <div class="info-tecnica-item">
+              <span class="info-label">💾 Firmware:</span>
+              <span class="info-valor"> {{ modulo.firmware || 'N/A' }}</span>
+            </div>
+            <div class="info-tecnica-item">
+              <span class="info-label">🏷️ MAC:</span>
+              <span class="info-valor"> {{ modulo.direccionMAC || 'N/A' }}</span>
             </div>
           </div>
         </ion-col>
