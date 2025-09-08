@@ -85,8 +85,8 @@ routerModulos.post('/:id/abrir', (req, res) => {
 
     pool.query(query, [resetId], (err) => {
         if (err) {
-            console.error('Error al abrir la modulo reset:', err);
-            return res.status(500).send({ error: 'No se pudo abrir la válvula' });
+            console.error('Error al encender el módulo reset:', err);
+            return res.status(500).send({ error: 'No se pudo encender el módulo' });
         }
         res.status(200).send({ message: 'Reset reinicio exitosamente' });
     });
@@ -101,14 +101,14 @@ routerModulos.post('/:id/cerrar', (req, res) => {
 
     pool.query(query, [resetId], (err) => {
         if (err) {
-            console.error('Error al cerrar la válvula:', err);
-            return res.status(500).send({ error: 'No se pudo cerrar la válvula' });
+            console.error('Error al apagar el módulo:', err);
+            return res.status(500).send({ error: 'No se pudo apagar el módulo' });
         }
         res.status(200).send({ message: 'Reset no reiniciado exitosamente' });
     });
 });
 
-// Obtener estado de la válvula
+// Obtener estado de la módulo
 routerModulos.get('/:id/estado', (req, res) => {
     const resetId = req.params.id;
     const query = `

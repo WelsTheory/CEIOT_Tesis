@@ -85,7 +85,7 @@ export class ModuloPage implements OnInit{
         this.moduloId,
         reinicio
       );
-      alert(` ${reinicio ? 'abierto' : 'cerrado'} correctamente`);
+      alert(` ${reinicio ? 'encendido' : 'apagado'} correctamente`);
     } catch (error) {
       console.error('Error al cambiar el estado del reinicio :', error);
       alert('No se pudo cambiar el reinicio del módulo.');
@@ -105,24 +105,24 @@ export class ModuloPage implements OnInit{
   async abrirReset(moduloId: number) {
     try {
       await this.moduloService.abrirReset(moduloId);
-      alert('Válvula abierta exitosamente');
+      alert('Módulo encendido exitosamente');
       this.actualizarEstadoReset();
       this.moduloService.setResetState(moduloId, true); // ✅ Notifica a Home
     } catch (error) {
-      console.error('Error al abrir la válvula:', error);
-      alert('No se pudo abrir la válvula');
+      console.error('Error al encender el módulo:', error);
+      alert('No se pudo encender el módulo');
     }
   }
   
   async cerrarReset(moduloId: number) {
     try {
       await this.moduloService.cerrarReset(moduloId);
-      alert('Válvula cerrada exitosamente');
+      alert('Módulo apagado exitosamente');
       this.actualizarEstadoReset();
       this.moduloService.setResetState(moduloId, false); // ✅ Notifica a Home
     } catch (error) {
-      console.error('Error al cerrar la válvula:', error);
-      alert('No se pudo cerrar la válvula');
+      console.error('Error al apagar el módulo:', error);
+      alert('No se pudo apagar el módulo');
     }
   }
   private async actualizarEstadoReset() {
