@@ -13,6 +13,16 @@ export interface Apunte {
   moduloId: number;
 }
 
+// Interfaz para la información del sistema
+export interface InformacionSistema {
+  memoriaLibre?: number;
+  temperaturaInterna?: number;
+  voltajeAlimentacion?: number;
+  direccionIP?: string;
+  firmware?: string;
+  direccionMAC?: string;
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -101,6 +111,32 @@ export class ModuloService {
     };
     return firstValueFrom(
       this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/apuntes`, { params })
+    );
+  }
+    /**
+   * Obtiene la información del sistema del módulo (memoria, temperatura interna, voltaje, IP, firmware, MAC)
+   */
+  getInformacionSistema(moduloId: number): Promise<InformacionSistema> {
+    return firstValueFrom(
+      this._http.get<InformacionSistema>(`${this.apiUrl}/${moduloId}/sistema-info`)
+    );
+  }
+
+  /**
+   * Obtiene información técnica del módulo (IP, firmware, MAC)
+   */
+  getInformacionTecnica(moduloId: number): Promise<{direccionIP: string, firmware: string, direccionMAC: string}> {
+    return firstValueFrom(
+      this._http.get<{direccionIP: string, firmware: string, direccionMAC: string}>(`${this.apiUrl}/${moduloId}/info-tecnica`)
+    );
+  }
+
+  /**
+   * Obtiene métricas del sistema del módulo (memoria, temperatura interna, voltaje)
+   */
+  getMetricasSistema(moduloId: number): Promise<{memoriaLibre: number, temperaturaInterna: number, voltajeAlimentacion: number}> {
+    return firstValueFrom(
+      this._http.get<{memoriaLibre: number, temperaturaInterna: number, voltajeAlimentacion: number}>(`${this.apiUrl}/${moduloId}/metricas-sistema`)
     );
   }
 }
