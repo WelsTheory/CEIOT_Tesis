@@ -11,6 +11,8 @@ services:
          -                      ./src/frontend/dam:/src/frontend/dam
          -                      /src/frontend/dam/node_modules
       command:                  ionic serve --external
+      networks:
+        -                       app-fullstack-net
 
     mysql-server:
         image:                   mysql:5.7
@@ -40,21 +42,24 @@ services:
         ports:
             -                    "8001:80"
 
-# ====== NUEVO SERVICIO MQTT ======
-    mosquitto:
-        image:                   eclipse-mosquitto:2.0
-        container_name:          mosquitto
-        networks:
-            -                    app-fullstack-net
-        ports:
-            -                    "1883:1883"   # Puerto MQTT estándar
-            -                    "9001:9001"   # Puerto WebSocket para frontend
-        volumes:
-            -                    ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-            -                    ./mqtt/data:/mosquitto/data
-            -                    ./mqtt/log:/mosquitto/log
-        restart:                 unless-stopped
-        command: mosquitto -c /mosquitto/config/mosquitto.conf
+    # ====== MOSQUITTO LOCAL COMENTADO (RESPALDO) ======
+    # Comentado porque usamos broker remoto en 10.10.10.102
+    # Descomenta si quieres volver a usar broker local
+    
+    # mosquitto:
+    #     image:                   eclipse-mosquitto:2.0
+    #     container_name:          mosquitto
+    #     networks:
+    #         -                    app-fullstack-net
+    #     ports:
+    #         -                    "1883:1883"   # Puerto MQTT estándar
+    #         -                    "9001:9001"   # Puerto WebSocket para frontend
+    #     volumes:
+    #         -                    ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    #         -                    ./mqtt/data:/mosquitto/data
+    #         -                    ./mqtt/log:/mosquitto/log
+    #     restart:                 unless-stopped
+    #     command: mosquitto -c /mosquitto/config/mosquitto.conf
 
     node-backend:
         build:
@@ -67,9 +72,12 @@ services:
         - app-fullstack-net
         depends_on:
         - mysql-server
-        - mosquitto
+        # - mosquitto  # ← COMENTADO: ya no depende del mosquitto local
         ports:
         - "8000:3000"
+        environment:
+        # ↓ OPCIONAL: variable de entorno para el broker remoto
+        - MQTT_BROKER_URL=mqtt://10.10.10.102:1883
         command: >
             sh -c "npm install && nodemon -L index.js"
 

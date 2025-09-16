@@ -15,7 +15,8 @@ const routerModulos = require('./modulos/index');
 var app = express();
 
 //=======[ MQTT Configuration ]=============================================
-const MQTT_BROKER_URL = 'mqtt://mosquitto:1883'; // ← Usar nombre del contenedor Docker
+//const MQTT_BROKER_URL = 'mqtt://mosquitto:1883'; // ← Usar nombre del contenedor Docker
+const MQTT_BROKER_URL = 'mqtt://10.10.10.102:1883'; // BROQUET MQTT REMOTO
 const MQTT_TOPICS = {
     SENSOR_DATA: 'sensores/data',
     CONTROL_COMMANDS: 'control/commands',
