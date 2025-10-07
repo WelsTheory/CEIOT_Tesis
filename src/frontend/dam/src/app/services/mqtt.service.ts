@@ -1,6 +1,7 @@
 // src/app/services/mqtt.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../environments/environment'; // 👈 Importar
 
 // Declarar mqtt para TypeScript
 declare const mqtt: any;
@@ -91,7 +92,7 @@ export class MqttService {
       console.log('🔌 Inicializando conexión MQTT...');
       
       // Conectar al broker MQTT vía WebSocket
-      this.client = mqtt.connect('ws://localhost:9001', {
+      this.client = mqtt.connect(environment.mqttUrl, {
         clientId: 'ionic_frontend_' + Math.random().toString(16).substr(2, 8),
         // 🚀 OPTIMIZACIONES CLAVE:
         reconnectPeriod: 100,        // ⚡ Era 1000ms → ahora 100ms

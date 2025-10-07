@@ -1,78 +1,104 @@
 services:
+  ionic-ui:
+    build:
+      context: ./src/frontend/dam
+      dockerfile: Dockerfile
+    ports:
+      - "8100:8100"
+    container_name: ionic-ui
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - app-fullstack-net
 
-    ionic-ui:
-      build:
-        context:                ./src/frontend/dam
-        dockerfile:             Dockerfile
-      ports:
-        -                       "8100:8100"
-      container_name:           ionic-ui
-      volumes:
-         -                      ./src/frontend/dam:/src/frontend/dam
-         -                      /src/frontend/dam/node_modules
-      command:                  ionic serve --external
+  mysql-server:
+    image: mysql:5.7
+    hostname: mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-userpass}
+      MYSQL_DATABASE: ABS
+    container_name: mysql-server
+    volumes:
+      - ./db/dumps:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-fullstack-net
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
 
-    mysql-server:
-        image:                   mysql:5.7
-        hostname:                mysql-server
-        environment:
-            MYSQL_ROOT_PASSWORD: userpass
-        container_name:          mysql-server
-        volumes:
-            -                    ./db/dumps:/docker-entrypoint-initdb.d
-            -                    ./db/data:/var/lib/mysql
-        networks:
-            -                    app-fullstack-net
-        ports:
-            -                    "3306:3306"
+  mysql-admin:
+    image: phpmyadmin/phpmyadmin
+    environment: 
+      PMA_HOST: mysql-server
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-userpass}
+    container_name: mysql-admin
+    networks:
+      - app-fullstack-net
+    depends_on:
+      - mysql-server
+    ports:
+      - "8001:80"
+    restart: unless-stopped
 
-    mysql-admin:
-        image:                   phpmyadmin/phpmyadmin
-        environment: 
-            PMA_HOST:            mysql-server
-            PMA_PORT:            3306
-            MYSQL_ROOT_PASSWORD: userpass
-        container_name:          mysql-admin
-        networks:
-            -                    app-fullstack-net
-        depends_on:
-            -                    mysql-server
-        ports:
-            -                    "8001:80"
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    networks:
+      - app-fullstack-net
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    restart: unless-stopped
+    command: mosquitto -c /mosquitto/config/mosquitto.conf
 
-# ====== NUEVO SERVICIO MQTT ======
-    mosquitto:
-        image:                   eclipse-mosquitto:2.0
-        container_name:          mosquitto
-        networks:
-            -                    app-fullstack-net
-        ports:
-            -                    "1883:1883"   # Puerto MQTT estándar
-            -                    "9001:9001"   # Puerto WebSocket para frontend
-        volumes:
-            -                    ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-            -                    ./mqtt/data:/mosquitto/data
-            -                    ./mqtt/log:/mosquitto/log
-        restart:                 unless-stopped
-        command: mosquitto -c /mosquitto/config/mosquitto.conf
+  node-backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+    container_name: node-backend
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=mysql-server
+      - MQTT_HOST=mosquitto
+    volumes:
+      - ./src/backend:/src/backend
+      - /src/backend/node_modules
+    networks:
+      - app-fullstack-net
+    depends_on:
+      - mysql-server
+      - mosquitto
+    ports:
+      - "8000:3000"
+    restart: unless-stopped
 
-    node-backend:
-        build:
-            context:                  ./src/backend
-            dockerfile:                 Dockerfile
-        container_name: node-backend
-        volumes:
-        - ./src/backend:/src/backend
-        networks:
-        - app-fullstack-net
-        depends_on:
-        - mysql-server
-        - mosquitto
-        ports:
-        - "8000:3000"
-        command: >
-            sh -c "npm install && nodemon -L index.js"
+nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - app-fullstack-net
+    depends_on:
+      - ionic-ui
+      - node-backend
+      - mosquitto
+    restart: unless-stopped
 
 networks:
-    app-fullstack-net:
-        driver:                  bridge
+  app-fullstack-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  mosquitto-data:
+  mosquitto-log:

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Modulo } from '../listado-modulos/modulo';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment'; // 👈 Importar
 
 // Interface para los apuntes
 export interface Apunte {
@@ -28,7 +29,7 @@ export interface InformacionSistema {
   providedIn: 'root'
 })
 export class ModuloService {
-  private apiUrl = 'http://localhost:8000/modulo';
+  private apiUrl = `${environment.apiUrl}/modulo`;
 
   constructor(private _http: HttpClient) {}
 
@@ -49,14 +50,14 @@ export class ModuloService {
   }
   getModuloById(id: number): Promise<Modulo> {
     return firstValueFrom(
-      this._http.get<Modulo>(`http://localhost:8000/modulo/${id}`)
+      this._http.get<Modulo>(`${environment.apiUrl}/modulo/${id}`)
     );
   }
   
   cambiarEstadoReset(id: number, apertura: boolean): Promise<void> {
     return firstValueFrom(
       this._http.post<void>(
-        `http://localhost:8000/modulo/reset`,
+        `${environment.apiUrl}/modulo/reset`,
         { apertura: apertura ? 1 : 0 }
       )
     );
@@ -65,42 +66,42 @@ export class ModuloService {
   getMediciones(id: number): Promise<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string;}[]> {
     return firstValueFrom(
       this._http.get<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; ubicacion: string}[]>(
-        `http://localhost:8000/modulo/${id}/mediciones`
+        `${environment.apiUrl}/modulo/${id}/mediciones`
       )
     );
   }
   
   abrirReset(id: number): Promise<any> {
     return firstValueFrom(
-      this._http.post(`http://localhost:8000/modulo/${id}/abrir`, {})
+      this._http.post(`${environment.apiUrl}/modulo/${id}/abrir`, {})
     );
   }
   
   cerrarReset(id: number): Promise<any> {
     return firstValueFrom(
-      this._http.post(`http://localhost:8000/modulo/${id}/cerrar`, {})
+      this._http.post(`${environment.apiUrl}/modulo/${id}/cerrar`, {})
     );
   }
   
   getEstadoReset(id: number): Promise<any> {
     return firstValueFrom(
-      this._http.get(`http://localhost:8000/modulo/${id}/estado`)
+      this._http.get(`${environment.apiUrl}/modulo/${id}/estado`)
     );
   }
   getUltimaMedicion(moduloId: number) {
     return firstValueFrom(
-      this._http.get<{ fecha: string; valor_temp: string; valor_press: string;}>(`http://localhost:8000/modulo/${moduloId}/ultima-medicion`)
+      this._http.get<{ fecha: string; valor_temp: string; valor_press: string;}>(`${environment.apiUrl}/modulo/${moduloId}/ultima-medicion`)
     );
   }
   getApunte(moduloId: number): Promise<{up: number, down: number, fecha?: string}> {
     return firstValueFrom(
-      this._http.get<{up: number, down: number, fecha?: string}>(`http://localhost:8000/modulo/${moduloId}/apunte`)
+      this._http.get<{up: number, down: number, fecha?: string}>(`${environment.apiUrl}/modulo/${moduloId}/apunte`)
     );
   }
   // Nuevo método para obtener el historial de apuntes
   getHistorialApuntes(moduloId: number): Promise<Apunte[]> {
     return firstValueFrom(
-      this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/historial-apuntes`)
+      this._http.get<Apunte[]>(`${environment.apiUrl}/modulo/${moduloId}/historial-apuntes`)
     );
   }
   // Método para obtener apuntes por rango de fechas
@@ -110,7 +111,7 @@ export class ModuloService {
       fechaHasta
     };
     return firstValueFrom(
-      this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/apuntes`, { params })
+      this._http.get<Apunte[]>(`${environment.apiUrl}/modulo/${moduloId}/apuntes`, { params })
     );
   }
     /**

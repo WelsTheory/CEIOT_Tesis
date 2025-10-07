@@ -2,13 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment'; // 👈 Importar
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoginService {
 
-  uri = 'http://localhost:8000'
+  uri = environment.apiUrl;
 
   constructor(private _http: HttpClient, private _router: Router) { }
 
