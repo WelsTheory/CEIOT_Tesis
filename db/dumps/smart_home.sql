@@ -572,14 +572,14 @@ BEGIN
 END$
 
 -- Trigger para mantener un solo registro activo por módulo en Info_Modulo
---CREATE TRIGGER `tr_info_modulo_before_insert`
---BEFORE INSERT ON `Info_Modulo`
---FOR EACH ROW
---BEGIN
+-- CREATE TRIGGER `tr_info_modulo_before_insert`
+-- BEFORE INSERT ON `Info_Modulo`
+-- FOR EACH ROW
+-- BEGIN
 --    IF NEW.activo = 1 THEN
 --        UPDATE `Info_Modulo` SET `activo` = 0 WHERE `moduloId` = NEW.moduloId;
 --    END IF;
---END$
+-- END$
 
 DELIMITER ;
 
