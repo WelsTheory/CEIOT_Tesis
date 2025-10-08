@@ -92,6 +92,11 @@ export class HomePage implements OnInit, OnDestroy {
     if (this.refreshMedicionesInterval) clearInterval(this.refreshMedicionesInterval);
   }
 
+  async ionViewWillEnter() {
+    console.log('👁️ Recargando datos al entrar a Home...');
+    await this.cargarModulosIniciales();
+  }
+
   /**
    * Configurar suscripciones MQTT para recibir estados en tiempo real
    */
@@ -404,6 +409,12 @@ export class HomePage implements OnInit, OnDestroy {
               if (ultima) {
                 modulo.medicionTempActual = ultima.valor_temp ?? modulo.medicionTempActual;
                 modulo.medicionPressActual = ultima.valor_press ?? modulo.medicionPressActual;
+              }
+
+              const apunte = await this.moduloService.getApunte(modulo.moduloId);
+              if (apunte) {
+                modulo.up = apunte.up ?? modulo.up;
+                modulo.down = apunte.down ?? modulo.down;
               }
             } catch (error) {
               // Error silencioso para no spam en consola
