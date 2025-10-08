@@ -153,7 +153,7 @@ export class HomePage implements OnInit, OnDestroy {
   
   // iniciarActualizacionPeriodica también usa el mismo método
   private iniciarActualizacionPeriodica() {
-    this.refreshMedicionesInterval = setInterval(async () => {
+    this.refreshMedicionesInterval = setI nterval(async () => {
       try {
         console.log('🔄 Actualización periódica cada 2 minutos...');
         
@@ -210,14 +210,26 @@ export class HomePage implements OnInit, OnDestroy {
    */
   private procesarActualizacionEstadoMQTT(estadoModulo: ModuloEstado) {
     const { moduloId } = estadoModulo;
-    
+  
     console.log(`📡 Actualizando estado MQTT - Módulo ${moduloId}:`, estadoModulo);
+    
+    const modulo = this.modulos.find(m => m.moduloId === moduloId);
+    if (!modulo) return;
     
     // Actualizar estado de conexión
     this.estadosConexion.set(moduloId, estadoModulo.estado_conexion);
     
-    // Actualizar estados de apuntes
+    // 🎯 ACTUALIZAR VALORES DE APUNTES (NUEVO)
     if (estadoModulo.apuntes) {
+      // Actualizar valores
+      if (estadoModulo.apuntes.up_actual !== undefined) {
+        modulo.up = estadoModulo.apuntes.up_actual;
+      }
+      if (estadoModulo.apuntes.down_actual !== undefined) {
+        modulo.down = estadoModulo.apuntes.down_actual;
+      }
+      
+      // Actualizar estados (colores)
       const { estado_up, estado_down } = estadoModulo.apuntes;
       this.estadosApuntes.set(moduloId, {
         up: estado_up || this.determinarEstadoApunte(estadoModulo, 'up'),
@@ -225,10 +237,9 @@ export class HomePage implements OnInit, OnDestroy {
       });
     }
     
-    // Actualizar información técnica del módulo si está disponible
+    // Actualizar información técnica
     if (estadoModulo.info_tecnica) {
-      const modulo = this.modulos.find(m => m.moduloId === moduloId);
-      if (modulo && estadoModulo.info_tecnica.version_firmware) {
+      if (estadoModulo.info_tecnica.version_firmware) {
         modulo.version = estadoModulo.info_tecnica.version_firmware;
       }
     }
@@ -236,11 +247,12 @@ export class HomePage implements OnInit, OnDestroy {
     // Actualizar timestamp
     this.ultimaActualizacionMqtt = new Date();
     
-    // Marcar módulo como no actualizando si estaba en proceso
-    const modulo = this.modulos.find(m => m.moduloId === moduloId);
+    // Marcar módulo como no actualizando
     if (modulo) {
       modulo.actualizandoEstado = false;
     }
+    
+    console.log(`✅ Módulo ${moduloId} actualizado - UP: ${modulo.up}, DOWN: ${modulo.down}`);
   }
 
   /**

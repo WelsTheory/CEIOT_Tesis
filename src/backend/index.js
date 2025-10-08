@@ -193,26 +193,34 @@ function handleApunteData(data) {
             const up = data.up !== undefined ? parseFloat(data.up) : null;
             const down = data.down !== undefined ? parseFloat(data.down) : null;
             
-            // Si no se proporciona uno de los valores, obtenerlo de la tabla Modulos
-            if (up === null || down === null) {
-                const queryGetCurrent = `SELECT up, down FROM Modulos WHERE moduloId = ?`;
+            if (up !== null && down !== null) {
+                const queryBeam = `INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down) VALUES (?, NOW(), ?, ?)`;
                 
-                pool.query(queryGetCurrent, [moduloId], (err, currentResult) => {
-                    if (err) {
-                        console.error('❌ Error obteniendo valores actuales:', err);
-                        return;
-                    }
-                    
-                    if (currentResult.length > 0) {
-                        const currentValues = currentResult[0];
-                        const finalUp = up !== null ? up : parseFloat(currentValues.up);
-                        const finalDown = down !== null ? down : parseFloat(currentValues.down);
-                        
-                        insertIntoBeam(moduloId, finalUp, finalDown, data);
+                pool.query(queryBeam, [moduloId, up, down], (error) => {
+                    if (error) {
+                        console.error('❌ Error insertando en Beam:', error);
+                    } else {
+                        console.log('✅ Registro insertado en Beam');
                     }
                 });
-            } else {
-                insertIntoBeam(moduloId, up, down, data);
+            }
+            
+            // 🎯 NUEVO PASO 3: Publicar a modulos/X/apuntes para el frontend
+            if (mqttConnected && mqttClient) {
+                const mensajeFrontend = {
+                    moduloId: moduloId,
+                    up_esperado: data.up !== undefined ? parseFloat(data.up) : null,
+                    down_esperado: data.down !== undefined ? parseFloat(data.down) : null,
+                    up_actual: data.up !== undefined ? parseFloat(data.up) : null,
+                    down_actual: data.down !== undefined ? parseFloat(data.down) : null,
+                    estado_up: data.estado_up || 'correcto',
+                    estado_down: data.estado_down || 'correcto',
+                    timestamp: new Date().toISOString()
+                };
+                
+                const topicFrontend = `modulos/${moduloId}/apuntes`;
+                mqttClient.publish(topicFrontend, JSON.stringify(mensajeFrontend));
+                console.log('📤 Apunte publicado al frontend:', topicFrontend, mensajeFrontend);
             }
         });
     }
