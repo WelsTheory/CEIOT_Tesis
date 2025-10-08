@@ -153,7 +153,7 @@ export class HomePage implements OnInit, OnDestroy {
   
   // iniciarActualizacionPeriodica también usa el mismo método
   private iniciarActualizacionPeriodica() {
-    this.refreshMedicionesInterval = setI nterval(async () => {
+    this.refreshMedicionesInterval = setInterval(async () => {
       try {
         console.log('🔄 Actualización periódica cada 2 minutos...');
         
