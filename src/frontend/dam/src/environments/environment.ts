@@ -4,8 +4,8 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000',         // Para desarrollo local
-  mqttUrl: 'ws://localhost:9001',          // Para desarrollo local
+  apiUrl: 'http://52.0.242.44/api',         // Para desarrollo local
+  mqttUrl: 'ws://52.0.242.44/mqtt',          // Para desarrollo local
 };
 /*
  * For easier debugging in development mode, you can import the following file

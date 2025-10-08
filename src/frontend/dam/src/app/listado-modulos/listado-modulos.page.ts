@@ -187,13 +187,13 @@ export class ModuloPage implements OnInit {
 
   verMediciones() {
     console.log('Navegando a mediciones del módulo:', this.modulo);
-    this.router.navigate(['/mediciones', this.moduloId]);
+    this.router.navigate(['/modulo', this.moduloId,'mediciones']);
   }
 
   // Nuevo método para navegar al historial de apuntes
   verHistorialApuntes() {
     console.log('Navegando al historial de apuntes del módulo:', this.moduloId);
-    this.router.navigate(['/apuntes', this.moduloId]);
+    this.router.navigate(['/modulo', this.moduloId,'apuntes']);
   }
   
   async abrirReset(moduloId: number) {
