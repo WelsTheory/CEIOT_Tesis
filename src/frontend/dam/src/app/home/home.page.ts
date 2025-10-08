@@ -92,9 +92,83 @@ export class HomePage implements OnInit, OnDestroy {
     if (this.refreshMedicionesInterval) clearInterval(this.refreshMedicionesInterval);
   }
 
+  private async actualizarModulo(modulo: any): Promise<any> {
+    try {
+      // Cargar mediciones
+      const ultimaMedicion = await this.moduloService.getUltimaMedicion(modulo.moduloId);
+      const medicionTempActual = ultimaMedicion?.valor_temp ?? modulo.medicionTempActual ?? '—';
+      const medicionPressActual = ultimaMedicion?.valor_press ?? modulo.medicionPressActual ?? '—';
+      
+      // Cargar apuntes
+      const apunte = await this.moduloService.getApunte(modulo.moduloId);
+      const up = apunte?.up ?? modulo.up ?? 0.0;
+      const down = apunte?.down ?? modulo.down ?? 0.0;
+      
+      // Cargar estado reset
+      let estadoReset = modulo.estadoReset ?? null;
+      try {
+        const estadoResponse = await this.moduloService.getEstadoReset(modulo.moduloId);
+        estadoReset = estadoResponse.estado;
+      } catch (error) {
+        // Mantener el valor anterior si falla
+      }
+      
+      // Retornar módulo actualizado
+      return {
+        ...modulo,
+        medicionTempActual,
+        medicionPressActual,
+        estadoReset,
+        up,
+        down,
+        actualizandoEstado: false
+      };
+    } catch (error) {
+      console.error(`Error actualizando módulo ${modulo.moduloId}:`, error);
+      return modulo; // Retornar sin cambios si hay error
+    }
+  }
+  
+  // cargarModulosIniciales simplificado
+  private async cargarModulosIniciales() {
+    const modulos = await this.moduloService.getModulos();
+    this.modulos = await Promise.all(
+      modulos.map(modulo => this.actualizarModulo(modulo))
+    );
+  }
+  
+  // ionViewWillEnter actualiza en lugar de recargar
   async ionViewWillEnter() {
-    console.log('👁️ Recargando datos al entrar a Home...');
-    await this.cargarModulosIniciales();
+    console.log('👁️ Vista Home activada, actualizando módulos...');
+    
+    if (this.modulos.length === 0) {
+      await this.cargarModulosIniciales();
+    } else {
+      // Actualizar módulos existentes sin reemplazar el array
+      for (let i = 0; i < this.modulos.length; i++) {
+        this.modulos[i] = await this.actualizarModulo(this.modulos[i]);
+      }
+    }
+  }
+  
+  // iniciarActualizacionPeriodica también usa el mismo método
+  private iniciarActualizacionPeriodica() {
+    this.refreshMedicionesInterval = setInterval(async () => {
+      try {
+        console.log('🔄 Actualización periódica cada 2 minutos...');
+        
+        // Actualizar cada módulo
+        for (let i = 0; i < this.modulos.length; i++) {
+          this.modulos[i] = await this.actualizarModulo(this.modulos[i]);
+        }
+        
+        console.log('✅ Actualización periódica completada');
+      } catch (error) {
+        console.error('❌ Error en actualización periódica:', error);
+      }
+    }, 120000); // Cada 2 minutos
+    
+    console.log('⏰ Actualización periódica configurada cada 2 minutos');
   }
 
   /**
@@ -359,74 +433,6 @@ export class HomePage implements OnInit, OnDestroy {
         modulo.actualizandoEstado = false;
       });
     }
-  }
-
-  private async cargarModulosIniciales() {
-    const modulos = await this.moduloService.getModulos();
-    this.modulos = await Promise.all(
-      modulos.map(async (d: Modulo) => {
-        let medicionTempActual = '—';
-        let medicionPressActual = '—';
-        let estadoReset = null;
-        let up = 0.0;
-        let down = 0.0;
-        
-        try {
-          const ultimaMedicion = await this.moduloService.getUltimaMedicion(d.moduloId);
-          medicionTempActual = ultimaMedicion?.valor_temp ?? '—';
-          medicionPressActual = ultimaMedicion?.valor_press ?? '—';
-          
-          const apunte = await this.moduloService.getApunte(d.moduloId);
-          up = apunte?.up ?? 0.0;
-          down = apunte?.down ?? 0.0;
-          
-        } catch (error) {
-          console.error(`Error cargando datos del módulo ${d.moduloId}:`, error);
-        }
-
-        return {
-          ...d,
-          medicionTempActual,
-          medicionPressActual,
-          estadoReset,
-          up,
-          down,
-          actualizandoEstado: false
-        };
-      })
-    );
-  }
-
-  private iniciarActualizacionPeriodica() {
-    // Reducir frecuencia ya que MQTT maneja las actualizaciones en tiempo real
-    this.refreshMedicionesInterval = setInterval(async () => {
-      try {
-        // Solo actualizar mediciones de la BD, no estados (esos vienen por MQTT)
-        await Promise.all(
-          this.modulos.map(async (modulo) => {
-            try {
-              const ultima = await this.moduloService.getUltimaMedicion(modulo.moduloId);
-              if (ultima) {
-                modulo.medicionTempActual = ultima.valor_temp ?? modulo.medicionTempActual;
-                modulo.medicionPressActual = ultima.valor_press ?? modulo.medicionPressActual;
-              }
-
-              const apunte = await this.moduloService.getApunte(modulo.moduloId);
-              if (apunte) {
-                modulo.up = apunte.up ?? modulo.up;
-                modulo.down = apunte.down ?? modulo.down;
-              }
-            } catch (error) {
-              // Error silencioso para no spam en consola
-            }
-          })
-        );
-      } catch (error) {
-        console.error('❌ Error en actualización periódica:', error);
-      }
-    }, 120000); // Cada 2 minutos (MQTT maneja el tiempo real)
-    
-    console.log('⏰ Actualización periódica configurada cada 2 minutos (complementa MQTT)');
   }
 
   private configurarResponsive() {
