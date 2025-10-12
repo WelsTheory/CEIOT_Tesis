@@ -50,9 +50,13 @@ services:
       - app-fullstack-net
     ports:
       - "1883:1883"
+      - "8883:8883"
       - "9001:9001"
+      - "8884:8884"
     volumes:
       - ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mqtt/config/passwd:/mosquitto/config/passwd:ro
+      - ./mqtt/certs:/mosquitto/config/certs:ro
       - mosquitto-data:/mosquitto/data
       - mosquitto-log:/mosquitto/log
     restart: unless-stopped
@@ -67,6 +71,7 @@ services:
       - NODE_ENV=production
       - DB_HOST=mysql-server
       - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883  # Internamente usa sin cifrar (red Docker es segura)
     volumes:
       - ./src/backend:/src/backend
       - /src/backend/node_modules
@@ -84,6 +89,7 @@ services:
     container_name: nginx-proxy
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
