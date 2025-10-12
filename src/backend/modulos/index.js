@@ -320,4 +320,104 @@ routerModulos.get('/:id/apuntes-estadisticas', (req, res) => {
     });
 });
 
+// Obtener información completa del sistema (memoria, temperatura, voltaje, IP, firmware, MAC)
+routerModulos.get('/:id/sistema-info', (req, res) => {
+    const moduloId = req.params.id;
+    const query = `
+        SELECT 
+            im.memoria_libre as memoriaLibre,
+            im.temperatura_interna as temperaturaInterna,
+            im.voltaje_alimentacion as voltajeAlimentacion,
+            im.ip_address as direccionIP,
+            im.version_firmware as firmware,
+            im.mac_address as direccionMAC
+        FROM Info_Modulo im
+        WHERE im.moduloId = ? AND im.activo = 1
+        ORDER BY im.fecha_actualizacion DESC
+        LIMIT 1`;
+
+    pool.query(query, [moduloId], (err, result) => {
+        if (err) {
+            console.error('Error al obtener información del sistema:', err);
+            return res.status(500).json({ error: 'Error al obtener información del sistema' });
+        }
+        
+        if (result.length > 0) {
+            res.status(200).json(result[0]);
+        } else {
+            // Si no hay datos, devolver valores por defecto
+            res.status(200).json({
+                memoriaLibre: null,
+                temperaturaInterna: null,
+                voltajeAlimentacion: null,
+                direccionIP: null,
+                firmware: null,
+                direccionMAC: null
+            });
+        }
+    });
+});
+
+// Obtener solo información técnica (IP, firmware, MAC)
+routerModulos.get('/:id/info-tecnica', (req, res) => {
+    const moduloId = req.params.id;
+    const query = `
+        SELECT 
+            im.ip_address as direccionIP,
+            im.version_firmware as firmware,
+            im.mac_address as direccionMAC
+        FROM Info_Modulo im
+        WHERE im.moduloId = ? AND im.activo = 1
+        ORDER BY im.fecha_actualizacion DESC
+        LIMIT 1`;
+
+    pool.query(query, [moduloId], (err, result) => {
+        if (err) {
+            console.error('Error al obtener información técnica:', err);
+            return res.status(500).json({ error: 'Error al obtener información técnica' });
+        }
+        
+        if (result.length > 0) {
+            res.status(200).json(result[0]);
+        } else {
+            res.status(200).json({
+                direccionIP: null,
+                firmware: null,
+                direccionMAC: null
+            });
+        }
+    });
+});
+
+// Obtener solo métricas del sistema (memoria, temperatura, voltaje)
+routerModulos.get('/:id/metricas-sistema', (req, res) => {
+    const moduloId = req.params.id;
+    const query = `
+        SELECT 
+            im.memoria_libre as memoriaLibre,
+            im.temperatura_interna as temperaturaInterna,
+            im.voltaje_alimentacion as voltajeAlimentacion
+        FROM Info_Modulo im
+        WHERE im.moduloId = ? AND im.activo = 1
+        ORDER BY im.fecha_actualizacion DESC
+        LIMIT 1`;
+
+    pool.query(query, [moduloId], (err, result) => {
+        if (err) {
+            console.error('Error al obtener métricas del sistema:', err);
+            return res.status(500).json({ error: 'Error al obtener métricas del sistema' });
+        }
+        
+        if (result.length > 0) {
+            res.status(200).json(result[0]);
+        } else {
+            res.status(200).json({
+                memoriaLibre: null,
+                temperaturaInterna: null,
+                voltajeAlimentacion: null
+            });
+        }
+    });
+});
+
 module.exports = routerModulos;

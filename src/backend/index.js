@@ -464,6 +464,30 @@ app.post('/modulo/:id/apunte', authenticator, (req, res) => {
     });
 });
 
+function handleInfoTecnica(data) {
+    const { moduloId, version_firmware, ip_address, temperatura_interna, voltaje_alimentacion, mac_address } = data;
+    
+    const query = `
+        INSERT INTO Info_Modulo 
+        (moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion, activo)
+        VALUES (?, ?, ?, ?, ?, ?, 1)
+        ON DUPLICATE KEY UPDATE
+            version_firmware = VALUES(version_firmware),
+            ip_address = VALUES(ip_address),
+            temperatura_interna = VALUES(temperatura_interna),
+            voltaje_alimentacion = VALUES(voltaje_alimentacion),
+            fecha_actualizacion = NOW()`;
+    
+    pool.query(query, [moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion], 
+        (err, result) => {
+            if (err) {
+                console.error('Error guardando info técnica:', err);
+            } else {
+                console.log(`✅ Info técnica guardada para módulo ${moduloId}`);
+            }
+        });
+}
+
 //=======[ Rutas de la API originales ]=====================================
 app.post('/login', (req, res) => {
     if (req.body) {
