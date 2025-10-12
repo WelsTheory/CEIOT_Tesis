@@ -43,51 +43,59 @@ function connectMQTT() {
         console.log('✅ Conectado al broker MQTT:', MQTT_BROKER_URL);
         mqttConnected = true;
         
-        // Suscribirse a topics relevantes
-        mqttClient.subscribe(MQTT_TOPICS.SENSOR_DATA, (err) => {
-            if (!err) {
-                console.log('📡 Suscrito a:', MQTT_TOPICS.SENSOR_DATA);
-            }
-        });
+        // Suscribirse a todos los topics relevantes
+        const topics = [
+            'modulos/+/heartbeat',
+            'modulos/+/info-tecnica',
+            'modulos/+/estado',
+            'modulos/+/mediciones',
+            'modulos/+/apuntes'
+        ];
         
-        mqttClient.subscribe(MQTT_TOPICS.DEVICE_STATUS, (err) => {
-            if (!err) {
-                console.log('📡 Suscrito a:', MQTT_TOPICS.DEVICE_STATUS);
-            }
-        });
-        
-        // Suscribirse al nuevo topic de apuntes
-        mqttClient.subscribe(MQTT_TOPICS.APUNTE_DATA, (err) => {
-            if (!err) {
-                console.log('📡 Suscrito a:', MQTT_TOPICS.APUNTE_DATA);
-            }
+        topics.forEach(topic => {
+            mqttClient.subscribe(topic, (err) => {
+                if (!err) {
+                    console.log('📡 Suscrito a:', topic);
+                } else {
+                    console.error('❌ Error suscribiéndose a:', topic, err);
+                }
+            });
         });
     });
 
     mqttClient.on('message', function (topic, message) {
         console.log('📨 Mensaje MQTT recibido:');
-        console.log('  Topic:', topic);
-        console.log('  Mensaje:', message.toString());
+    console.log('  Topic:', topic);
+    console.log('  Mensaje:', message.toString());
+    
+    try {
+        const data = JSON.parse(message.toString());
         
-        try {
-            const data = JSON.parse(message.toString());
-            
-            // Procesar según el topic
-            switch(topic) {
-                case MQTT_TOPICS.SENSOR_DATA:
-                    handleSensorData(data);
-                    break;
-                case MQTT_TOPICS.DEVICE_STATUS:
-                    handleDeviceStatus(data);
-                    break;
-                case MQTT_TOPICS.APUNTE_DATA:
-                    handleApunteData(data);  // ← Nuevo handler
-                    break;
-            }
-        } catch (error) {
-            console.error('Error procesando mensaje MQTT:', error);
+        // Extraer moduloId del topic (formato: modulos/14/heartbeat)
+        const topicParts = topic.split('/');
+        const moduloIdFromTopic = parseInt(topicParts[1]);
+        
+        // Agregar moduloId a los datos si no existe
+        if (!data.moduloId && moduloIdFromTopic) {
+            data.moduloId = moduloIdFromTopic;
         }
-    });
+        
+        // Procesar según el topic
+        if (topic.includes('/heartbeat')) {
+            handleHeartbeat(data);
+        } else if (topic.includes('/info-tecnica')) {
+            handleInfoTecnica(data);
+        } else if (topic.includes('/sensor')) {
+            handleSensorData(data);
+        } else if (topic.includes('/estado')) {
+            handleDeviceStatus(data);
+        } else if (topic.includes('/apunte')) {
+            // Manejar apuntes si es necesario
+        }
+        
+    } catch (error) {
+        console.error('❌ Error procesando mensaje MQTT:', error);
+    }
 
     mqttClient.on('error', function (error) {
         console.error('❌ Error MQTT:', error.message);
@@ -464,9 +472,38 @@ app.post('/modulo/:id/apunte', authenticator, (req, res) => {
     });
 });
 
+// Agregar después de la función handleDeviceStatus
+function handleHeartbeat(data) {
+    const { moduloId, version_firmware, ip_address, temperatura_interna, voltaje_alimentacion, mac_address, timestamp } = data;
+    
+    console.log(`💓 Heartbeat recibido del módulo ${moduloId}`);
+    
+    // Actualizar o insertar en Info_Modulo
+    const query = `
+        INSERT INTO Info_Modulo 
+        (moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion, activo, fecha_actualizacion)
+        VALUES (?, ?, ?, ?, ?, ?, 1, NOW())
+        ON DUPLICATE KEY UPDATE
+            version_firmware = VALUES(version_firmware),
+            ip_address = VALUES(ip_address),
+            temperatura_interna = VALUES(temperatura_interna),
+            voltaje_alimentacion = VALUES(voltaje_alimentacion),
+            fecha_actualizacion = NOW(),
+            activo = 1`;
+    
+    pool.query(query, [moduloId, version_firmware, ip_address, mac_address || null, temperatura_interna, voltaje_alimentacion], 
+        (err, result) => {
+            if (err) {
+                console.error('❌ Error guardando heartbeat en BD:', err);
+            } else {
+                console.log(`✅ Heartbeat guardado en BD para módulo ${moduloId}`);
+            }
+        });
+}
+
 function handleInfoTecnica(data) {
     const { moduloId, version_firmware, ip_address, temperatura_interna, voltaje_alimentacion, mac_address } = data;
-    
+    console.log(`🔧 Info técnica recibida del módulo ${moduloId}`);
     const query = `
         INSERT INTO Info_Modulo 
         (moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion, activo)
@@ -476,7 +513,8 @@ function handleInfoTecnica(data) {
             ip_address = VALUES(ip_address),
             temperatura_interna = VALUES(temperatura_interna),
             voltaje_alimentacion = VALUES(voltaje_alimentacion),
-            fecha_actualizacion = NOW()`;
+            fecha_actualizacion = NOW(),
+            activo = 1`; 
     
     pool.query(query, [moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion], 
         (err, result) => {

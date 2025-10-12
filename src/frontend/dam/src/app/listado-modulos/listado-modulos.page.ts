@@ -9,6 +9,7 @@ import { Modulo } from '../listado-modulos/modulo';
 import { Router } from '@angular/router';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
+import { MqttService } from '../services/mqtt.service';
 
 @Component({
   selector: 'app-modulo',
@@ -43,12 +44,14 @@ export class ModuloPage implements OnInit {
 
   // Suscripción para actualizaciones automáticas
   private actualizacionSubscription?: Subscription;
+  private mqttSubscription?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private moduloService: ModuloService,
     private resetService: ModuloService,
-    private router: Router
+    private router: Router,
+    private mqttService: MqttService  // ← AGREGAR
   ) {}
 
   async cargarUltimaMedicion() {
@@ -114,12 +117,17 @@ export class ModuloPage implements OnInit {
     
     // Configurar actualización automática cada 30 segundos
     this.iniciarActualizacionAutomatica();
+
+    this.suscribirMQTT();
   }
 
   ngOnDestroy() {
     // Limpiar suscripciones al destruir el componente
     if (this.actualizacionSubscription) {
       this.actualizacionSubscription.unsubscribe();
+    }
+    if (this.mqttSubscription) {
+      this.mqttSubscription.unsubscribe();
     }
   }
 
@@ -227,6 +235,34 @@ export class ModuloPage implements OnInit {
     } catch (error) {
       console.error('Error al actualizar el reinicio del módulo:', error);
     }
+  }
+
+  private suscribirMQTT() {
+    this.mqttSubscription = this.mqttService.moduloEstados$.subscribe(estadoModulo => {
+      if (estadoModulo && estadoModulo.moduloId === this.moduloId) {
+        console.log('📡 Actualización MQTT recibida para módulo', this.moduloId, estadoModulo);
+        
+        // Actualizar info técnica en tiempo real
+        if (estadoModulo.info_tecnica) {
+          this.informacionSistema = {
+            ...this.informacionSistema,
+            temperaturaInterna: estadoModulo.info_tecnica.temperatura_interna,
+            voltajeAlimentacion: estadoModulo.info_tecnica.voltaje_alimentacion,
+            direccionIP: estadoModulo.info_tecnica.ip_address,
+            firmware: estadoModulo.info_tecnica.version_firmware
+          };
+          
+          // También actualizar el objeto modulo
+          this.modulo = {
+            ...this.modulo,
+            temperaturaInterna: estadoModulo.info_tecnica.temperatura_interna,
+            voltajeAlimentacion: estadoModulo.info_tecnica.voltaje_alimentacion,
+            direccionIP: estadoModulo.info_tecnica.ip_address,
+            firmware: estadoModulo.info_tecnica.version_firmware
+          };
+        }
+      }
+    });
   }
 
   toggleReset(newState: boolean) {
