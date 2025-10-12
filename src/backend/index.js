@@ -65,37 +65,38 @@ function connectMQTT() {
 
     mqttClient.on('message', function (topic, message) {
         console.log('📨 Mensaje MQTT recibido:');
-    console.log('  Topic:', topic);
-    console.log('  Mensaje:', message.toString());
-    
-    try {
-        const data = JSON.parse(message.toString());
+        console.log('  Topic:', topic);
+        console.log('  Mensaje:', message.toString());
         
-        // Extraer moduloId del topic (formato: modulos/14/heartbeat)
-        const topicParts = topic.split('/');
-        const moduloIdFromTopic = parseInt(topicParts[1]);
-        
-        // Agregar moduloId a los datos si no existe
-        if (!data.moduloId && moduloIdFromTopic) {
-            data.moduloId = moduloIdFromTopic;
+        try {
+            const data = JSON.parse(message.toString());
+            
+            // Extraer moduloId del topic (formato: modulos/14/heartbeat)
+            const topicParts = topic.split('/');
+            const moduloIdFromTopic = parseInt(topicParts[1]);
+            
+            // Agregar moduloId a los datos si no existe
+            if (!data.moduloId && moduloIdFromTopic) {
+                data.moduloId = moduloIdFromTopic;
+            }
+            
+            // Procesar según el topic
+            if (topic.includes('/heartbeat')) {
+                handleHeartbeat(data);
+            } else if (topic.includes('/info-tecnica')) {
+                handleInfoTecnica(data);
+            } else if (topic.includes('/sensor')) {
+                handleSensorData(data);
+            } else if (topic.includes('/estado')) {
+                handleDeviceStatus(data);
+            } else if (topic.includes('/apunte')) {
+                // Manejar apuntes si es necesario
+            }
+            
+        } catch (error) {
+            console.error('❌ Error procesando mensaje MQTT:', error);
         }
-        
-        // Procesar según el topic
-        if (topic.includes('/heartbeat')) {
-            handleHeartbeat(data);
-        } else if (topic.includes('/info-tecnica')) {
-            handleInfoTecnica(data);
-        } else if (topic.includes('/sensor')) {
-            handleSensorData(data);
-        } else if (topic.includes('/estado')) {
-            handleDeviceStatus(data);
-        } else if (topic.includes('/apunte')) {
-            // Manejar apuntes si es necesario
-        }
-        
-    } catch (error) {
-        console.error('❌ Error procesando mensaje MQTT:', error);
-    }
+    });
 
     mqttClient.on('error', function (error) {
         console.error('❌ Error MQTT:', error.message);
