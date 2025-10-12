@@ -85,12 +85,12 @@ function connectMQTT() {
                 handleHeartbeat(data);
             } else if (topic.includes('/info-tecnica')) {
                 handleInfoTecnica(data);
-            } else if (topic.includes('/sensor')) {
-                handleSensorData(data);
+            }else if (topic.includes('/mediciones')) {  // ← NUEVO
+                    handleMediciones(data);
             } else if (topic.includes('/estado')) {
                 handleDeviceStatus(data);
-            } else if (topic.includes('/apunte')) {
-                // Manejar apuntes si es necesario
+            } else if (topic.includes('/apuntes')) {
+                handleApuntes(data);
             }
             
         } catch (error) {
@@ -157,6 +157,60 @@ function handleSensorData(data) {
 function handleDeviceStatus(data) {
     console.log('📡 Estado del dispositivo actualizado:', data);
     // Aquí puedes manejar cambios de estado de dispositivos
+}
+
+function handleMediciones(data) {
+    const { moduloId, temperatura, presion, timestamp } = data;
+    
+    console.log(`🌡️ Mediciones recibidas del módulo ${moduloId}:`, { temperatura, presion });
+    
+    // Insertar en la tabla Mediciones
+    const query = `
+        INSERT INTO Mediciones (moduloId, fecha, valor_temp, valor_press)
+        VALUES (?, NOW(), ?, ?)`;
+    
+    pool.query(query, [moduloId, temperatura, presion], (err, result) => {
+        if (err) {
+            console.error('❌ Error guardando mediciones en BD:', err);
+        } else {
+            console.log(`✅ Mediciones guardadas en BD para módulo ${moduloId} - Temp: ${temperatura}°C, Presión: ${presion} hPa`);
+        }
+    });
+}
+
+function handleApuntes(data) {
+    const { moduloId, up_actual, down_actual, up_esperado, down_esperado, estado_up, estado_down } = data;
+    
+    console.log(`📝 Apuntes recibidos del módulo ${moduloId}:`, { up_actual, down_actual });
+    
+    // Insertar en la tabla Beam (apuntes)
+    const query = `
+        INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down)
+        VALUES (?, NOW(), ?, ?)`;
+    
+    pool.query(query, [moduloId, up_actual, down_actual], (err, result) => {
+        if (err) {
+            console.error('❌ Error guardando apuntes en BD:', err);
+        } else {
+            console.log(`✅ Apuntes guardados en BD para módulo ${moduloId} - UP: ${up_actual}, DOWN: ${down_actual}`);
+            
+            // Opcional: También registrar en Log_Apuntes si hay mismatch
+            if (estado_up === 'mismatch' || estado_down === 'mismatch') {
+                const queryLog = `
+                    INSERT INTO Log_Apuntes 
+                    (moduloId, fecha, tipo_evento, valor_up_esperado, valor_down_esperado, 
+                     valor_up_actual, valor_down_actual, estado, descripcion)
+                    VALUES (?, NOW(), 'MISMATCH', ?, ?, ?, ?, 'ERROR', 'Mismatch detectado via MQTT')`;
+                
+                pool.query(queryLog, [moduloId, up_esperado, down_esperado, up_actual, down_actual], 
+                    (errLog) => {
+                        if (!errLog) {
+                            console.log(`⚠️ Mismatch registrado en Log_Apuntes para módulo ${moduloId}`);
+                        }
+                    });
+            }
+        }
+    });
 }
 
 function handleApunteData(data) {
