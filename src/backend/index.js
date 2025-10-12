@@ -416,7 +416,7 @@ const generarMediciones = () => {
 setTimeout(() => {
     setInterval(() => {
         console.log('🕒 Generando nuevas mediciones...');
-        generarMediciones();
+        //generarMediciones();
         // generarApuntes(); // Si tienes esta función definida en algún lado
     }, 300000); // cada 5 minutos
 }, 10000); // retraso inicial de 10 segundos
