@@ -27,8 +27,10 @@ export interface ModuloEstado {
   info_tecnica?: {
     version_firmware?: string;
     ip_address?: string;
+    mac_address?: string;
     temperatura_interna?: number;
     voltaje_alimentacion?: number;
+    memoria?: number;
   };
   detalles?: string;
 }
@@ -178,11 +180,10 @@ export class MqttService {
 
   private subscribeToTopics() {
     const topics = [
-      'modulos/+/estado',        // Estados de módulos
-      'modulos/+/heartbeat',     // Heartbeats
-      'modulos/+/mediciones',    // Mediciones de sensores
-      'modulos/+/info-tecnica',  // Información técnica
-      'modulos/+/apuntes'        // Cambios en apuntes
+      'ABS/MODULOS/+/ESTADO',        // Estados de módulos
+      'ABS/MODULOS/+/mediciones',    // Mediciones de sensores
+      'ABS/MODULOS/+/info-tecnica',  // Información técnica
+      'ABS/MODULOS/+/APUNTES'        // Cambios en apuntes
     ];
 
     topics.forEach(topic => {
@@ -220,11 +221,7 @@ export class MqttService {
         case 'estado':
           estadoActual = this.procesarEstadoModulo(estadoActual, data);
           break;
-        
-        case 'heartbeat':
-          estadoActual = this.procesarHeartbeat(estadoActual, data);
-          break;
-        
+
         case 'mediciones':
           this.procesarMediciones(moduloId, data);
           break;
@@ -256,39 +253,16 @@ export class MqttService {
       ...estadoActual,
       estado_conexion: data.estado_conexion || data.estado || estadoActual.estado_conexion,
       ultimo_heartbeat: data.ultimo_heartbeat ? new Date(data.ultimo_heartbeat) : new Date(),
-      apuntes: {
-        ...estadoActual.apuntes,
-        ...data.apuntes
-      },
-      info_tecnica: {
-        ...estadoActual.info_tecnica,
-        ...data.info_tecnica
-      },
       detalles: data.detalles || estadoActual.detalles
-    };
-  }
-
-  private procesarHeartbeat(estadoActual: ModuloEstado, data: any): ModuloEstado {
-    return {
-      ...estadoActual,
-      estado_conexion: 'ONLINE',
-      ultimo_heartbeat: new Date(),
-      info_tecnica: {
-        ...estadoActual.info_tecnica,
-        ...data
-      }
     };
   }
 
   private procesarMediciones(moduloId: number, data: any) {
     // Emitir actualización de mediciones
     this.medicionUpdates.next({
-      moduloId,
       temperatura: data.temperatura,
       presion: data.presion,
-      timestamp: new Date(data.timestamp || Date.now()),
-      apuntes_verificados: data.apuntes_verificados,
-      mismatch_detectado: data.mismatch_detectado
+      timestamp: new Date(data.timestamp || Date.now())
     });
   }
 
@@ -299,8 +273,10 @@ export class MqttService {
         ...estadoActual.info_tecnica,
         version_firmware: data.version_firmware,
         ip_address: data.ip_address,
+        mac_address: data.mac,
         temperatura_interna: data.temperatura_interna,
-        voltaje_alimentacion: data.voltaje_alimentacion
+        voltaje_alimentacion: data.voltaje_alimentacion,
+        memoria: data.memoria
       }
     };
   }

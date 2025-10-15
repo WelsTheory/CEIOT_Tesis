@@ -219,7 +219,6 @@ export class HomePage implements OnInit, OnDestroy {
     // Actualizar estado de conexión
     this.estadosConexion.set(moduloId, estadoModulo.estado_conexion);
     
-    // 🎯 ACTUALIZAR VALORES DE APUNTES (NUEVO)
     if (estadoModulo.apuntes) {
       // Actualizar valores
       if (estadoModulo.apuntes.up_actual !== undefined) {

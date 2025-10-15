@@ -45,11 +45,10 @@ function connectMQTT() {
         
         // Suscribirse a todos los topics relevantes
         const topics = [
-            'modulos/+/heartbeat',
-            'modulos/+/info-tecnica',
-            'modulos/+/estado',
-            'modulos/+/mediciones',
-            'modulos/+/apuntes'
+            'ABS/MODULOS/+/info-tecnica',
+            'ABS/MODULOS/+/ESTADO',
+            'ABS/MODULOS/+/mediciones',
+            'ABS/MODULOS/+/APUNTES'
         ];
         
         topics.forEach(topic => {
@@ -73,23 +72,19 @@ function connectMQTT() {
             
             // Extraer moduloId del topic (formato: modulos/14/heartbeat)
             const topicParts = topic.split('/');
-            const moduloIdFromTopic = parseInt(topicParts[1]);
-            
-            // Agregar moduloId a los datos si no existe
-            if (!data.moduloId && moduloIdFromTopic) {
-                data.moduloId = moduloIdFromTopic;
-            }
+            const moduloId = parseInt(topicParts[1]);
+
+            data.moduloId = moduloId;
+    
             
             // Procesar según el topic
-            if (topic.includes('/heartbeat')) {
-                handleHeartbeat(data);
-            } else if (topic.includes('/info-tecnica')) {
+            if (topic.includes('/info-tecnica')) {
                 handleInfoTecnica(data);
-            }else if (topic.includes('/mediciones')) {  // ← NUEVO
-                    handleMediciones(data);
-            } else if (topic.includes('/estado')) {
-                handleDeviceStatus(data);
-            } else if (topic.includes('/apuntes')) {
+            }else if (topic.includes('/mediciones')) { 
+                handleMediciones(data);
+            } else if (topic.includes('/ESTADO')) {
+                handleEstado(data);
+            } else if (topic.includes('/APUNTES')) {
                 handleApuntes(data);
             }
             
@@ -160,20 +155,19 @@ function handleDeviceStatus(data) {
 }
 
 function handleMediciones(data) {
+    console.log('🌡️ Procesando mediciones:', data);
+    
     const { moduloId, temperatura, presion, timestamp } = data;
     
-    console.log(`🌡️ Mediciones recibidas del módulo ${moduloId}:`, { temperatura, presion });
+    const query = `INSERT INTO Mediciones (moduloId, fecha, valor_temp, valor_press) 
+                   VALUES (?, ?, ?, ?)`;
+    const params = [moduloId, timestamp || new Date(), temperatura, presion];
     
-    // Insertar en la tabla Mediciones
-    const query = `
-        INSERT INTO Mediciones (moduloId, fecha, valor_temp, valor_press)
-        VALUES (?, NOW(), ?, ?)`;
-    
-    pool.query(query, [moduloId, temperatura, presion], (err, result) => {
-        if (err) {
-            console.error('❌ Error guardando mediciones en BD:', err);
+    pool.query(query, params, (error) => {
+        if (error) {
+            console.error('❌ Error guardando medición MQTT:', error);
         } else {
-            console.log(`✅ Mediciones guardadas en BD para módulo ${moduloId} - Temp: ${temperatura}°C, Presión: ${presion} hPa`);
+            console.log('✅ Medición MQTT guardada en BD');
         }
     });
 }
@@ -208,122 +202,6 @@ function handleApuntes(data) {
                             console.log(`⚠️ Mismatch registrado en Log_Apuntes para módulo ${moduloId}`);
                         }
                     });
-            }
-        }
-    });
-}
-
-function handleApunteData(data) {
-    console.log('🎯 Procesando datos de apunte:', data);
-    
-    // Validar que tenga los datos necesarios
-    if (data.moduloId && (data.up !== undefined || data.down !== undefined)) {
-        const moduloId = parseInt(data.moduloId);
-        
-        // PASO 1: Actualizar tabla Modulos (valores por defecto)
-        let updateFields = [];
-        let params = [];
-        
-        if (data.up !== undefined) {
-            updateFields.push('up = ?');
-            params.push(parseFloat(data.up));
-        }
-        
-        if (data.down !== undefined) {
-            updateFields.push('down = ?');
-            params.push(parseFloat(data.down));
-        }
-        
-        params.push(moduloId);
-        const queryModulos = `UPDATE Modulos SET ${updateFields.join(', ')} WHERE moduloId = ?`;
-        
-        console.log('📝 Actualizando tabla Modulos:', queryModulos, params);
-        
-        pool.query(queryModulos, params, (error, result) => {
-            if (error) {
-                console.error('❌ Error actualizando Modulos:', error);
-                return;
-            } 
-            
-            if (result.affectedRows === 0) {
-                console.warn('⚠️ No se encontró módulo con ID:', moduloId);
-                return;
-            }
-            
-            console.log('✅ Tabla Modulos actualizada para módulo', moduloId);
-            
-            // PASO 2: Insertar registro histórico en tabla Beam
-            const up = data.up !== undefined ? parseFloat(data.up) : null;
-            const down = data.down !== undefined ? parseFloat(data.down) : null;
-            
-            if (up !== null && down !== null) {
-                const queryBeam = `INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down) VALUES (?, NOW(), ?, ?)`;
-                
-                pool.query(queryBeam, [moduloId, up, down], (error) => {
-                    if (error) {
-                        console.error('❌ Error insertando en Beam:', error);
-                    } else {
-                        console.log('✅ Registro insertado en Beam');
-                    }
-                });
-            }
-            
-            // 🎯 NUEVO PASO 3: Publicar a modulos/X/apuntes para el frontend
-            if (mqttConnected && mqttClient) {
-                const mensajeFrontend = {
-                    moduloId: moduloId,
-                    up_esperado: data.up !== undefined ? parseFloat(data.up) : null,
-                    down_esperado: data.down !== undefined ? parseFloat(data.down) : null,
-                    up_actual: data.up !== undefined ? parseFloat(data.up) : null,
-                    down_actual: data.down !== undefined ? parseFloat(data.down) : null,
-                    estado_up: data.estado_up || 'correcto',
-                    estado_down: data.estado_down || 'correcto',
-                    timestamp: new Date().toISOString()
-                };
-                
-                const topicFrontend = `modulos/${moduloId}/apuntes`;
-                mqttClient.publish(topicFrontend, JSON.stringify(mensajeFrontend));
-                console.log('📤 Apunte publicado al frontend:', topicFrontend, mensajeFrontend);
-            }
-        });
-    }
-}
-
-// Función auxiliar para insertar en tabla Beam
-function insertIntoBeam(moduloId, up, down, originalData) {
-    const queryBeam = `INSERT INTO Beam (modulo_id, fecha, valor_up, valor_down) VALUES (?, NOW(), ?, ?)`;
-    const beamParams = [moduloId, up, down];
-    
-    console.log('📝 Insertando en tabla Beam:', queryBeam, beamParams);
-    
-    pool.query(queryBeam, beamParams, (errorBeam, resultBeam) => {
-        if (errorBeam) {
-            console.error('❌ Error insertando en Beam:', errorBeam);
-        } else {
-            console.log('✅ Registro insertado en tabla Beam para módulo', moduloId);
-            console.log('📊 Datos guardados: UP =', up, ', DOWN =', down);
-            
-            // PASO 3: Publicar confirmación con ID del registro creado
-            if (mqttConnected && mqttClient) {
-                const confirmacion = {
-                    status: 'updated',
-                    moduloId: moduloId,
-                    up: up,
-                    down: down,
-                    beamId: resultBeam.insertId,
-                    timestamp: new Date().toISOString(),
-                    source: 'mqtt_update'
-                };
-                
-                console.log('📤 Enviando confirmación MQTT:', confirmacion);
-                
-                mqttClient.publish('apunte/confirmacion', JSON.stringify(confirmacion), (pubError) => {
-                    if (pubError) {
-                        console.error('❌ Error publicando confirmación:', pubError);
-                    } else {
-                        console.log('✅ Confirmación MQTT enviada correctamente');
-                    }
-                });
             }
         }
     });
@@ -527,51 +405,52 @@ app.post('/modulo/:id/apunte', authenticator, (req, res) => {
     });
 });
 
-// Agregar después de la función handleDeviceStatus
-function handleHeartbeat(data) {
-    const { moduloId, version_firmware, ip_address, temperatura_interna, voltaje_alimentacion, mac_address, timestamp } = data;
+// ✅ NUEVO: Manejar /estado (reemplaza handleHeartbeat)
+function handleEstado(data) {
+    const { moduloId, estado, heartbeat } = data;
     
-    console.log(`💓 Heartbeat recibido del módulo ${moduloId}`);
+    console.log(`📡 Estado recibido del módulo ${moduloId}`);
     
-    // Actualizar o insertar en Info_Modulo
+    // Actualizar estado en Estado_Actual_Modulos
     const query = `
-        INSERT INTO Info_Modulo 
-        (moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion, activo, fecha_actualizacion)
-        VALUES (?, ?, ?, ?, ?, ?, 1, NOW())
+        INSERT INTO Estado_Actual_Modulos 
+        (moduloId, estado_conexion, ultimo_heartbeat)
+        VALUES (?, ?, ?)
         ON DUPLICATE KEY UPDATE
-            version_firmware = VALUES(version_firmware),
-            ip_address = VALUES(ip_address),
-            temperatura_interna = VALUES(temperatura_interna),
-            voltaje_alimentacion = VALUES(voltaje_alimentacion),
-            fecha_actualizacion = NOW(),
-            activo = 1`;
+            estado_conexion = VALUES(estado_conexion),
+            ultimo_heartbeat = VALUES(ultimo_heartbeat),
+            fecha_ultimo_cambio = NOW()`;
     
-    pool.query(query, [moduloId, version_firmware, ip_address, mac_address || null, temperatura_interna, voltaje_alimentacion], 
+    pool.query(query, [moduloId, estado, heartbeat || new Date()], 
         (err, result) => {
             if (err) {
-                console.error('❌ Error guardando heartbeat en BD:', err);
+                console.error('❌ Error guardando estado:', err);
             } else {
-                console.log(`✅ Heartbeat guardado en BD para módulo ${moduloId}`);
+                console.log(`✅ Estado guardado para módulo ${moduloId}`);
             }
         });
 }
 
 function handleInfoTecnica(data) {
-    const { moduloId, version_firmware, ip_address, temperatura_interna, voltaje_alimentacion, mac_address } = data;
+    const { moduloId, version_firmware, ip, mac, temp_interna, voltaje_alimentacion, memoria } = data;
+    
     console.log(`🔧 Info técnica recibida del módulo ${moduloId}`);
+    
     const query = `
         INSERT INTO Info_Modulo 
-        (moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion, activo)
-        VALUES (?, ?, ?, ?, ?, ?, 1)
+        (moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion, memoria_libre, activo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
         ON DUPLICATE KEY UPDATE
             version_firmware = VALUES(version_firmware),
             ip_address = VALUES(ip_address),
+            mac_address = VALUES(mac_address),
             temperatura_interna = VALUES(temperatura_interna),
             voltaje_alimentacion = VALUES(voltaje_alimentacion),
+            memoria_libre = VALUES(memoria_libre),
             fecha_actualizacion = NOW(),
             activo = 1`; 
     
-    pool.query(query, [moduloId, version_firmware, ip_address, mac_address, temperatura_interna, voltaje_alimentacion], 
+    pool.query(query, [moduloId, version_firmware, ip, mac, temp_interna, voltaje_alimentacion, memoria], 
         (err, result) => {
             if (err) {
                 console.error('Error guardando info técnica:', err);
