@@ -11,6 +11,8 @@ services:
          -                      ./src/frontend/dam:/src/frontend/dam
          -                      /src/frontend/dam/node_modules
       command:                  ionic serve --external
+      networks:
+        -                       app-fullstack-net
 
     mysql-server:
         image:                   mysql:5.7
@@ -25,6 +27,11 @@ services:
             -                    app-fullstack-net
         ports:
             -                    "3306:3306"
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-puserpass"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     mysql-admin:
         image:                   phpmyadmin/phpmyadmin
@@ -36,7 +43,8 @@ services:
         networks:
             -                    app-fullstack-net
         depends_on:
-            -                    mysql-server
+            mysql-server:
+                condition:       service_healthy
         ports:
             -                    "8001:80"
 
@@ -56,22 +64,50 @@ services:
         restart:                 unless-stopped
         command: mosquitto -c /mosquitto/config/mosquitto.conf
 
-    node-backend:
+    #node-backend:
+    #    build:
+    #        context:                  ./src/backend
+    #        dockerfile:                 Dockerfile
+    #    container_name: node-backend
+    #    volumes:
+    #    - ./src/backend:/src/backend
+    #    networks:
+    #    - app-fullstack-net
+    #    depends_on:
+    #    - mysql-server
+    #    - mosquitto
+    #    ports:
+    #    - "8000:3000"
+    #    command: >
+    #        sh -c "npm install && nodemon -L index.js"
+
+    # ====== BACKEND DJANGO (NUEVO) ======
+    django-backend:
         build:
-            context:                  ./src/backend
-            dockerfile:                 Dockerfile
-        container_name: node-backend
+            context:                  ./src/backend_django
+            dockerfile:               Dockerfile
+        container_name:               django-backend
         volumes:
-        - ./src/backend:/src/backend
+            -                         ./src/backend_django:/app
         networks:
-        - app-fullstack-net
+            -                         app-fullstack-net
         depends_on:
-        - mysql-server
-        - mosquitto
+            mysql-server:
+                condition:            service_healthy
+            mosquitto:
+                condition:            service_started
         ports:
-        - "8000:3000"
-        command: >
-            sh -c "npm install && nodemon -L index.js"
+            -                         "8000:8000"
+        environment:
+            - DEBUG=True
+            - DB_HOST=mysql-server
+            - DB_PORT=3306
+            - DB_NAME=ABS
+            - DB_USER=root
+            - DB_PASSWORD=userpass
+            - MQTT_BROKER_HOST=mosquitto
+            - MQTT_BROKER_PORT=1883
+        restart:                      unless-stopped
 
 networks:
     app-fullstack-net:

@@ -1,16 +1,16 @@
-# config/settings.py
-
 import os
 from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-tu-clave-secreta-aqui'
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-tu-clave-secreta-aqui')
 
-DEBUG = True
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -62,15 +62,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
+# Database - Configuración para Docker
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ABS',
-        'USER': 'root',
-        'PASSWORD': 'userpass',  # Tu contraseña
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'NAME': os.environ.get('DB_NAME', 'ABS'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'userpass'),
+        'HOST': os.environ.get('DB_HOST', 'mysql-server'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -94,47 +94,58 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Para Django 3.2 usamos este en lugar de DEFAULT_AUTO_FIELD
-# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'  # Comentar o eliminar
-
 # Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
+    'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    ],
+    ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 100,
-    'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S',
+    'PAGE_SIZE': 100
 }
 
 # JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.environ.get('ACCESS_TOKEN_LIFETIME_MINUTES', 60))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.environ.get('REFRESH_TOKEN_LIFETIME_DAYS', 7))),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': os.environ.get('JWT_ALGORITHM', 'HS256'),
+    'SIGNING_KEY': os.environ.get('JWT_SECRET_KEY', SECRET_KEY),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+# CORS Settings - Permitir frontend
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8100",
     "http://localhost:4200",
-    "http://52.0.242.44",
+    "http://ionic-ui:8100",
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 # MQTT Configuration
-MQTT_BROKER = 'localhost'
-MQTT_PORT = 1883
+MQTT_BROKER_HOST = os.environ.get('MQTT_BROKER_HOST', 'mosquitto')
+MQTT_BROKER_PORT = int(os.environ.get('MQTT_BROKER_PORT', 1883))
+MQTT_CLIENT_ID = os.environ.get('MQTT_CLIENT_ID', 'django_backend')
 MQTT_KEEPALIVE = 60
-MQTT_CLIENT_ID = 'django_backend'
+
+MQTT_CONFIG = {
+    'BROKER_HOST': MQTT_BROKER_HOST,
+    'BROKER_PORT': MQTT_BROKER_PORT,
+    'CLIENT_ID': MQTT_CLIENT_ID,
+    'KEEPALIVE': MQTT_KEEPALIVE,
+    'TOPICS': {
+        'SENSOR_DATA': 'sensores/data',
+        'CONTROL_COMMANDS': 'control/commands',
+        'DEVICE_STATUS': 'dispositivos/estado',
+        'MEASUREMENTS': 'mediciones/nuevas',
+        'APUNTE_DATA': 'apunte/data'
+    }
+}
 
 # Logging configuration
 LOGGING = {
@@ -157,6 +168,11 @@ LOGGING = {
         'level': 'INFO',
     },
     'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'mqtt_handler': {
             'handlers': ['console'],
             'level': 'INFO',

@@ -1,9 +1,7 @@
-# mqtt_handler/client.py
-
 import paho.mqtt.client as mqtt
 import json
 import logging
-import uuid  # ← Agregar este import
+import uuid
 from django.conf import settings
 from datetime import datetime
 
@@ -15,8 +13,9 @@ class MQTTClient:
     def __init__(self):
         self.client = None
         self.connected = False
-        # Generar client_id único
-        self.client_id = f"{settings.MQTT_CLIENT_ID}_{uuid.uuid4().hex[:8]}"  # ← Cambio aquí
+        # Generar client_id único usando la configuración de settings
+        base_client_id = getattr(settings, 'MQTT_CLIENT_ID', 'django_backend')
+        self.client_id = f"{base_client_id}_{uuid.uuid4().hex[:8]}"
         
         
     def on_connect(self, client, userdata, flags, rc):
@@ -87,91 +86,74 @@ class MQTTClient:
                     valor_press=str(valor_press) if valor_press is not None else None
                 )
                 
-                logger.info(f"✅ Medición guardada - Módulo {modulo_id}: Temp={valor_temp}, Press={valor_press}")
+                logger.info(f"✅ Medición guardada - Módulo {modulo_id}: T={valor_temp}, P={valor_press}")
             else:
-                logger.warning(f"⚠️ Datos incompletos en medición: {data}")
+                logger.warning(f"⚠️ Medición incompleta: {data}")
                 
         except Modulo.DoesNotExist:
             logger.error(f"❌ Módulo {modulo_id} no existe")
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Error decodificando JSON: {e}")
         except Exception as e:
-            logger.error(f"❌ Error guardando medición: {e}")
+            logger.error(f"❌ Error procesando medición: {e}")
     
     def handle_apunte(self, topic, payload):
-        """Procesar apuntes (UP/DOWN)"""
+        """Procesar datos de apunte (beam)"""
         try:
             from modulos.models import Modulo, Beam
             
             data = json.loads(payload)
             modulo_id = data.get('moduloId')
-            up = data.get('up')
-            down = data.get('down')
             
-            if modulo_id and up is not None and down is not None:
+            if modulo_id:
                 modulo = Modulo.objects.get(modulo_id=modulo_id)
                 
-                # Actualizar valores en el módulo
-                modulo.up = up
-                modulo.down = down
-                modulo.save()
-                
-                # Guardar en historial
                 Beam.objects.create(
                     modulo=modulo,
-                    valor_up=up,
-                    valor_down=down
+                    up_esperado=data.get('upEsperado'),
+                    down_esperado=data.get('downEsperado'),
+                    up_actual=data.get('upActual'),
+                    down_actual=data.get('downActual'),
+                    estado_up=data.get('estadoUp', 'DESCONOCIDO'),
+                    estado_down=data.get('estadoDown', 'DESCONOCIDO')
                 )
                 
-                logger.info(f"✅ Apunte guardado - Módulo {modulo_id}: UP={up}, DOWN={down}")
-                
-                # Publicar confirmación
-                confirmacion = {
-                    'status': 'updated',
-                    'moduloId': modulo_id,
-                    'up': float(up),
-                    'down': float(down),
-                    'timestamp': datetime.now().isoformat()
-                }
-                self.publish('apunte/confirmacion', json.dumps(confirmacion))
+                logger.info(f"✅ Apunte guardado - Módulo {modulo_id}")
             else:
-                logger.warning(f"⚠️ Datos incompletos en apunte: {data}")
+                logger.warning(f"⚠️ Apunte sin moduloId: {data}")
                 
         except Modulo.DoesNotExist:
             logger.error(f"❌ Módulo {modulo_id} no existe")
         except Exception as e:
-            logger.error(f"❌ Error guardando apunte: {e}")
+            logger.error(f"❌ Error procesando apunte: {e}")
     
     def handle_estado(self, topic, payload):
         """Procesar cambios de estado de conexión"""
         try:
             from modulos.models import Modulo, EstadoConexion
             
-            data = json.loads(payload)
+            data = json.parse(payload)
             modulo_id = data.get('moduloId')
-            tipo_evento = data.get('evento')  # ONLINE, OFFLINE, TIMEOUT
-            detalles = data.get('detalles', '')
+            estado = data.get('estado', 'DESCONOCIDO')
             
-            if modulo_id and tipo_evento:
+            if modulo_id:
                 modulo = Modulo.objects.get(modulo_id=modulo_id)
                 
                 EstadoConexion.objects.create(
                     modulo=modulo,
-                    tipo_evento=tipo_evento,
-                    detalles=detalles
+                    estado=estado,
+                    detalles=data.get('detalles', '')
                 )
                 
-                logger.info(f"✅ Estado guardado - Módulo {modulo_id}: {tipo_evento}")
+                logger.info(f"✅ Estado actualizado - Módulo {modulo_id}: {estado}")
             else:
-                logger.warning(f"⚠️ Datos incompletos en estado: {data}")
+                logger.warning(f"⚠️ Estado sin moduloId: {data}")
                 
         except Modulo.DoesNotExist:
             logger.error(f"❌ Módulo {modulo_id} no existe")
         except Exception as e:
-            logger.error(f"❌ Error guardando estado: {e}")
+            logger.error(f"❌ Error procesando estado: {e}")
     
     def handle_heartbeat(self, topic, payload):
-        """Procesar heartbeat de módulos"""
+        """Procesar heartbeats de módulos"""
         try:
             from modulos.models import Modulo, InfoModulo
             
@@ -222,17 +204,22 @@ class MQTTClient:
         """Conectar al broker MQTT"""
         try:
             # Usar el client_id único generado
-            self.client = mqtt.Client(client_id=self.client_id)  # ← Cambio aquí
+            self.client = mqtt.Client(client_id=self.client_id)
             self.client.on_connect = self.on_connect
             self.client.on_disconnect = self.on_disconnect
             self.client.on_message = self.on_message
             
-            logger.info(f"🔌 Conectando a MQTT broker {settings.MQTT_BROKER}:{settings.MQTT_PORT} con client_id: {self.client_id}")
+            # Obtener configuración de settings con valores por defecto
+            broker_host = getattr(settings, 'MQTT_BROKER_HOST', 'mosquitto')
+            broker_port = getattr(settings, 'MQTT_BROKER_PORT', 1883)
+            keepalive = getattr(settings, 'MQTT_KEEPALIVE', 60)
+            
+            logger.info(f"🔌 Conectando a MQTT broker {broker_host}:{broker_port} con client_id: {self.client_id}")
             
             self.client.connect(
-                settings.MQTT_BROKER,
-                settings.MQTT_PORT,
-                settings.MQTT_KEEPALIVE
+                broker_host,
+                broker_port,
+                keepalive
             )
             
             # Iniciar loop en un thread separado
