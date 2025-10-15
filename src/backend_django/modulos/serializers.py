@@ -1,153 +1,116 @@
-# modulos/serializers.py
-
 from rest_framework import serializers
-from .models import (
-    Modulo, Medicion, Beam, ControlReinicio,
-    EstadoConexion, InfoModulo, LogReinicio
-)
+from .models import Modulo, Medicion, Beam, ControlReinicio, EstadoConexion, InfoModulo, LogReinicio
 
 class ControlReinicioSerializer(serializers.ModelSerializer):
-    """Serializer para Control_Reinicio"""
+    # Usar camelCase para el frontend
+    reset_id = serializers.IntegerField(source='reset_id', read_only=True)
+    
     class Meta:
         model = ControlReinicio
         fields = ['reset_id', 'nombre', 'modulo']
-        read_only_fields = ['reset_id']
-
+        
+    def to_representation(self, instance):
+        """Convertir a camelCase"""
+        ret = super().to_representation(instance)
+        return {
+            'resetId': ret.get('reset_id'),
+            'nombre': ret.get('nombre'),
+            'modulo': ret.get('modulo')
+        }
 
 class ModuloSerializer(serializers.ModelSerializer):
-    """Serializer básico para Módulo"""
     reset = ControlReinicioSerializer(read_only=True)
     
     class Meta:
         model = Modulo
-        fields = [
-            'modulo_id', 'nombre', 'ubicacion', 'version',
-            'up', 'down', 'reset'
-        ]
-        read_only_fields = ['modulo_id']
-
-
-class ModuloDetalleSerializer(serializers.ModelSerializer):
-    """Serializer detallado para Módulo con relaciones"""
-    reset = ControlReinicioSerializer(read_only=True)
-    total_mediciones = serializers.SerializerMethodField()
-    total_apuntes = serializers.SerializerMethodField()
-    ultima_conexion = serializers.SerializerMethodField()
+        fields = '__all__'
     
-    class Meta:
-        model = Modulo
-        fields = [
-            'modulo_id', 'nombre', 'ubicacion', 'version',
-            'up', 'down', 'reset',
-            'total_mediciones', 'total_apuntes', 'ultima_conexion'
-        ]
-    
-    def get_total_mediciones(self, obj):
-        return obj.mediciones.count()
-    
-    def get_total_apuntes(self, obj):
-        return obj.apuntes.count()
-    
-    def get_ultima_conexion(self, obj):
-        ultimo_estado = obj.estados_conexion.first()
-        if ultimo_estado:
-            return {
-                'tipo_evento': ultimo_estado.tipo_evento,
-                'fecha': ultimo_estado.fecha
-            }
-        return None
-
+    def to_representation(self, instance):
+        """Convertir snake_case a camelCase para el frontend"""
+        ret = super().to_representation(instance)
+        
+        # Mapear campos a camelCase
+        return {
+            'moduloId': ret.get('modulo_id'),
+            'nombre': ret.get('nombre'),
+            'ubicacion': ret.get('ubicacion'),
+            'version': ret.get('version'),
+            'up': ret.get('up'),
+            'down': ret.get('down'),
+            'resetId': ret.get('reset_id'),
+            'reset': ret.get('reset'),
+            # Agregar campos adicionales si existen
+            'medicionTempActual': ret.get('medicion_temp_actual'),
+            'medicionPressActual': ret.get('medicion_press_actual'),
+        }
 
 class MedicionSerializer(serializers.ModelSerializer):
-    """Serializer para Mediciones"""
-    modulo_nombre = serializers.CharField(source='modulo.nombre', read_only=True)
-    
     class Meta:
         model = Medicion
-        fields = [
-            'medicion_id', 'fecha', 'valor_temp', 'valor_press',
-            'modulo', 'modulo_nombre'
-        ]
-        read_only_fields = ['medicion_id', 'fecha']
-
+        fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convertir a camelCase"""
+        ret = super().to_representation(instance)
+        return {
+            'medicionId': ret.get('medicion_id'),
+            'moduloId': ret.get('modulo_id'),
+            'fecha': ret.get('fecha'),
+            'valorTemp': ret.get('valor_temp'),
+            'valorPress': ret.get('valor_press'),
+        }
 
 class BeamSerializer(serializers.ModelSerializer):
-    """Serializer para Beam (Apuntes)"""
-    modulo_nombre = serializers.CharField(source='modulo.nombre', read_only=True)
-    
     class Meta:
         model = Beam
-        fields = [
-            'beam_id', 'fecha', 'valor_up', 'valor_down',
-            'modulo', 'modulo_nombre'
-        ]
-        read_only_fields = ['beam_id', 'fecha']
-
+        fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convertir a camelCase"""
+        ret = super().to_representation(instance)
+        return {
+            'apunteId': ret.get('apunte_id'),
+            'moduloId': ret.get('modulo_id'),
+            'fecha': ret.get('fecha'),
+            'up': ret.get('up'),
+            'down': ret.get('down'),
+            'upEsperado': ret.get('up_esperado'),
+            'downEsperado': ret.get('down_esperado'),
+            'upActual': ret.get('up_actual'),
+            'downActual': ret.get('down_actual'),
+            'estadoUp': ret.get('estado_up'),
+            'estadoDown': ret.get('estado_down'),
+        }
 
 class EstadoConexionSerializer(serializers.ModelSerializer):
-    """Serializer para Estado_Conexion"""
-    modulo_nombre = serializers.CharField(source='modulo.nombre', read_only=True)
-    
     class Meta:
         model = EstadoConexion
-        fields = [
-            'estado_id', 'modulo', 'modulo_nombre',
-            'tipo_evento', 'fecha', 'duracion_desconexion', 'detalles'
-        ]
-        read_only_fields = ['estado_id', 'fecha']
-
+        fields = '__all__'
 
 class InfoModuloSerializer(serializers.ModelSerializer):
-    """Serializer para Info_Modulo"""
-    modulo_nombre = serializers.CharField(source='modulo.nombre', read_only=True)
-    
     class Meta:
         model = InfoModulo
-        fields = [
-            'info_id', 'modulo', 'modulo_nombre',
-            'fecha_actualizacion', 'version_firmware', 'ip_address',
-            'mac_address', 'uptime', 'memoria_libre',
-            'temperatura_interna', 'voltaje_alimentacion',
-            'signal_strength', 'activo'
-        ]
-        read_only_fields = ['info_id', 'fecha_actualizacion']
-
+        fields = '__all__'
+    
+    def to_representation(self, instance):
+        """Convertir a camelCase"""
+        ret = super().to_representation(instance)
+        return {
+            'infoId': ret.get('info_id'),
+            'moduloId': ret.get('modulo_id'),
+            'versionFirmware': ret.get('version_firmware'),
+            'ipAddress': ret.get('ip_address'),
+            'macAddress': ret.get('mac_address'),
+            'uptime': ret.get('uptime'),
+            'memoriaLibre': ret.get('memoria_libre'),
+            'temperaturaInterna': ret.get('temperatura_interna'),
+            'voltajeAlimentacion': ret.get('voltaje_alimentacion'),
+            'signalStrength': ret.get('signal_strength'),
+            'activo': ret.get('activo'),
+            'fechaRegistro': ret.get('fecha_registro'),
+        }
 
 class LogReinicioSerializer(serializers.ModelSerializer):
-    """Serializer para Log_Reinicios"""
-    reset_nombre = serializers.CharField(source='reset.nombre', read_only=True)
-    
     class Meta:
         model = LogReinicio
-        fields = [
-            'log_reset_id', 'reinicio', 'fecha',
-            'reset', 'reset_nombre'
-        ]
-        read_only_fields = ['log_reset_id', 'fecha']
-
-
-# Serializers para casos de uso específicos
-
-class UltimaMedicionSerializer(serializers.Serializer):
-    """Serializer para última medición de un módulo"""
-    fecha = serializers.DateTimeField()
-    valor_temp = serializers.CharField()
-    valor_press = serializers.CharField()
-
-
-class ApunteActualSerializer(serializers.Serializer):
-    """Serializer para apunte actual de un módulo"""
-    up = serializers.DecimalField(max_digits=2, decimal_places=1)
-    down = serializers.DecimalField(max_digits=2, decimal_places=1)
-    fecha = serializers.DateTimeField(required=False)
-
-
-class EstadoResetSerializer(serializers.Serializer):
-    """Serializer para estado de reset"""
-    apertura = serializers.IntegerField()
-    modulo_id = serializers.IntegerField()
-
-
-class CambiarEstadoResetSerializer(serializers.Serializer):
-    """Serializer para cambiar estado de reset"""
-    apertura = serializers.IntegerField(min_value=0, max_value=1)
+        fields = '__all__'
