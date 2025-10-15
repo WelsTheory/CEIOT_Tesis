@@ -98,3 +98,6 @@ src/frontend/js
 .csr
 
 mqtt/data
+
+*/*/venv
+*.sqlite3
