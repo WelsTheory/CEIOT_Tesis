@@ -1,269 +1,227 @@
-// src/app/services/mqtt.service.ts
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-
-// Declarar mqtt para TypeScript
-declare const mqtt: any;
-
-export interface MqttMessage {
-  topic: string;
-  message: any;
-  timestamp: Date;
-}
+import { connect, MqttClient } from 'mqtt';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface ModuloEstado {
   moduloId: number;
-  estado_conexion: 'ONLINE' | 'OFFLINE' | 'TIMEOUT' | 'DESCONOCIDO';
-  ultimo_heartbeat?: Date;
-  apuntes?: {
+  estado_conexion: 'ONLINE' | 'OFFLINE' | 'DESCONOCIDO';
+  ultimo_heartbeat: Date;
+  apuntes: {
     up_esperado?: number;
     down_esperado?: number;
     up_actual?: number;
     down_actual?: number;
-    estado_up?: 'correcto' | 'mismatch' | 'desconectado';
-    estado_down?: 'correcto' | 'mismatch' | 'desconectado';
+    estado_up?: string;
+    estado_down?: string;
   };
-  info_tecnica?: {
+  mediciones?: {
+    temperatura?: number;
+    presion?: number;
+    timestamp?: Date;
+  };
+  info_tecnica: {
     version_firmware?: string;
     ip_address?: string;
+    mac_address?: string;
+    uptime?: number;
+    memoria_libre?: number;
     temperatura_interna?: number;
     voltaje_alimentacion?: number;
+    signal_strength?: number;
   };
   detalles?: string;
+}
+
+export interface MedicionUpdate {
+  moduloId: number;
+  temperatura: number;
+  presion: number;
+  timestamp: Date;
+  apuntes_verificados?: boolean;
+  mismatch_detectado?: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class MqttService {
-  private client: any = null;
+  private client: MqttClient | null = null;
   private connected = false;
-  
-  // Observable para el estado de conexión
+
+  // Subjects para emitir actualizaciones
   private connectionStatus = new BehaviorSubject<boolean>(false);
   public connectionStatus$ = this.connectionStatus.asObservable();
-  
-  // Observable para mensajes recibidos
-  private messages = new BehaviorSubject<MqttMessage | null>(null);
-  public messages$ = this.messages.asObservable();
-  
-  // Observable específico para estados de módulos
-  private moduloEstados = new BehaviorSubject<ModuloEstado | null>(null);
-  public moduloEstados$ = this.moduloEstados.asObservable();
-  
-  // Observable para actualizaciones de mediciones
-  private medicionUpdates = new BehaviorSubject<any>(null);
+
+  private estadosModulos = new Map<number, ModuloEstado>();
+  private moduloEstadoSubject = new Subject<{ moduloId: number, estado: ModuloEstado }>();
+  public moduloEstado$ = this.moduloEstadoSubject.asObservable();
+
+  private medicionUpdates = new Subject<MedicionUpdate>();
   public medicionUpdates$ = this.medicionUpdates.asObservable();
 
-  // Map para mantener el último estado conocido de cada módulo
-  private estadosModulos: Map<number, ModuloEstado> = new Map();
-
   constructor() {
-    // Cargar librería MQTT desde CDN si no está disponible
-    this.cargarMqttLibrary().then(() => {
-      this.initializeMqtt();
-    });
+    this.connect();
   }
 
-  private async cargarMqttLibrary(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (typeof mqtt !== 'undefined') {
-        resolve();
-        return;
-      }
+  /**
+   * Conectar al broker MQTT
+   */
+  connect() {
+    if (this.client) {
+      console.log('⚠️ Cliente MQTT ya existe');
+      return;
+    }
 
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js';
-      script.onload = () => {
-        console.log('✅ Librería MQTT cargada desde CDN');
-        resolve();
-      };
-      script.onerror = () => {
-        console.error('❌ Error cargando librería MQTT');
-        reject();
-      };
-      document.head.appendChild(script);
-    });
-  }
-
-  private initializeMqtt() {
     try {
-      console.log('🔌 Inicializando conexión MQTT...');
-      
-      // Conectar al broker MQTT vía WebSocket
-      this.client = mqtt.connect('ws://localhost:9001', {
-        clientId: 'ionic_frontend_' + Math.random().toString(16).substr(2, 8),
-        // 🚀 OPTIMIZACIONES CLAVE:
-        reconnectPeriod: 100,        // ⚡ Era 1000ms → ahora 100ms
-        connectTimeout: 2000,        // ⚡ Timeout conexión: 2 segundos máximo
-        keepalive: 10,               // ⚡ Era 60s → ahora 10s 
+      console.log(`🔌 Conectando a MQTT: ${environment.mqttBrokerUrl}`);
+
+      this.client = connect(environment.mqttBrokerUrl, {
+        clientId: `ionic_client_${Math.random().toString(16).substr(2, 8)}`,
         clean: true,
-        // 🚀 NUEVAS OPTIMIZACIONES:
-        resubscribe: true,           // ⚡ Re-suscribir automáticamente
-        protocolVersion: 4,          // ⚡ MQTT v3.1.1 (más rápido que v5)
-        queueQoSZero: false,         // ⚡ No encolar mensajes QoS 0
-        properties: {
-          sessionExpiryInterval: 10, // ⚡ Expirar sesión rápido
-          requestResponseInformation: false,
-          requestProblemInformation: false
-        }
+        reconnectPeriod: 5000,
+        connectTimeout: 30000
       });
 
-      // ⚡ EVENTOS OPTIMIZADOS
       this.client.on('connect', () => {
-        console.log('✅ MQTT CONECTADO RÁPIDO en', Date.now());
+        console.log('✅ Conectado al broker MQTT');
         this.connected = true;
         this.connectionStatus.next(true);
-        
-        // ⚡ Suscribirse inmediatamente (sin delay)
         this.subscribeToTopics();
       });
 
-      // ⚡ PROCESAMIENTO DE MENSAJES ULTRA RÁPIDO
-      this.client.on('message', (topic: string, message: Uint8Array) => {
-        const startTime = performance.now();
-        
-        try {
-          const messageStr = message.toString();
-          const data = JSON.parse(messageStr);
-          
-          console.log(`📨 MQTT mensaje procesado en ${(performance.now() - startTime).toFixed(2)}ms:`, {
-            topic,
-            data
-          });
-          
-          // ⚡ Procesar mensaje INMEDIATAMENTE
-          this.procesarMensaje(topic, data);
-          
-          // ⚡ Emitir mensaje genérico INMEDIATAMENTE
-          this.messages.next({
-            topic,
-            message: data,
-            timestamp: new Date()
-          });
-          
-        } catch (error) {
-          console.error('❌ Error procesando mensaje MQTT:', error);
-        }
-      });
-
-      this.client.on('disconnect', () => {
-        console.log('🔌 Desconectado de MQTT');
-        this.connected = false;
-        this.connectionStatus.next(false);
-      });
-
-      this.client.on('error', (error: any) => {
+      this.client.on('error', (error) => {
         console.error('❌ Error MQTT:', error);
         this.connected = false;
         this.connectionStatus.next(false);
       });
 
-      // ⚡ NUEVOS EVENTOS PARA DEBUGGING
-      this.client.on('reconnect', () => {
-        console.log('🔄 Reconectando MQTT...');
-      });
-
-      this.client.on('offline', () => {
-        console.log('📴 MQTT offline');
+      this.client.on('close', () => {
+        console.log('🔌 Desconectado del broker MQTT');
         this.connected = false;
         this.connectionStatus.next(false);
       });
 
+      this.client.on('message', (topic, message) => {
+        this.handleMessage(topic, message.toString());
+      });
+
     } catch (error) {
-      console.error('❌ Error inicializando MQTT:', error);
+      console.error('❌ Error al conectar MQTT:', error);
     }
   }
 
+  /**
+   * Suscribirse a los topics relevantes
+   */
   private subscribeToTopics() {
+    if (!this.client) return;
+
     const topics = [
-      'modulos/+/estado',        // Estados de módulos
-      'modulos/+/heartbeat',     // Heartbeats
-      'modulos/+/mediciones',    // Mediciones de sensores
-      'modulos/+/info-tecnica',  // Información técnica
-      'modulos/+/apuntes'        // Cambios en apuntes
+      'medicion/#',
+      'apunte/#',
+      'estado/#',
+      'heartbeat/#',
+      'sensores/data',
+      'dispositivos/estado',
+      'mediciones/nuevas'
     ];
 
     topics.forEach(topic => {
-      this.client.subscribe(topic, (err: any) => {
+      this.client?.subscribe(topic, (err) => {
         if (!err) {
-          console.log('📡 Suscrito a topic:', topic);
+          console.log(`📡 Suscrito a: ${topic}`);
         } else {
-          console.error('❌ Error suscribiéndose a:', topic, err);
+          console.error(`❌ Error suscribiéndose a ${topic}:`, err);
         }
       });
     });
   }
 
-  private procesarMensaje(topic: string, data: any) {
-    const startTime = performance.now();
+  /**
+   * Procesar mensajes MQTT recibidos
+   */
+  private handleMessage(topic: string, message: string) {
     try {
-      // Extraer moduloId del topic (formato: modulos/X/tipo)
-      const topicParts = topic.split('/');
-      const moduloId = parseInt(topicParts[1]);
-      const tipoMensaje = topicParts[2];
+      const data = JSON.parse(message);
+      console.log(`📨 Mensaje MQTT [${topic}]:`, data);
 
-      if (!moduloId || isNaN(moduloId)) {
-        console.warn('⚠️ ModuloId inválido en topic:', topic);
-        return;
+      const moduloId = data.moduloId || data.modulo_id;
+      if (!moduloId) return;
+
+      // Obtener o crear estado del módulo
+      let estadoActual = this.estadosModulos.get(moduloId) || this.crearEstadoInicial(moduloId);
+
+      // Procesar según el topic
+      if (topic.startsWith('medicion/') || topic === 'sensores/data' || topic === 'mediciones/nuevas') {
+        estadoActual = this.procesarMedicion(estadoActual, data);
+      } else if (topic.startsWith('apunte/')) {
+        estadoActual = this.procesarApuntes(estadoActual, data);
+      } else if (topic.startsWith('estado/') || topic === 'dispositivos/estado') {
+        estadoActual = this.procesarEstado(estadoActual, data);
+      } else if (topic.startsWith('heartbeat/')) {
+        estadoActual = this.procesarHeartbeat(estadoActual, data);
       }
 
-      // Obtener estado actual del módulo o crear uno nuevo
-      let estadoActual = this.estadosModulos.get(moduloId) || {
-        moduloId,
-        estado_conexion: 'DESCONOCIDO'
-      };
-
-      // Procesar según el tipo de mensaje
-      switch (tipoMensaje) {
-        case 'estado':
-          estadoActual = this.procesarEstadoModulo(estadoActual, data);
-          break;
-        
-        case 'heartbeat':
-          estadoActual = this.procesarHeartbeat(estadoActual, data);
-          break;
-        
-        case 'mediciones':
-          this.procesarMediciones(moduloId, data);
-          break;
-        
-        case 'info-tecnica':
-          estadoActual = this.procesarInfoTecnica(estadoActual, data);
-          break;
-        
-        case 'apuntes':
-          estadoActual = this.procesarApuntes(estadoActual, data);
-          break;
-      }
-
-      // Guardar estado actualizado
+      // Actualizar el mapa y emitir el cambio
       this.estadosModulos.set(moduloId, estadoActual);
-      
-      // Emitir actualización
-      this.moduloEstados.next(estadoActual);
+      this.moduloEstadoSubject.next({ moduloId, estado: estadoActual });
 
-      console.log(`⚡ Mensaje procesado en ${(performance.now() - startTime).toFixed(2)}ms`);
-      
     } catch (error) {
       console.error('❌ Error procesando mensaje MQTT:', error);
     }
   }
 
-  private procesarEstadoModulo(estadoActual: ModuloEstado, data: any): ModuloEstado {
+  private crearEstadoInicial(moduloId: number): ModuloEstado {
+    return {
+      moduloId,
+      estado_conexion: 'DESCONOCIDO',
+      ultimo_heartbeat: new Date(),
+      apuntes: {},
+      info_tecnica: {}
+    };
+  }
+
+  private procesarMedicion(estadoActual: ModuloEstado, data: any): ModuloEstado {
+    const nuevaMedicion = {
+      temperatura: data.temperatura || data.valor_temp,
+      presion: data.presion || data.valor_press,
+      timestamp: new Date(data.timestamp || data.fecha || Date.now())
+    };
+
+    // Emitir actualización de medición
+    this.medicionUpdates.next({
+      moduloId: estadoActual.moduloId,
+      ...nuevaMedicion
+    });
+
     return {
       ...estadoActual,
-      estado_conexion: data.estado_conexion || data.estado || estadoActual.estado_conexion,
-      ultimo_heartbeat: data.ultimo_heartbeat ? new Date(data.ultimo_heartbeat) : new Date(),
+      mediciones: nuevaMedicion,
+      estado_conexion: 'ONLINE',
+      ultimo_heartbeat: new Date()
+    };
+  }
+
+  private procesarApuntes(estadoActual: ModuloEstado, data: any): ModuloEstado {
+    return {
+      ...estadoActual,
       apuntes: {
-        ...estadoActual.apuntes,
-        ...data.apuntes
-      },
-      info_tecnica: {
-        ...estadoActual.info_tecnica,
-        ...data.info_tecnica
-      },
-      detalles: data.detalles || estadoActual.detalles
+        up_esperado: data.upEsperado || data.up_esperado,
+        down_esperado: data.downEsperado || data.down_esperado,
+        up_actual: data.upActual || data.up_actual,
+        down_actual: data.downActual || data.down_actual,
+        estado_up: data.estadoUp || data.estado_up,
+        estado_down: data.estadoDown || data.estado_down
+      }
+    };
+  }
+
+  private procesarEstado(estadoActual: ModuloEstado, data: any): ModuloEstado {
+    return {
+      ...estadoActual,
+      estado_conexion: data.estado || data.estado_conexion || 'DESCONOCIDO',
+      detalles: data.detalles
     };
   }
 
@@ -274,53 +232,18 @@ export class MqttService {
       ultimo_heartbeat: new Date(),
       info_tecnica: {
         ...estadoActual.info_tecnica,
-        ...data
+        version_firmware: data.firmware || estadoActual.info_tecnica.version_firmware,
+        ip_address: data.ip || estadoActual.info_tecnica.ip_address,
+        mac_address: data.mac || estadoActual.info_tecnica.mac_address,
+        uptime: data.uptime || estadoActual.info_tecnica.uptime,
+        memoria_libre: data.memoria || estadoActual.info_tecnica.memoria_libre,
+        temperatura_interna: data.temperatura || estadoActual.info_tecnica.temperatura_interna,
+        voltaje_alimentacion: data.voltaje || estadoActual.info_tecnica.voltaje_alimentacion,
+        signal_strength: data.signal || estadoActual.info_tecnica.signal_strength
       }
     };
   }
 
-  private procesarMediciones(moduloId: number, data: any) {
-    // Emitir actualización de mediciones
-    this.medicionUpdates.next({
-      moduloId,
-      temperatura: data.temperatura,
-      presion: data.presion,
-      timestamp: new Date(data.timestamp || Date.now()),
-      apuntes_verificados: data.apuntes_verificados,
-      mismatch_detectado: data.mismatch_detectado
-    });
-  }
-
-  private procesarInfoTecnica(estadoActual: ModuloEstado, data: any): ModuloEstado {
-    return {
-      ...estadoActual,
-      info_tecnica: {
-        ...estadoActual.info_tecnica,
-        version_firmware: data.version_firmware,
-        ip_address: data.ip_address,
-        temperatura_interna: data.temperatura_interna,
-        voltaje_alimentacion: data.voltaje_alimentacion
-      }
-    };
-  }
-
-  private procesarApuntes(estadoActual: ModuloEstado, data: any): ModuloEstado {
-    return {
-      ...estadoActual,
-      apuntes: {
-        ...estadoActual.apuntes,
-        up_esperado: data.up_esperado,
-        down_esperado: data.down_esperado,
-        up_actual: data.up_actual,
-        down_actual: data.down_actual,
-        estado_up: data.estado_up,
-        estado_down: data.estado_down
-      }
-    };
-  }
-
-  // Métodos públicos para la interfaz
-  
   /**
    * Obtener estado actual de un módulo específico
    */
@@ -348,10 +271,15 @@ export class MqttService {
   publish(topic: string, message: any): void {
     if (this.connected && this.client) {
       const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
-      this.client.publish(topic, messageStr);
-      console.log('📤 Mensaje publicado:', { topic, message });
+      this.client.publish(topic, messageStr, (error) => {
+        if (error) {
+          console.error(`❌ Error publicando en ${topic}:`, error);
+        } else {
+          console.log(`📤 Mensaje publicado en ${topic}`);
+        }
+      });
     } else {
-      console.warn('⚠️ MQTT no conectado, no se puede publicar mensaje');
+      console.warn('⚠️ No se puede publicar: MQTT no está conectado');
     }
   }
 
@@ -359,41 +287,47 @@ export class MqttService {
    * Solicitar actualización de estado de un módulo específico
    */
   solicitarActualizacionModulo(moduloId: number): void {
-    this.publish(`modulos/${moduloId}/cmd/refresh`, {
-      command: 'refresh_status',
-      timestamp: new Date().toISOString()
-    });
+    if (this.connected && this.client) {
+      const message = {
+        moduloId: moduloId,
+        action: 'request_update',
+        timestamp: new Date().toISOString()
+      };
+      
+      this.publish(`control/modulo/${moduloId}`, message);
+      console.log(`📤 Solicitada actualización del módulo ${moduloId}`);
+    } else {
+      console.warn('⚠️ No se puede solicitar actualización: MQTT no está conectado');
+    }
   }
 
   /**
    * Solicitar actualización de todos los módulos
    */
   solicitarActualizacionTodos(): void {
-    this.publish('modulos/all/cmd/refresh', {
-      command: 'refresh_all_status',
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  /**
-   * Reconectar manualmente
-   */
-  reconnect(): void {
-    if (this.client) {
-      console.log('🔄 Reconectando a MQTT...');
-      this.client.reconnect();
+    if (this.connected && this.client) {
+      const message = {
+        action: 'request_update_all',
+        timestamp: new Date().toISOString()
+      };
+      
+      this.publish('control/update_all', message);
+      console.log('📤 Solicitada actualización de todos los módulos');
+    } else {
+      console.warn('⚠️ No se puede solicitar actualización: MQTT no está conectado');
     }
   }
 
   /**
-   * Desconectar
+   * Desconectar del broker MQTT
    */
-  disconnect(): void {
-    if (this.client && this.connected) {
-      console.log('🔌 Desconectando de MQTT...');
+  disconnect() {
+    if (this.client) {
       this.client.end();
+      this.client = null;
       this.connected = false;
       this.connectionStatus.next(false);
+      console.log('🔌 Cliente MQTT desconectado');
     }
   }
 }

@@ -112,9 +112,9 @@ export class HomePage implements OnInit, OnDestroy {
     });
 
     // Suscribirse a actualizaciones de estado de módulos
-    this.mqttSubscription = this.mqttService.moduloEstados$.subscribe(estadoModulo => {
-      if (estadoModulo) {
-        this.procesarActualizacionEstadoMQTT(estadoModulo);
+    this.mqttSubscription = this.mqttService.moduloEstado$.subscribe(({moduloId, estado}) => {
+      if (estado) {
+        this.procesarActualizacionEstadoMQTT({moduloId, estado});
       }
     });
 
@@ -129,38 +129,22 @@ export class HomePage implements OnInit, OnDestroy {
   /**
    * Procesar actualización de estado recibida via MQTT
    */
-  private procesarActualizacionEstadoMQTT(estadoModulo: ModuloEstado) {
-    const { moduloId } = estadoModulo;
+  private procesarActualizacionEstadoMQTT(data: {moduloId: number, estado: ModuloEstado}) {
+    const { moduloId, estado } = data;
     
-    console.log(`📡 Actualizando estado MQTT - Módulo ${moduloId}:`, estadoModulo);
-    
-    // Actualizar estado de conexión
-    this.estadosConexion.set(moduloId, estadoModulo.estado_conexion);
-    
-    // Actualizar estados de apuntes
-    if (estadoModulo.apuntes) {
-      const { estado_up, estado_down } = estadoModulo.apuntes;
-      this.estadosApuntes.set(moduloId, {
-        up: estado_up || this.determinarEstadoApunte(estadoModulo, 'up'),
-        down: estado_down || this.determinarEstadoApunte(estadoModulo, 'down')
-      });
-    }
-    
-    // Actualizar información técnica del módulo si está disponible
-    if (estadoModulo.info_tecnica) {
-      const modulo = this.modulos.find(m => m.moduloId === moduloId);
-      if (modulo && estadoModulo.info_tecnica.version_firmware) {
-        modulo.version = estadoModulo.info_tecnica.version_firmware;
-      }
-    }
-    
-    // Actualizar timestamp
-    this.ultimaActualizacionMqtt = new Date();
-    
-    // Marcar módulo como no actualizando si estaba en proceso
+    // Actualizar el estado del módulo en tu lista
     const modulo = this.modulos.find(m => m.moduloId === moduloId);
     if (modulo) {
-      modulo.actualizandoEstado = false;
+      // Actualizar propiedades según el estado recibido
+      if (estado.mediciones) {
+        modulo.medicionTempActual = estado.mediciones.temperatura;
+        modulo.medicionPressActual = estado.mediciones.presion;
+      }
+      
+      if (estado.apuntes) {
+        modulo.up = estado.apuntes.up_actual || modulo.up;
+        modulo.down = estado.apuntes.down_actual || modulo.down;
+      }
     }
   }
 

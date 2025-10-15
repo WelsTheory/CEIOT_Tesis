@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Modulo } from '../listado-modulos/modulo';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // Interface para los apuntes
 export interface Apunte {
@@ -23,12 +24,11 @@ export interface InformacionSistema {
   direccionMAC?: string;
 }
 
-
 @Injectable({
   providedIn: 'root'
 })
 export class ModuloService {
-  private apiUrl = 'http://localhost:8000/modulo';
+  private apiUrl = `${environment.apiUrl}/modulos`;
 
   constructor(private _http: HttpClient) {}
 
@@ -43,100 +43,148 @@ export class ModuloService {
     return this.resetState.value?.estado ?? false;
   }
 
- 
+  /**
+   * Obtener todos los módulos
+   * GET /api/modulos/
+   */
   getModulos(): Promise<Modulo[]> {
     return firstValueFrom(this._http.get<Modulo[]>(this.apiUrl));
   }
+
+  /**
+   * Obtener módulo por ID
+   * GET /api/modulos/{id}/
+   */
   getModuloById(id: number): Promise<Modulo> {
     return firstValueFrom(
-      this._http.get<Modulo>(`http://localhost:8000/modulo/${id}`)
+      this._http.get<Modulo>(`${this.apiUrl}/${id}/`)
     );
   }
-  
-  cambiarEstadoReset(id: number, apertura: boolean): Promise<void> {
+
+  /**
+   * Obtener mediciones de un módulo
+   * GET /api/modulos/{id}/mediciones/
+   */
+  getMediciones(id: number): Promise<any[]> {
     return firstValueFrom(
-      this._http.post<void>(
-        `http://localhost:8000/modulo/reset`,
-        { apertura: apertura ? 1 : 0 }
-      )
+      this._http.get<any[]>(`${this.apiUrl}/${id}/mediciones/`)
     );
   }
-  
-  getMediciones(id: number): Promise<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string;}[]> {
+
+  /**
+   * Obtener última medición
+   * GET /api/modulos/{id}/ultima-medicion/
+   */
+  getUltimaMedicion(moduloId: number): Promise<any> {
     return firstValueFrom(
-      this._http.get<{ medicionId: number; fecha: string; valor_temp: string; valor_press: string; ubicacion: string}[]>(
-        `http://localhost:8000/modulo/${id}/mediciones`
-      )
+      this._http.get<any>(`${this.apiUrl}/${moduloId}/ultima-medicion/`)
     );
   }
-  
-  abrirReset(id: number): Promise<any> {
-    return firstValueFrom(
-      this._http.post(`http://localhost:8000/modulo/${id}/abrir`, {})
-    );
-  }
-  
-  cerrarReset(id: number): Promise<any> {
-    return firstValueFrom(
-      this._http.post(`http://localhost:8000/modulo/${id}/cerrar`, {})
-    );
-  }
-  
-  getEstadoReset(id: number): Promise<any> {
-    return firstValueFrom(
-      this._http.get(`http://localhost:8000/modulo/${id}/estado`)
-    );
-  }
-  getUltimaMedicion(moduloId: number) {
-    return firstValueFrom(
-      this._http.get<{ fecha: string; valor_temp: string; valor_press: string;}>(`http://localhost:8000/modulo/${moduloId}/ultima-medicion`)
-    );
-  }
+
+  /**
+   * Obtener apuntes de un módulo
+   * GET /api/modulos/{id}/apuntes/
+   */
   getApunte(moduloId: number): Promise<{up: number, down: number, fecha?: string}> {
     return firstValueFrom(
-      this._http.get<{up: number, down: number, fecha?: string}>(`http://localhost:8000/modulo/${moduloId}/apunte`)
+      this._http.get<{up: number, down: number, fecha?: string}>(`${this.apiUrl}/${moduloId}/apuntes/`)
     );
   }
-  // Nuevo método para obtener el historial de apuntes
+
+  /**
+   * Obtener historial de apuntes
+   * GET /api/modulos/{id}/historial-apuntes/
+   */
   getHistorialApuntes(moduloId: number): Promise<Apunte[]> {
     return firstValueFrom(
-      this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/historial-apuntes`)
+      this._http.get<Apunte[]>(`${this.apiUrl}/${moduloId}/historial-apuntes/`)
     );
   }
-  // Método para obtener apuntes por rango de fechas
+
+  /**
+   * Obtener apuntes por rango de fechas
+   * GET /api/modulos/{id}/apuntes/?fechaDesde={fecha}&fechaHasta={fecha}
+   */
   getApuntesPorFecha(moduloId: number, fechaDesde: string, fechaHasta: string): Promise<Apunte[]> {
     const params = {
       fechaDesde,
       fechaHasta
     };
     return firstValueFrom(
-      this._http.get<Apunte[]>(`http://localhost:8000/modulo/${moduloId}/apuntes`, { params })
+      this._http.get<Apunte[]>(`${this.apiUrl}/${moduloId}/apuntes/`, { params })
     );
   }
-    /**
-   * Obtiene la información del sistema del módulo (memoria, temperatura interna, voltaje, IP, firmware, MAC)
+
+  /**
+   * Obtener información del sistema del módulo
+   * GET /api/modulos/{id}/sistema-info/
    */
   getInformacionSistema(moduloId: number): Promise<InformacionSistema> {
     return firstValueFrom(
-      this._http.get<InformacionSistema>(`${this.apiUrl}/${moduloId}/sistema-info`)
+      this._http.get<InformacionSistema>(`${this.apiUrl}/${moduloId}/sistema-info/`)
     );
   }
 
   /**
-   * Obtiene información técnica del módulo (IP, firmware, MAC)
+   * Obtener información técnica del módulo
+   * GET /api/modulos/{id}/info-tecnica/
    */
   getInformacionTecnica(moduloId: number): Promise<{direccionIP: string, firmware: string, direccionMAC: string}> {
     return firstValueFrom(
-      this._http.get<{direccionIP: string, firmware: string, direccionMAC: string}>(`${this.apiUrl}/${moduloId}/info-tecnica`)
+      this._http.get<{direccionIP: string, firmware: string, direccionMAC: string}>(`${this.apiUrl}/${moduloId}/info-tecnica/`)
     );
   }
 
   /**
-   * Obtiene métricas del sistema del módulo (memoria, temperatura interna, voltaje)
+   * Obtener métricas del sistema
+   * GET /api/modulos/{id}/metricas-sistema/
    */
   getMetricasSistema(moduloId: number): Promise<{memoriaLibre: number, temperaturaInterna: number, voltajeAlimentacion: number}> {
     return firstValueFrom(
-      this._http.get<{memoriaLibre: number, temperaturaInterna: number, voltajeAlimentacion: number}>(`${this.apiUrl}/${moduloId}/metricas-sistema`)
+      this._http.get<{memoriaLibre: number, temperaturaInterna: number, voltajeAlimentacion: number}>(`${this.apiUrl}/${moduloId}/metricas-sistema/`)
+    );
+  }
+
+  /**
+   * Cambiar estado de reset (LEGACY - mantener por compatibilidad)
+   * POST /api/controles-reinicio/reset/
+   */
+  cambiarEstadoReset(id: number, apertura: boolean): Promise<void> {
+    return firstValueFrom(
+      this._http.post<void>(
+        `${environment.apiUrl}/controles-reinicio/reset/`,
+        { apertura: apertura ? 1 : 0 }
+      )
+    );
+  }
+
+  /**
+   * Abrir reset
+   * POST /api/modulos/{id}/abrir/
+   */
+  abrirReset(id: number): Promise<any> {
+    return firstValueFrom(
+      this._http.post(`${this.apiUrl}/${id}/abrir/`, {})
+    );
+  }
+
+  /**
+   * Cerrar reset
+   * POST /api/modulos/{id}/cerrar/
+   */
+  cerrarReset(id: number): Promise<any> {
+    return firstValueFrom(
+      this._http.post(`${this.apiUrl}/${id}/cerrar/`, {})
+    );
+  }
+
+  /**
+   * Obtener estado de reset
+   * GET /api/modulos/{id}/estado/
+   */
+  getEstadoReset(id: number): Promise<any> {
+    return firstValueFrom(
+      this._http.get(`${this.apiUrl}/${id}/estado/`)
     );
   }
 }

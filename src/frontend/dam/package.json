@@ -27,10 +27,15 @@
     "@capacitor/keyboard": "6.0.2",
     "@capacitor/status-bar": "6.0.1",
     "@ionic/angular": "^8.0.0",
+    "buffer": "^6.0.3",
+    "events": "^3.3.0",
     "ionicons": "^7.2.1",
     "mqtt": "^4.3.7",
+    "process": "^0.11.10",
     "rxjs": "~7.8.0",
+    "stream-browserify": "^3.0.0",
     "tslib": "^2.3.0",
+    "url": "^0.11.4",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {
