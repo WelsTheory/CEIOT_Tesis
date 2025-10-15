@@ -21,6 +21,9 @@ from .serializers import (
     EstadoResetSerializer, CambiarEstadoResetSerializer
 )
 
+from mqtt_handler.client import mqtt_client
+import json
+
 
 class ModuloViewSet(viewsets.ModelViewSet):
     """
@@ -152,16 +155,22 @@ class ModuloViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def abrir(self, request, pk=None):
-        """
-        POST /modulo/{id}/abrir/
-        Abrir reset del módulo
-        """
+        """POST /modulo/{id}/abrir/ - Abrir reset del módulo"""
         modulo = self.get_object()
         
-        # Aquí implementarías la lógica MQTT para enviar comando de apertura
-        # Por ahora solo registramos en el log
-        
         if modulo.reset:
+            # Publicar comando MQTT
+            comando = {
+                'moduloId': modulo.modulo_id,
+                'resetId': modulo.reset.reset_id,
+                'accion': 'abrir',
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            topic = f'comando/reset/{modulo.modulo_id}'
+            mqtt_client.publish(topic, json.dumps(comando))
+            
+            # Registrar en log
             LogReinicio.objects.create(
                 reset=modulo.reset,
                 reinicio=1
@@ -177,16 +186,25 @@ class ModuloViewSet(viewsets.ModelViewSet):
             {'error': 'El módulo no tiene control de reset asignado'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     @action(detail=True, methods=['post'])
     def cerrar(self, request, pk=None):
-        """
-        POST /modulo/{id}/cerrar/
-        Cerrar reset del módulo
-        """
+        """POST /modulo/{id}/cerrar/ - Cerrar reset del módulo"""
         modulo = self.get_object()
         
         if modulo.reset:
+            # Publicar comando MQTT
+            comando = {
+                'moduloId': modulo.modulo_id,
+                'resetId': modulo.reset.reset_id,
+                'accion': 'cerrar',
+                'timestamp': datetime.now().isoformat()
+            }
+            
+            topic = f'comando/reset/{modulo.modulo_id}'
+            mqtt_client.publish(topic, json.dumps(comando))
+            
+            # Registrar en log
             LogReinicio.objects.create(
                 reset=modulo.reset,
                 reinicio=0
