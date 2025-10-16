@@ -1,0 +1,263 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="text-gray-700 hover:text-blue-600">
+                <i class="fas fa-home mr-2"></i>Inicio
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="text-gray-500">Prueba Etapa 1</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-6 text-white shadow-lg">
+        <h1 class="text-3xl font-bold mb-2">🎉 Prueba de Etapa 1</h1>
+        <p class="text-blue-100">Verificación de templates, componentes y funcionalidades</p>
+    </div>
+    
+    <!-- Cards de Estado -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Módulos</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ test_data.total_modulos }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-solar-panel text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Activos</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ test_data.activos }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Con Alertas</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ test_data.alertas }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Desconectados</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ test_data.desconectados }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times-circle text-2xl text-red-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Secciones de Prueba -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Prueba de htmx -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-bolt text-yellow-500 mr-2"></i>
+                Prueba htmx
+            </h2>
+            <p class="text-gray-600 mb-4">Click para cargar contenido dinámico sin recargar la página</p>
+            
+            <button 
+                class="btn btn-primary"
+                hx-get="{% url 'test_htmx' %}"
+                hx-target="#htmx-result"
+                hx-swap="innerHTML"
+            >
+                <i class="fas fa-sync-alt mr-2"></i>
+                Cargar con htmx
+            </button>
+            
+            <div id="htmx-result" class="mt-4 p-4 bg-gray-50 rounded border border-gray-200 min-h-20">
+                <p class="text-gray-500 text-center">Presiona el botón para ver htmx en acción</p>
+            </div>
+        </div>
+        
+        <!-- Prueba de Alpine.js -->
+        <div class="bg-white rounded-lg shadow-md p-6" x-data="{ count: 0, message: '' }">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-mountain text-blue-500 mr-2"></i>
+                Prueba Alpine.js
+            </h2>
+            <p class="text-gray-600 mb-4">Contador reactivo con Alpine.js</p>
+            
+            <div class="flex items-center space-x-4 mb-4">
+                <button @click="count--" class="btn btn-danger">
+                    <i class="fas fa-minus"></i>
+                </button>
+                
+                <div class="text-4xl font-bold text-gray-800 min-w-20 text-center" x-text="count"></div>
+                
+                <button @click="count++" class="btn btn-success">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <input 
+                    type="text" 
+                    x-model="message"
+                    placeholder="Escribe algo..."
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                <button @click="$store.notifications.success(message || 'Notificación de prueba')" class="btn btn-primary">
+                    Mostrar
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-500 mt-4" x-show="message">
+                Mensaje: <span class="font-semibold" x-text="message"></span>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Prueba de Componentes -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-puzzle-piece text-purple-500 mr-2"></i>
+            Prueba de Componentes
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Modal -->
+            <div x-data="modal()">
+                <button @click="show()" class="w-full btn btn-primary">
+                    <i class="fas fa-window-maximize mr-2"></i>
+                    Abrir Modal
+                </button>
+                
+                <div x-show="open" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                    <div class="flex items-center justify-center min-h-screen px-4">
+                        <div @click="hide()" class="fixed inset-0 bg-black bg-opacity-50"></div>
+                        
+                        <div class="relative bg-white rounded-lg p-8 max-w-md w-full">
+                            <h3 class="text-xl font-bold mb-4">Modal de Prueba</h3>
+                            <p class="text-gray-600 mb-6">Este es un modal funcional con Alpine.js</p>
+                            <button @click="hide()" class="btn btn-primary">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dropdown -->
+            <div x-data="dropdown()" class="relative">
+                <button @click="toggle()" class="w-full btn bg-green-600 text-white hover:bg-green-700">
+                    <i class="fas fa-chevron-down mr-2"></i>
+                    Dropdown
+                </button>
+                
+                <div 
+                    x-show="open" 
+                    @click.away="close()"
+                    class="absolute mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+                    style="display: none;"
+                >
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-50">Opción 1</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-50">Opción 2</a>
+                    <a href="#" class="block px-4 py-2 hover:bg-gray-50">Opción 3</a>
+                </div>
+            </div>
+            
+            <!-- Tabs -->
+            <div x-data="tabs()">
+                <div class="flex border-b border-gray-200">
+                    <button @click="setTab(0)" :class="isActive(0) ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'" class="px-4 py-2 border-b-2">
+                        Tab 1
+                    </button>
+                    <button @click="setTab(1)" :class="isActive(1) ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'" class="px-4 py-2 border-b-2">
+                        Tab 2
+                    </button>
+                </div>
+                
+                <div class="p-4 bg-gray-50 rounded-b">
+                    <div x-show="isActive(0)">Contenido Tab 1</div>
+                    <div x-show="isActive(1)">Contenido Tab 2</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Checklist de Funcionalidades -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+            <i class="fas fa-check-double text-green-500 mr-2"></i>
+            Checklist de Funcionalidades
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Template base cargado</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Navbar responsive</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Sidebar con filtros</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Sistema de mensajes</span>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Tailwind CSS funcionando</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ htmx configurado</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Alpine.js activo</span>
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    <span>✅ Font Awesome cargado</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

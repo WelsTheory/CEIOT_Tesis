@@ -1,0 +1,10 @@
+<div class="bg-green-50 border border-green-200 rounded p-4">
+    <div class="flex items-center mb-2">
+        <i class="fas fa-check-circle text-green-600 text-2xl mr-3"></i>
+        <div>
+            <p class="font-semibold text-green-800">{{ timestamp }}</p>
+            <p class="text-sm text-green-600">{{ data }}</p>
+        </div>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">Cargado el: {% now "d/m/Y H:i:s" %}</p>
+</div>

@@ -47,14 +47,18 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [
+            BASE_DIR / 'templates',  # Directorio global de templates
+        ],
+        'APP_DIRS': True,  # Buscar templates dentro de cada app
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.static',  # Para {% static %}
+                'django.template.context_processors.media',   # Para archivos media
             ],
         },
     },
@@ -85,14 +89,60 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-LANGUAGE_CODE = 'es-es'
-TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Para collectstatic
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # Directorio de archivos estáticos del proyecto
+]
+
+# MEDIA FILES (uploads de usuarios)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# STATICFILES FINDERS
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+# LOGIN/LOGOUT URLS
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+# MENSAJES DE DJANGO
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',  # Bootstrap usa 'danger' en lugar de 'error'
+}
+
+# SESIONES
+SESSION_COOKIE_AGE = 86400  # 24 horas
+SESSION_SAVE_EVERY_REQUEST = True  # Actualizar sesión en cada request
+SESSION_COOKIE_SECURE = not DEBUG  # True en producción (HTTPS)
+SESSION_COOKIE_HTTPONLY = True  # Protección contra XSS
+
+# SEGURIDAD
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+
+# INTERNACIONALIZACIÓN
+LANGUAGE_CODE = 'es-pe'
+TIME_ZONE = 'America/Lima'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
 # Django REST Framework
 REST_FRAMEWORK = {

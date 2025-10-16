@@ -366,3 +366,76 @@ class LogReinicioViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = LogReinicio.objects.all()
     serializer_class = LogReinicioSerializer
     permission_classes = [IsAuthenticated]
+
+from django.shortcuts import render
+from django.contrib import messages
+from django.http import JsonResponse
+
+def test_base_template(request):
+    """Vista de prueba para verificar el template base y componentes"""
+    messages.success(request, '¡Template base cargado exitosamente!')
+    messages.info(request, 'Los componentes están funcionando correctamente')
+    messages.warning(request, 'Esta es una advertencia de prueba')
+    
+    context = {
+        'page_title': 'Test - Etapa 1',
+        'test_data': {
+            'total_modulos': 64,
+            'activos': 58,
+            'alertas': 4,
+            'desconectados': 2
+        }
+    }
+    return render(request, 'test/base_test.html', context)
+
+def test_htmx(request):
+    """Endpoint de prueba para htmx"""
+    if request.headers.get('HX-Request'):
+        return render(request, 'test/htmx_response.html', {
+            'timestamp': 'Actualizado con htmx',
+            'data': 'Contenido dinámico cargado exitosamente'
+        })
+    return JsonResponse({'error': 'Esta vista requiere htmx'})
+
+def modulo_search(request):
+    """Búsqueda de módulos (simulada)"""
+    query = request.GET.get('q', '')
+    modulos = [
+        {'id': 1, 'nombre': 'Módulo 1', 'ubicacion': 'Norte'},
+        {'id': 2, 'nombre': 'Módulo 2', 'ubicacion': 'Sur'},
+        {'id': 3, 'nombre': 'Módulo 3', 'ubicacion': 'Este'},
+        {'id': 4, 'nombre': 'Módulo 4', 'ubicacion': 'Oeste'},
+    ]
+    if query:
+        modulos = [m for m in modulos if query.lower() in m['nombre'].lower()]
+    return render(request, 'test/search_results.html', {'modulos': modulos})
+
+def dashboard_test(request):
+    """Dashboard de prueba"""
+    context = {
+        'page_title': 'Dashboard - Prueba',
+        'modulos': [
+            {
+                'id': 1, 'nombre': 'Módulo 1', 'ubicacion': 'Norte',
+                'estado': 'online', 'temperatura': 25.5, 'presion': 1013.2,
+                'up': 1.5, 'down': 0.5
+            },
+            {
+                'id': 2, 'nombre': 'Módulo 2', 'ubicacion': 'Sur',
+                'estado': 'online', 'temperatura': 26.8, 'presion': 1012.8,
+                'up': 2.0, 'down': 1.0
+            },
+            {
+                'id': 3, 'nombre': 'Módulo 3', 'ubicacion': 'Este',
+                'estado': 'warning', 'temperatura': 28.2, 'presion': 1010.5,
+                'up': 3.5, 'down': 0.0
+            },
+            {
+                'id': 4, 'nombre': 'Módulo 4', 'ubicacion': 'Oeste',
+                'estado': 'offline', 'temperatura': 0, 'presion': 0,
+                'up': 0.0, 'down': 3.5
+            },
+        ],
+        'stats': {'total': 64, 'activos': 58, 'alertas': 4, 'desconectados': 2}
+    }
+    return render(request, 'test/dashboard_test.html', context)
