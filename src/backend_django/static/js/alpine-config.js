@@ -48,43 +48,74 @@ document.addEventListener('alpine:init', () => {
             this.filter[key] = value;
         }
     });
-    
-    // Store para notificaciones
+    // Store para notificaciones mejorado
     Alpine.store('notifications', {
-        items: [],
+    items: [],
+    nextId: 1,
+    
+    add(message, type = 'info', duration = 5000, description = null) {
+        const id = this.nextId++;
+        const notification = {
+            id,
+            message,
+            type,
+            description,
+            visible: true,
+            createdAt: Date.now()
+        };
         
-        add(message, type = 'info', duration = 5000) {
-            const id = Date.now();
-            this.items.push({ id, message, type });
-            
-            if (duration > 0) {
-                setTimeout(() => this.remove(id), duration);
-            }
-        },
+        this.items.push(notification);
         
-        remove(id) {
-            const index = this.items.findIndex(item => item.id === id);
-            if (index > -1) {
-                this.items.splice(index, 1);
-            }
-        },
-        
-        success(message) {
-            this.add(message, 'success');
-        },
-        
-        error(message) {
-            this.add(message, 'error');
-        },
-        
-        warning(message) {
-            this.add(message, 'warning');
-        },
-        
-        info(message) {
-            this.add(message, 'info');
+        // Auto-remove después de duration
+        if (duration > 0) {
+            setTimeout(() => {
+                this.remove(id);
+            }, duration);
         }
-    });
+        
+        // Limitar a máximo 5 notificaciones visibles
+        if (this.items.length > 5) {
+            this.items.shift();
+        }
+        
+        return id;
+    },
+    
+    remove(id) {
+        const index = this.items.findIndex(item => item.id === id);
+        if (index > -1) {
+            this.items[index].visible = false;
+            // Remover del array después de la animación
+            setTimeout(() => {
+                const idx = this.items.findIndex(item => item.id === id);
+                if (idx > -1) {
+                    this.items.splice(idx, 1);
+                }
+            }, 300);
+        }
+    },
+    
+    clear() {
+        this.items = [];
+    },
+    
+    // Métodos de conveniencia
+    success(message, description = null) {
+        return this.add(message, 'success', 5000, description);
+    },
+    
+    error(message, description = null) {
+        return this.add(message, 'error', 8000, description);
+    },
+    
+    warning(message, description = null) {
+        return this.add(message, 'warning', 6000, description);
+    },
+    
+    info(message, description = null) {
+        return this.add(message, 'info', 4000, description);
+    }
+});
     
     // Store para MQTT
     Alpine.store('mqtt', {

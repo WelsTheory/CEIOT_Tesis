@@ -19,30 +19,74 @@
             <p class="text-gray-600">{{ modulo.ubicacion }} - Versión {{ modulo.version }}</p>
         </div>
         
-        <form method="post" class="space-y-6">
-            {% csrf_token %}
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button type="submit" name="accion" value="encender" 
-                        class="p-8 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+        <!-- Área de mensajes -->
+        <div id="control-messages"></div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button 
+                hx-post="{% url 'modulo_control_action' modulo.modulo_id %}"
+                hx-vals='{"accion": "encender"}'
+                hx-target="#control-messages"
+                hx-swap="innerHTML"
+                class="p-8 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                hx-indicator="#loading-encender"
+            >
+                <div id="loading-encender" class="htmx-indicator">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                </div>
+                <div class="htmx-request-hidden">
                     <i class="fas fa-power-off text-4xl mb-4"></i>
                     <p class="text-xl font-bold">Encender</p>
-                </button>
-                
-                <button type="submit" name="accion" value="apagar"
-                        class="p-8 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                </div>
+            </button>
+            
+            <button 
+                hx-post="{% url 'modulo_control_action' modulo.modulo_id %}"
+                hx-vals='{"accion": "apagar"}'
+                hx-target="#control-messages"
+                hx-swap="innerHTML"
+                class="p-8 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                hx-indicator="#loading-apagar"
+            >
+                <div id="loading-apagar" class="htmx-indicator">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                </div>
+                <div class="htmx-request-hidden">
                     <i class="fas fa-power-off text-4xl mb-4"></i>
                     <p class="text-xl font-bold">Apagar</p>
-                </button>
-                
-                <button type="submit" name="accion" value="reiniciar"
-                        class="p-8 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+                </div>
+            </button>
+            
+            <button 
+                hx-post="{% url 'modulo_control_action' modulo.modulo_id %}"
+                hx-vals='{"accion": "reiniciar"}'
+                hx-target="#control-messages"
+                hx-swap="innerHTML"
+                class="p-8 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                hx-indicator="#loading-reiniciar"
+            >
+                <div id="loading-reiniciar" class="htmx-indicator">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                </div>
+                <div class="htmx-request-hidden">
                     <i class="fas fa-sync-alt text-4xl mb-4"></i>
                     <p class="text-xl font-bold">Reiniciar</p>
-                </button>
-            </div>
-        </form>
+                </div>
+            </button>
+        </div>
     </div>
     
 </div>
+{% block extra_css %}
+<style>
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: block;
+}
+.htmx-request .htmx-request-hidden {
+    display: none;
+}
+    </style>
 {% endblock %}

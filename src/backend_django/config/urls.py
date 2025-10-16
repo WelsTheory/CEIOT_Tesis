@@ -43,6 +43,16 @@ urlpatterns = [
     path('test/', modulos_views.test_base_template, name='test_base'),
     path('test/htmx/', modulos_views.test_htmx, name='test_htmx'),
     path('search/', modulos_views.modulo_search, name='modulo_search'),
+    # ============================================================================
+    # ENDPOINTS HTMX (Etapa 4)
+    # ============================================================================
+    # Partials para auto-refresh
+    path('api/dashboard/stats/', modulos_views.dashboard_stats_partial, name='dashboard_stats_partial'),
+    path('api/modulos/<int:modulo_id>/card/', modulos_views.modulo_card_partial, name='modulo_card_partial'),
+    path('api/modulos/<int:modulo_id>/ultima-medicion/', modulos_views.ultima_medicion_partial, name='ultima_medicion_partial'),
+    
+    # Acciones de control
+    path('api/modulos/<int:modulo_id>/control-action/', modulos_views.modulo_control_action, name='modulo_control_action'),
 ]
 
 # Servir archivos estáticos en desarrollo

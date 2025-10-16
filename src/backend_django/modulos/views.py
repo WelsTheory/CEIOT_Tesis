@@ -9,6 +9,8 @@ from django.db.models import Max, Avg, Count, Q
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required  
 from django.shortcuts import render, get_object_or_404, redirect  # ← Agregar redirect
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
 from .models import (
     Modulo, Medicion, Beam, ControlReinicio,
@@ -457,7 +459,7 @@ def dashboard(request):
             continue
         
         modulos_data.append({
-            'id': modulo.modulo_id,
+            'modulo_id': modulo.modulo_id,
             'nombre': modulo.nombre,
             'ubicacion': modulo.ubicacion,
             'version': modulo.version,
@@ -690,3 +692,140 @@ def modulo_control(request, modulo_id):
     }
     
     return render(request, 'modulos/control.html', context)
+
+@login_required
+def dashboard_stats_partial(request):
+    """Vista parcial para actualizar solo las estadísticas del dashboard"""
+    from django.db.models import Count, Q
+    from datetime import datetime, timedelta
+    
+    # Calcular estadísticas
+    total_modulos = Modulo.objects.count()
+    
+    # Obtener módulos con última medición
+    hace_5_min = datetime.now() - timedelta(minutes=5)
+    hace_15_min = datetime.now() - timedelta(minutes=15)
+    
+    modulos_activos = 0
+    modulos_alerta = 0
+    modulos_offline = 0
+    
+    for modulo in Modulo.objects.all():
+        ultima_medicion = modulo.mediciones.first()
+        if ultima_medicion:
+            if ultima_medicion.fecha >= hace_5_min:
+                modulos_activos += 1
+            elif ultima_medicion.fecha >= hace_15_min:
+                modulos_alerta += 1
+            else:
+                modulos_offline += 1
+        else:
+            modulos_offline += 1
+    
+    context = {
+        'stats': {
+            'total': total_modulos,
+            'activos': modulos_activos,
+            'alertas': modulos_alerta,
+            'desconectados': modulos_offline,
+        }
+    }
+    
+    html = render_to_string('modulos/partials/stats_cards.html', context, request=request)
+    return HttpResponse(html)
+
+
+@login_required
+def modulo_card_partial(request, modulo_id):
+    """Vista parcial para actualizar un solo card de módulo"""
+    from datetime import datetime, timedelta
+    
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    ultima_medicion = modulo.mediciones.first()
+    
+    # Determinar estado
+    if ultima_medicion:
+        hace_5_min = datetime.now() - timedelta(minutes=5)
+        hace_15_min = datetime.now() - timedelta(minutes=15)
+        
+        if ultima_medicion.fecha >= hace_5_min:
+            estado = 'online'
+        elif ultima_medicion.fecha >= hace_15_min:
+            estado = 'warning'
+        else:
+            estado = 'offline'
+    else:
+        estado = 'offline'
+    
+    modulo_data = {
+        'id': modulo.modulo_id,
+        'nombre': modulo.nombre,
+        'ubicacion': modulo.ubicacion,
+        'version': modulo.version,
+        'up': float(modulo.up) if modulo.up else 0,
+        'down': float(modulo.down) if modulo.down else 0,
+        'estado': estado,
+        'temperatura': float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0,
+        'presion': float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0,
+        'ultima_medicion': ultima_medicion.fecha if ultima_medicion else None,
+    }
+    
+    context = {
+        'page_title': f'Control - {modulo.nombre}',
+        'modulo': modulo,  # ← Debe pasar el objeto completo, no un dict
+    }
+    html = render_to_string('modulos/partials/modulo_card.html', context, request=request)
+    return HttpResponse(html)
+
+
+@login_required
+def modulo_control_action(request, modulo_id):
+    """Vista para acciones de control via htmx"""
+    from django.http import JsonResponse
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    accion = request.POST.get('accion')
+    
+    # Aquí iría la lógica MQTT real
+    # mqtt_client.publish(f"modulos/{modulo_id}/control", accion.upper())
+    
+    mensajes = {
+        'encender': f'✅ Módulo {modulo.nombre} encendido',
+        'apagar': f'🔴 Módulo {modulo.nombre} apagado',
+        'reiniciar': f'🔄 Módulo {modulo.nombre} reiniciado'
+    }
+    
+    mensaje = mensajes.get(accion, 'Acción realizada')
+    
+    # Devolver HTML con mensaje
+    html = f'''
+    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4" 
+         x-data="{{ show: true }}" 
+         x-show="show"
+         x-init="setTimeout(() => show = false, 3000)">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle text-green-600 text-xl mr-3"></i>
+            <span class="text-green-800">{mensaje}</span>
+        </div>
+    </div>
+    '''
+    
+    return HttpResponse(html)
+
+
+@login_required
+def ultima_medicion_partial(request, modulo_id):
+    """Vista parcial para actualizar última medición"""
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    ultima_medicion = modulo.mediciones.first()
+    
+    context = {
+        'modulo': modulo,
+        'ultima_medicion': ultima_medicion
+    }
+    
+    html = render_to_string('modulos/partials/ultima_medicion.html', context, request=request)
+    return HttpResponse(html)

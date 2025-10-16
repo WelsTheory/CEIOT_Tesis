@@ -1,0 +1,61 @@
+<div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+    <div class="p-4 {% if modulo.estado == 'online' %}bg-green-50{% elif modulo.estado == 'warning' %}bg-yellow-50{% else %}bg-red-50{% endif %}">
+        <div class="flex items-center justify-between">
+            <h3 class="font-bold text-gray-800">{{ modulo.nombre }}</h3>
+            <div class="flex items-center space-x-1">
+                <span class="status-indicator {% if modulo.estado == 'online' %}online{% elif modulo.estado == 'warning' %}warning{% else %}offline{% endif %}"></span>
+                <span class="text-xs font-semibold {% if modulo.estado == 'online' %}text-green-700{% elif modulo.estado == 'warning' %}text-yellow-700{% else %}text-red-700{% endif %}">
+                    {{ modulo.estado|upper }}
+                </span>
+            </div>
+        </div>
+        <p class="text-sm text-gray-600 mt-1">
+            <i class="fas fa-location-dot mr-1"></i>{{ modulo.ubicacion }}
+            <span class="ml-2 text-xs bg-white px-2 py-1 rounded">v{{ modulo.version }}</span>
+        </p>
+    </div>
+    
+    <div class="p-4 space-y-3">
+        <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-600">
+                <i class="fas fa-temperature-high text-red-500 mr-2"></i>Temperatura
+            </span>
+            <span class="font-semibold text-gray-800">{{ modulo.temperatura|floatformat:1 }}°C</span>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-600">
+                <i class="fas fa-gauge text-blue-500 mr-2"></i>Presión
+            </span>
+            <span class="font-semibold text-gray-800">{{ modulo.presion|floatformat:1 }} hPa</span>
+        </div>
+        
+        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+            <div class="text-center flex-1">
+                <p class="text-xs text-gray-500">UP</p>
+                <p class="font-bold text-green-600">{{ modulo.up }}</p>
+            </div>
+            <div class="border-l border-gray-200 h-8"></div>
+            <div class="text-center flex-1">
+                <p class="text-xs text-gray-500">DOWN</p>
+                <p class="font-bold text-red-600">{{ modulo.down }}</p>
+            </div>
+        </div>
+        
+        {% if modulo.ultima_medicion %}
+        <div class="text-xs text-gray-500 text-center pt-2 border-t border-gray-200">
+            <i class="fas fa-clock mr-1"></i>
+            Última medición: {{ modulo.ultima_medicion|timesince }} atrás
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between">
+        <a href="{% url 'modulo_detail' modulo.modulo_id %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            <i class="fas fa-eye mr-1"></i>Ver Detalle
+        </a>
+        <a href="{% url 'modulo_control' modulo.modulo_id %}" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
+            <i class="fas fa-sliders-h mr-1"></i>Control
+        </a>
+    </div>
+</div>

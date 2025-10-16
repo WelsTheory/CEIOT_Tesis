@@ -1,0 +1,47 @@
+<div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Total Módulos</p>
+            <p class="text-3xl font-bold text-gray-800">{{ stats.total }}</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-solar-panel text-2xl text-blue-600"></i>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Activos</p>
+            <p class="text-3xl font-bold text-gray-800">{{ stats.activos }}</p>
+        </div>
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-check-circle text-2xl text-green-600"></i>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Con Alertas</p>
+            <p class="text-3xl font-bold text-gray-800">{{ stats.alertas }}</p>
+        </div>
+        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm text-gray-600 mb-1">Desconectados</p>
+            <p class="text-3xl font-bold text-gray-800">{{ stats.desconectados }}</p>
+        </div>
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-times-circle text-2xl text-red-600"></i>
+        </div>
+    </div>
+</div>

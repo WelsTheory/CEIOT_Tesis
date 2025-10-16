@@ -26,6 +26,8 @@
     <!-- Chart.js para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+
     <!-- CSS Personalizado -->
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     {% block extra_css %}{% endblock %}
@@ -51,6 +53,7 @@
     
     <!-- Navbar -->
     {% include 'includes/navbar.html' %}
+    {% include 'includes/notifications.html' %}
     
     <div class="flex h-screen pt-16">
         <!-- Sidebar -->
@@ -78,7 +81,7 @@
     <script src="{% static 'js/main.js' %}"></script>
     <script src="{% static 'js/htmx-config.js' %}"></script>
     <script src="{% static 'js/alpine-config.js' %}"></script>
-    
+    <script src="{% static 'js/mqtt-client.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
