@@ -48,7 +48,9 @@ export class ModuloService {
    * GET /api/modulos/
    */
   getModulos(): Promise<Modulo[]> {
-    return firstValueFrom(this._http.get<Modulo[]>(this.apiUrl));
+    return firstValueFrom(
+      this._http.get<{results: Modulo[]}>(this.apiUrl)
+    ).then(response => response.results || response as any);
   }
 
   /**
