@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Max, Avg, Count, Q
 from datetime import datetime, timedelta
+from django.contrib.auth.decorators import login_required  
 
 from .models import (
     Modulo, Medicion, Beam, ControlReinicio,
@@ -371,6 +372,7 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.http import JsonResponse
 
+@login_required
 def test_base_template(request):
     """Vista de prueba para verificar el template base y componentes"""
     messages.success(request, '¡Template base cargado exitosamente!')
@@ -410,6 +412,7 @@ def modulo_search(request):
         modulos = [m for m in modulos if query.lower() in m['nombre'].lower()]
     return render(request, 'test/search_results.html', {'modulos': modulos})
 
+@login_required
 def dashboard_test(request):
     """Dashboard de prueba"""
     context = {

@@ -1,0 +1,48 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Cerrar Sesión{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        
+        <!-- Icono -->
+        <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-sign-out-alt text-4xl text-yellow-600"></i>
+        </div>
+        
+        <!-- Título -->
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">
+            ¿Seguro que quieres cerrar sesión?
+        </h2>
+        
+        <!-- Descripción -->
+        <p class="text-gray-600 mb-8">
+            Estás a punto de cerrar tu sesión. Tendrás que volver a iniciar sesión para acceder al sistema.
+        </p>
+        
+        <!-- Botones -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <form method="post" action="{% url 'logout' %}" class="w-full sm:w-auto">
+                {% csrf_token %}
+                <button 
+                    type="submit"
+                    class="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                >
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Sí, cerrar sesión
+                </button>
+            </form>
+            
+            <a 
+                href="{% url 'dashboard' %}"
+                class="w-full sm:w-auto px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors inline-block text-center"
+            >
+                <i class="fas fa-arrow-left mr-2"></i>
+                Cancelar
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

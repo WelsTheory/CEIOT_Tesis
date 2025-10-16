@@ -1,9 +1,8 @@
-# authentication/urls.py
-
 from django.urls import path
-from .views import login, user_info
+from . import views
 
 urlpatterns = [
-    path('login/', login, name='login'),
-    path('user/', user_info, name='user_info'),
+    # APIs REST (existentes)
+    path('login/', views.login, name='api_login'),
+    path('user/', views.user_info, name='api_user_info'),
 ]
