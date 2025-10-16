@@ -1,0 +1,48 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Control - {{ modulo.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-800">Panel de Control</h1>
+        <a href="{% url 'modulo_detail' modulo.modulo_id %}" class="text-blue-600 hover:text-blue-800">
+            <i class="fas fa-arrow-left mr-2"></i>Volver
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-8">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ modulo.nombre }}</h2>
+            <p class="text-gray-600">{{ modulo.ubicacion }} - Versión {{ modulo.version }}</p>
+        </div>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button type="submit" name="accion" value="encender" 
+                        class="p-8 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-power-off text-4xl mb-4"></i>
+                    <p class="text-xl font-bold">Encender</p>
+                </button>
+                
+                <button type="submit" name="accion" value="apagar"
+                        class="p-8 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-power-off text-4xl mb-4"></i>
+                    <p class="text-xl font-bold">Apagar</p>
+                </button>
+                
+                <button type="submit" name="accion" value="reiniciar"
+                        class="p-8 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+                    <i class="fas fa-sync-alt text-4xl mb-4"></i>
+                    <p class="text-xl font-bold">Reiniciar</p>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+</div>
+{% endblock %}

@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Max, Avg, Count, Q
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required  
+from django.shortcuts import render, get_object_or_404, redirect  # ← Agregar redirect
 
 from .models import (
     Modulo, Medicion, Beam, ControlReinicio,
@@ -162,7 +163,7 @@ class ModuloViewSet(viewsets.ModelViewSet):
         if modulo.reset:
             # Publicar comando MQTT
             comando = {
-                'moduloId': modulo.modulo_id,
+                'modulo_id': modulo.modulo_id,
                 'resetId': modulo.reset.reset_id,
                 'accion': 'abrir',
                 'timestamp': datetime.now().isoformat()
@@ -196,7 +197,7 @@ class ModuloViewSet(viewsets.ModelViewSet):
         if modulo.reset:
             # Publicar comando MQTT
             comando = {
-                'moduloId': modulo.modulo_id,
+                'modulo_id': modulo.modulo_id,
                 'resetId': modulo.reset.reset_id,
                 'accion': 'cerrar',
                 'timestamp': datetime.now().isoformat()
@@ -413,32 +414,279 @@ def modulo_search(request):
     return render(request, 'test/search_results.html', {'modulos': modulos})
 
 @login_required
-def dashboard_test(request):
-    """Dashboard de prueba"""
+def dashboard(request):
+    """Dashboard principal con datos reales de la BD"""
+    from django.db.models import Count, Q, Avg, Max
+    from datetime import datetime, timedelta
+    
+    # Filtros de la URL
+    ubicacion_filter = request.GET.get('ubicacion', 'all')
+    estado_filter = request.GET.get('estado', 'all')
+    
+    # Query base de módulos
+    modulos_query = Modulo.objects.select_related('reset').prefetch_related('mediciones')
+    
+    # Aplicar filtros
+    if ubicacion_filter != 'all':
+        modulos_query = modulos_query.filter(ubicacion__iexact=ubicacion_filter)
+    
+    # Obtener todos los módulos
+    modulos = modulos_query.all()
+    
+    # Procesar cada módulo con su última medición y estado
+    modulos_data = []
+    for modulo in modulos:
+        # Última medición
+        ultima_medicion = modulo.mediciones.first()  # Ya ordenado por -fecha
+        
+        # Determinar estado
+        if ultima_medicion:
+            # Módulo tiene mediciones recientes
+            tiempo_desde_medicion = datetime.now() - ultima_medicion.fecha.replace(tzinfo=None)
+            if tiempo_desde_medicion.total_seconds() < 300:  # 5 minutos
+                estado = 'online'
+            elif tiempo_desde_medicion.total_seconds() < 900:  # 15 minutos
+                estado = 'warning'
+            else:
+                estado = 'offline'
+        else:
+            estado = 'offline'
+        
+        # Aplicar filtro de estado
+        if estado_filter != 'all' and estado != estado_filter:
+            continue
+        
+        modulos_data.append({
+            'id': modulo.modulo_id,
+            'nombre': modulo.nombre,
+            'ubicacion': modulo.ubicacion,
+            'version': modulo.version,
+            'up': float(modulo.up) if modulo.up else 0,
+            'down': float(modulo.down) if modulo.down else 0,
+            'estado': estado,
+            'temperatura': float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0,
+            'presion': float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0,
+            'ultima_medicion': ultima_medicion.fecha if ultima_medicion else None,
+        })
+    
+    # Estadísticas generales
+    total_modulos = len(modulos)
+    modulos_activos = len([m for m in modulos_data if m['estado'] == 'online'])
+    modulos_alerta = len([m for m in modulos_data if m['estado'] == 'warning'])
+    modulos_offline = len([m for m in modulos_data if m['estado'] == 'offline'])
+    
+    # Estadísticas por ubicación
+    ubicaciones = {}
+    for ubicacion in ['Norte', 'Sur', 'Este', 'Oeste']:
+        ubicaciones[ubicacion] = len([m for m in modulos_data if m['ubicacion'] == ubicacion])
+    
     context = {
-        'page_title': 'Dashboard - Prueba',
-        'modulos': [
-            {
-                'id': 1, 'nombre': 'Módulo 1', 'ubicacion': 'Norte',
-                'estado': 'online', 'temperatura': 25.5, 'presion': 1013.2,
-                'up': 1.5, 'down': 0.5
-            },
-            {
-                'id': 2, 'nombre': 'Módulo 2', 'ubicacion': 'Sur',
-                'estado': 'online', 'temperatura': 26.8, 'presion': 1012.8,
-                'up': 2.0, 'down': 1.0
-            },
-            {
-                'id': 3, 'nombre': 'Módulo 3', 'ubicacion': 'Este',
-                'estado': 'warning', 'temperatura': 28.2, 'presion': 1010.5,
-                'up': 3.5, 'down': 0.0
-            },
-            {
-                'id': 4, 'nombre': 'Módulo 4', 'ubicacion': 'Oeste',
-                'estado': 'offline', 'temperatura': 0, 'presion': 0,
-                'up': 0.0, 'down': 3.5
-            },
-        ],
-        'stats': {'total': 64, 'activos': 58, 'alertas': 4, 'desconectados': 2}
+        'page_title': 'Dashboard',
+        'modulos': modulos_data,
+        'stats': {
+            'total': total_modulos,
+            'activos': modulos_activos,
+            'alertas': modulos_alerta,
+            'desconectados': modulos_offline,
+        },
+        'ubicaciones': ubicaciones,
+        'filtro_ubicacion': ubicacion_filter,
+        'filtro_estado': estado_filter,
     }
-    return render(request, 'test/dashboard_test.html', context)
+    
+    return render(request, 'modulos/dashboard.html', context)
+
+
+@login_required
+def modulos_list(request):
+    """Listado completo de módulos con filtros"""
+    from django.db.models import Q
+    
+    # Obtener parámetros de búsqueda y filtros
+    search_query = request.GET.get('q', '')
+    ubicacion_filter = request.GET.get('ubicacion', '')
+    version_filter = request.GET.get('version', '')
+    
+    # Query base
+    modulos = Modulo.objects.select_related('reset').prefetch_related('mediciones')
+    
+    # Aplicar búsqueda
+    if search_query:
+        modulos = modulos.filter(
+            Q(nombre__icontains=search_query) |
+            Q(ubicacion__icontains=search_query)
+        )
+    
+    # Aplicar filtros
+    if ubicacion_filter:
+        modulos = modulos.filter(ubicacion__iexact=ubicacion_filter)
+    
+    if version_filter:
+        modulos = modulos.filter(version=version_filter)
+    
+    # Ordenar
+    modulos = modulos.order_by('ubicacion', 'nombre')
+    
+    context = {
+        'page_title': 'Todos los Módulos',
+        'modulos': modulos,
+        'search_query': search_query,
+        'ubicacion_filter': ubicacion_filter,
+        'version_filter': version_filter,
+    }
+    
+    return render(request, 'modulos/list.html', context)
+
+
+@login_required
+def modulo_detail(request, modulo_id):
+    """Vista detallada de un módulo específico"""
+    from django.shortcuts import get_object_or_404
+    from datetime import datetime, timedelta
+    
+    # Obtener módulo
+    modulo = get_object_or_404(Modulo.objects.select_related('reset'), modulo_id=modulo_id)
+    
+    # Última medición
+    ultima_medicion = modulo.mediciones.first()
+    
+    # Últimas 10 mediciones
+    ultimas_mediciones = modulo.mediciones.all()[:10]
+    
+    # Mediciones de las últimas 24 horas para gráfico
+    hace_24h = datetime.now() - timedelta(hours=24)
+    mediciones_24h = modulo.mediciones.filter(fecha__gte=hace_24h).order_by('fecha')
+    
+    # Preparar datos para gráfico
+    chart_data = {
+        'labels': [m.fecha.strftime('%H:%M') for m in mediciones_24h],
+        'temperatura': [float(m.valor_temp) if m.valor_temp else 0 for m in mediciones_24h],
+        'presion': [float(m.valor_press) if m.valor_press else 0 for m in mediciones_24h],
+    }
+    
+    # Determinar estado
+    if ultima_medicion:
+        tiempo_desde_medicion = datetime.now() - ultima_medicion.fecha.replace(tzinfo=None)
+        if tiempo_desde_medicion.total_seconds() < 300:  # 5 minutos
+            estado = 'online'
+        elif tiempo_desde_medicion.total_seconds() < 900:  # 15 minutos
+            estado = 'warning'
+        else:
+            estado = 'offline'
+    else:
+        estado = 'offline'
+    
+    # Información técnica (si existe)
+    info_tecnica = modulo.info_tecnica.filter(activo=True).first()
+    
+    # Estadísticas del módulo
+    from django.db.models import Avg, Max, Min, Count
+    stats = modulo.mediciones.aggregate(
+        temp_promedio=Avg('valor_temp'),
+        temp_max=Max('valor_temp'),
+        temp_min=Min('valor_temp'),
+        press_promedio=Avg('valor_press'),
+        press_max=Max('valor_press'),
+        press_min=Min('valor_press'),
+        total_mediciones=Count('medicion_id')
+    )
+    
+    context = {
+        'page_title': f'Detalle - {modulo.nombre}',
+        'modulo': modulo,
+        'estado': estado,
+        'ultima_medicion': ultima_medicion,
+        'ultimas_mediciones': ultimas_mediciones,
+        'chart_data': chart_data,
+        'info_tecnica': info_tecnica,
+        'stats': stats,
+    }
+    
+    return render(request, 'modulos/detalle.html', context)
+
+
+@login_required
+def modulo_mediciones(request, modulo_id):
+    """Historial completo de mediciones de un módulo"""
+    from django.shortcuts import get_object_or_404
+    from django.core.paginator import Paginator
+    from datetime import datetime, timedelta
+    
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    
+    # Filtros de fecha
+    fecha_desde = request.GET.get('desde', '')
+    fecha_hasta = request.GET.get('hasta', '')
+    
+    # Query de mediciones
+    mediciones = modulo.mediciones.all()
+    
+    # Aplicar filtros de fecha
+    if fecha_desde:
+        mediciones = mediciones.filter(fecha__gte=fecha_desde)
+    
+    if fecha_hasta:
+        mediciones = mediciones.filter(fecha__lte=fecha_hasta)
+    
+    # Paginación
+    paginator = Paginator(mediciones, 50)  # 50 mediciones por página
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # Datos para gráfico (últimas 100 mediciones)
+    mediciones_grafico = mediciones[:100]
+    chart_data = {
+        'labels': [m.fecha.strftime('%d/%m %H:%M') for m in reversed(list(mediciones_grafico))],
+        'temperatura': [float(m.valor_temp) if m.valor_temp else 0 for m in reversed(list(mediciones_grafico))],
+        'presion': [float(m.valor_press) if m.valor_press else 0 for m in reversed(list(mediciones_grafico))],
+    }
+    
+    context = {
+        'page_title': f'Mediciones - {modulo.nombre}',
+        'modulo': modulo,
+        'page_obj': page_obj,
+        'chart_data': chart_data,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+    }
+    
+    return render(request, 'modulos/mediciones.html', context)
+
+
+@login_required
+def modulo_control(request, modulo_id):
+    """Panel de control para encender/apagar módulo"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    
+    if request.method == 'POST':
+        accion = request.POST.get('accion')
+        
+        if accion == 'encender':
+            # Lógica para encender (publicar MQTT)
+            # mqtt_client.publish(f"modulos/{modulo_id}/control", "ON")
+            messages.success(request, f'Comando de encendido enviado a {modulo.nombre}')
+        
+        elif accion == 'apagar':
+            # Lógica para apagar (publicar MQTT)
+            # mqtt_client.publish(f"modulos/{modulo_id}/control", "OFF")
+            messages.success(request, f'Comando de apagado enviado a {modulo.nombre}')
+        
+        elif accion == 'reiniciar':
+            # Lógica para reiniciar
+            messages.success(request, f'Comando de reinicio enviado a {modulo.nombre}')
+        
+        # Si es petición AJAX (htmx)
+        if request.headers.get('HX-Request'):
+            return JsonResponse({'status': 'success', 'message': 'Comando enviado'})
+        
+        return redirect('modulo_detail', modulo_id=modulo_id)
+    
+    context = {
+        'page_title': f'Control - {modulo.nombre}',
+        'modulo': modulo,
+    }
+    
+    return render(request, 'modulos/control.html', context)

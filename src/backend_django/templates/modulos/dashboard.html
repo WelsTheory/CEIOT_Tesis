@@ -1,0 +1,262 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Monitoring System{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <span class="text-gray-700 font-semibold">
+                <i class="fas fa-home mr-2"></i>Dashboard
+            </span>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header con filtros -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+            <p class="text-gray-600">Monitoreo en tiempo real de módulos solares</p>
+        </div>
+        
+        <!-- Botón actualizar -->
+        <button 
+            onclick="location.reload()"
+            class="mt-4 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+        >
+            <i class="fas fa-sync-alt mr-2"></i>
+            Actualizar
+        </button>
+    </div>
+    
+    <!-- Cards de Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Módulos</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.total }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-solar-panel text-2xl text-blue-600"></i>
+                </div>
+            </div>
+            <div class="mt-4 text-xs text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>
+                Módulos registrados
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Activos</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.activos }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                </div>
+            </div>
+            <div class="mt-4 text-xs text-gray-500">
+                <i class="fas fa-circle text-green-500 mr-1 animate-pulse"></i>
+                Online ahora
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Con Alertas</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.alertas }}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
+                </div>
+            </div>
+            <div class="mt-4 text-xs text-gray-500">
+                <i class="fas fa-clock mr-1"></i>
+                Requieren atención
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Desconectados</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.desconectados }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times-circle text-2xl text-red-600"></i>
+                </div>
+            </div>
+            <div class="mt-4 text-xs text-gray-500">
+                <i class="fas fa-circle text-red-500 mr-1"></i>
+                Offline
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex flex-wrap gap-4 items-center">
+            <span class="text-sm font-semibold text-gray-700">Filtrar por:</span>
+            
+            <!-- Filtro Ubicación -->
+            <div class="flex gap-2">
+                <a href="?estado={{ filtro_estado }}" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_ubicacion == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Todos
+                </a>
+                <a href="?ubicacion=norte&estado={{ filtro_estado }}" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_ubicacion == 'norte' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Norte ({{ ubicaciones.Norte }})
+                </a>
+                <a href="?ubicacion=sur&estado={{ filtro_estado }}" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_ubicacion == 'sur' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Sur ({{ ubicaciones.Sur }})
+                </a>
+                <a href="?ubicacion=este&estado={{ filtro_estado }}" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_ubicacion == 'este' %}bg-yellow-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Este ({{ ubicaciones.Este }})
+                </a>
+                <a href="?ubicacion=oeste&estado={{ filtro_estado }}" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_ubicacion == 'oeste' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Oeste ({{ ubicaciones.Oeste }})
+                </a>
+            </div>
+            
+            <div class="border-l border-gray-300 h-8"></div>
+            
+            <!-- Filtro Estado -->
+            <div class="flex gap-2">
+                <a href="?ubicacion={{ filtro_ubicacion }}" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_estado == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Todos
+                </a>
+                <a href="?ubicacion={{ filtro_ubicacion }}&estado=online" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_estado == 'online' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Online
+                </a>
+                <a href="?ubicacion={{ filtro_ubicacion }}&estado=warning" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_estado == 'warning' %}bg-yellow-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Alerta
+                </a>
+                <a href="?ubicacion={{ filtro_ubicacion }}&estado=offline" 
+                   class="px-4 py-2 rounded-lg transition-colors {% if filtro_estado == 'offline' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    Offline
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Grid de Módulos -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">
+            Módulos 
+            {% if filtro_ubicacion != 'all' %}
+                - {{ filtro_ubicacion|title }}
+            {% endif %}
+            {% if filtro_estado != 'all' %}
+                - {{ filtro_estado|title }}
+            {% endif %}
+            ({{ modulos|length }})
+        </h2>
+        
+        {% if modulos %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for modulo in modulos %}
+            <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
+                <!-- Header del Card -->
+                <div class="p-4 {% if modulo.estado == 'online' %}bg-green-50{% elif modulo.estado == 'warning' %}bg-yellow-50{% else %}bg-red-50{% endif %}">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-gray-800">{{ modulo.nombre }}</h3>
+                        <div class="flex items-center space-x-1">
+                            <span class="status-indicator {% if modulo.estado == 'online' %}online{% elif modulo.estado == 'warning' %}warning{% else %}offline{% endif %}"></span>
+                            <span class="text-xs font-semibold {% if modulo.estado == 'online' %}text-green-700{% elif modulo.estado == 'warning' %}text-yellow-700{% else %}text-red-700{% endif %}">
+                                {{ modulo.estado|upper }}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">
+                        <i class="fas fa-location-dot mr-1"></i>{{ modulo.ubicacion }}
+                        <span class="ml-2 text-xs bg-white px-2 py-1 rounded">v{{ modulo.version }}</span>
+                    </p>
+                </div>
+                
+                <!-- Body del Card -->
+                <div class="p-4 space-y-3">
+                    <!-- Temperatura -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">
+                            <i class="fas fa-temperature-high text-red-500 mr-2"></i>Temperatura
+                        </span>
+                        <span class="font-semibold text-gray-800">{{ modulo.temperatura|floatformat:1 }}°C</span>
+                    </div>
+                    
+                    <!-- Presión -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">
+                            <i class="fas fa-gauge text-blue-500 mr-2"></i>Presión
+                        </span>
+                        <span class="font-semibold text-gray-800">{{ modulo.presion|floatformat:1 }} hPa</span>
+                    </div>
+                    
+                    <!-- UP/DOWN -->
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                        <div class="text-center flex-1">
+                            <p class="text-xs text-gray-500">UP</p>
+                            <p class="font-bold text-green-600">{{ modulo.up }}</p>
+                        </div>
+                        <div class="border-l border-gray-200 h-8"></div>
+                        <div class="text-center flex-1">
+                            <p class="text-xs text-gray-500">DOWN</p>
+                            <p class="font-bold text-red-600">{{ modulo.down }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if modulo.ultima_medicion %}
+                    <div class="text-xs text-gray-500 text-center pt-2 border-t border-gray-200">
+                        <i class="fas fa-clock mr-1"></i>
+                        Última medición: {{ modulo.ultima_medicion|timesince }} atrás
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Footer del Card -->
+                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between">
+                    <a href="{% url 'modulo_detail' modulo.id %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <i class="fas fa-eye mr-1"></i>Ver Detalle
+                    </a>
+                    <a href="{% url 'modulo_control' modulo.id %}" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                        <i class="fas fa-sliders-h mr-1"></i>Control
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow p-12 text-center">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">No hay módulos</h3>
+            <p class="text-gray-500">No se encontraron módulos con los filtros aplicados</p>
+        </div>
+        {% endif %}
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh cada 30 segundos
+setTimeout(() => {
+    location.reload();
+}, 30000);
+</script>
+{% endblock %}

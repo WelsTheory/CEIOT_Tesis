@@ -1,0 +1,320 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ modulo.nombre }} - Detalle{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="text-gray-700 hover:text-blue-600">
+                <i class="fas fa-home mr-2"></i>Dashboard
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="text-gray-500">{{ modulo.nombre }}</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header del Módulo -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-solar-panel text-3xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">{{ modulo.nombre }}</h1>
+                    <div class="flex items-center space-x-4 mt-2">
+                        <span class="text-sm text-gray-600">
+                            <i class="fas fa-location-dot mr-1"></i>{{ modulo.ubicacion }}
+                        </span>
+                        <span class="text-sm text-gray-600">
+                            <i class="fas fa-code-branch mr-1"></i>Versión {{ modulo.version }}
+                        </span>
+                        <span class="flex items-center">
+                            <span class="status-indicator {% if estado == 'online' %}online{% elif estado == 'warning' %}warning{% else %}offline{% endif %}"></span>
+                            <span class="text-sm font-semibold {% if estado == 'online' %}text-green-700{% elif estado == 'warning' %}text-yellow-700{% else %}text-red-700{% endif %}">
+                                {{ estado|upper }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 md:mt-0 flex gap-2">
+                <a href="{% url 'modulo_mediciones' modulo.modulo_id %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-chart-line mr-2"></i>Ver Historial
+                </a>
+                <a href="{% url 'modulo_control' modulo.modulo_id %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-sliders-h mr-2"></i>Control
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Grid Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Columna Izquierda (2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Gráfico de Temperatura y Presión -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-chart-area text-blue-600 mr-2"></i>
+                    Últimas 24 Horas
+                </h2>
+                <canvas id="chartMediciones" height="80"></canvas>
+            </div>
+            
+            <!-- Tabla de Últimas Mediciones -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-list text-green-600 mr-2"></i>
+                    Últimas Mediciones
+                </h2>
+                
+                {% if ultimas_mediciones %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Temperatura</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Presión</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for medicion in ultimas_mediciones %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    <i class="fas fa-clock text-gray-400 mr-2"></i>
+                                    {{ medicion.fecha|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    <span class="font-semibold text-red-600">{{ medicion.valor_temp|floatformat:1 }}°C</span>
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    <span class="font-semibold text-blue-600">{{ medicion.valor_press|floatformat:1 }} hPa</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No hay mediciones disponibles</p>
+                {% endif %}
+            </div>
+            
+        </div>
+        
+        <!-- Columna Derecha (1/3) -->
+        <div class="space-y-6">
+            
+            <!-- Última Medición -->
+            {% if ultima_medicion %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-thermometer-half text-red-500 mr-2"></i>
+                    Última Medición
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Temperatura</p>
+                        <p class="text-3xl font-bold text-red-600">{{ ultima_medicion.valor_temp|floatformat:1 }}°C</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Presión</p>
+                        <p class="text-3xl font-bold text-blue-600">{{ ultima_medicion.valor_press|floatformat:1 }} hPa</p>
+                    </div>
+                    <div class="pt-4 border-t border-gray-200">
+                        <p class="text-xs text-gray-500">
+                            <i class="fas fa-clock mr-1"></i>
+                            {{ ultima_medicion.fecha|timesince }} atrás
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Estadísticas -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
+                    Estadísticas
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Temp. Promedio</span>
+                        <span class="font-semibold text-gray-800">{{ stats.temp_promedio|floatformat:1 }}°C</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Temp. Máxima</span>
+                        <span class="font-semibold text-red-600">{{ stats.temp_max|floatformat:1 }}°C</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Temp. Mínima</span>
+                        <span class="font-semibold text-blue-600">{{ stats.temp_min|floatformat:1 }}°C</span>
+                    </div>
+                    <div class="pt-3 border-t border-gray-200"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Press. Promedio</span>
+                        <span class="font-semibold text-gray-800">{{ stats.press_promedio|floatformat:1 }} hPa</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Total Mediciones</span>
+                        <span class="font-semibold text-gray-800">{{ stats.total_mediciones }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configuración UP/DOWN -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-cog text-gray-600 mr-2"></i>
+                    Configuración
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">UP</span>
+                        <span class="font-bold text-green-600">{{ modulo.up }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">DOWN</span>
+                        <span class="font-bold text-red-600">{{ modulo.down }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Reset ID</span>
+                        <span class="font-semibold text-gray-800">{{ modulo.reset.nombre }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información Técnica -->
+            {% if info_tecnica %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-microchip text-indigo-600 mr-2"></i>
+                    Información Técnica
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">IP</span>
+                        <span class="font-mono text-gray-800">{{ info_tecnica.ip_address }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">MAC</span>
+                        <span class="font-mono text-gray-800">{{ info_tecnica.mac_address }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Firmware</span>
+                        <span class="font-semibold text-gray-800">{{ info_tecnica.version_firmware }}</span>
+                    </div>
+                    {% if info_tecnica.memoria_libre %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Memoria Libre</span>
+                        <span class="text-gray-800">{{ info_tecnica.memoria_libre }} KB</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+        </div>
+        
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Datos del gráfico desde Django
+const chartData = {{ chart_data|safe }};
+
+// Crear gráfico
+const ctx = document.getElementById('chartMediciones').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: chartData.labels,
+        datasets: [
+            {
+                label: 'Temperatura (°C)',
+                data: chartData.temperatura,
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y',
+            },
+            {
+                label: 'Presión (hPa)',
+                data: chartData.presion,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                yAxisID: 'y1',
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += context.parsed.y.toFixed(1);
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Temperatura (°C)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Presión (hPa)'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

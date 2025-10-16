@@ -1,0 +1,111 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Mediciones - {{ modulo.nombre }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Historial de Mediciones</h1>
+            <p class="text-gray-600">{{ modulo.nombre }} - {{ modulo.ubicacion }}</p>
+        </div>
+        <a href="{% url 'modulo_detail' modulo.modulo_id %}" class="text-blue-600 hover:text-blue-800">
+            <i class="fas fa-arrow-left mr-2"></i>Volver
+        </a>
+    </div>
+    
+    <!-- Gráfico -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Gráfico de Tendencias</h2>
+        <canvas id="chartMediciones" height="100"></canvas>
+    </div>
+    
+    <!-- Tabla de mediciones -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Registros</h2>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Fecha y Hora</th>
+                        <th class="px-4 py-3 text-left">Temperatura</th>
+                        <th class="px-4 py-3 text-left">Presión</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for medicion in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">{{ medicion.fecha|date:"d/m/Y H:i:s" }}</td>
+                        <td class="px-4 py-3 font-semibold text-red-600">{{ medicion.valor_temp|floatformat:1 }}°C</td>
+                        <td class="px-4 py-3 font-semibold text-blue-600">{{ medicion.valor_press|floatformat:1 }} hPa</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-center">
+            <nav class="flex items-center space-x-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                    Anterior
+                </a>
+                {% endif %}
+                
+                <span class="px-4 py-2">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                    Siguiente
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartData = {{ chart_data|safe }};
+const ctx = document.getElementById('chartMediciones').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: chartData.labels,
+        datasets: [
+            {
+                label: 'Temperatura (°C)',
+                data: chartData.temperatura,
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+            },
+            {
+                label: 'Presión (hPa)',
+                data: chartData.presion,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: { position: 'top' }
+        }
+    }
+});
+</script>
+{% endblock %}
