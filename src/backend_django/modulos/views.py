@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Max, Avg, Count, Q
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required  
 from django.shortcuts import render, get_object_or_404, redirect  # ← Agregar redirect
 from django.http import HttpResponse
@@ -703,8 +704,8 @@ def dashboard_stats_partial(request):
     total_modulos = Modulo.objects.count()
     
     # Obtener módulos con última medición
-    hace_5_min = datetime.now() - timedelta(minutes=5)
-    hace_15_min = datetime.now() - timedelta(minutes=15)
+    hace_5_min = timezone.now() - timedelta(minutes=5)
+    hace_15_min = timezone.now() - timedelta(minutes=15)
     
     modulos_activos = 0
     modulos_alerta = 0
@@ -738,15 +739,15 @@ def dashboard_stats_partial(request):
 @login_required
 def modulo_card_partial(request, modulo_id):
     """Vista parcial para actualizar un solo card de módulo"""
-    from datetime import datetime, timedelta
+    from datetime import timedelta
     
     modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
     ultima_medicion = modulo.mediciones.first()
     
     # Determinar estado
     if ultima_medicion:
-        hace_5_min = datetime.now() - timedelta(minutes=5)
-        hace_15_min = datetime.now() - timedelta(minutes=15)
+        hace_5_min = timezone.now() - timedelta(minutes=5)
+        hace_15_min = timezone.now() - timedelta(minutes=15)
         
         if ultima_medicion.fecha >= hace_5_min:
             estado = 'online'

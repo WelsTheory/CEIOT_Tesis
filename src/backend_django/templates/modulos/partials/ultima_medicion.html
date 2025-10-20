@@ -1,0 +1,20 @@
+{% if ultima_medicion %}
+<div class="space-y-4">
+    <div>
+        <p class="text-sm text-gray-600 mb-1">Temperatura</p>
+        <p class="text-3xl font-bold text-red-600">{{ ultima_medicion.valor_temp|floatformat:1 }}°C</p>
+    </div>
+    <div>
+        <p class="text-sm text-gray-600 mb-1">Presión</p>
+        <p class="text-3xl font-bold text-blue-600">{{ ultima_medicion.valor_press|floatformat:1 }} hPa</p>
+    </div>
+    <div class="pt-4 border-t border-gray-200">
+        <p class="text-xs text-gray-500">
+            <i class="fas fa-clock mr-1"></i>
+            {{ ultima_medicion.fecha|timesince }} atrás
+        </p>
+    </div>
+</div>
+{% else %}
+<p class="text-gray-500 text-center py-4">No hay mediciones</p>
+{% endif %}

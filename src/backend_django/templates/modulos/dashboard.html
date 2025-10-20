@@ -35,12 +35,13 @@
         </button>
     </div>
     
-    <!-- Cards de Estadísticas -->
+    <!-- Cards de Estadísticas 
+    -->
     <div 
         id="stats-container"
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         hx-get="{% url 'dashboard_stats_partial' %}"
-        hx-trigger="every 30s"
+        hx-trigger="every 60s"
         hx-swap="innerHTML"
     >
         {% include 'modulos/partials/stats_cards.html' %}
@@ -179,11 +180,12 @@
         {% if modulos %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {% for modulo in modulos %}
+            <!-- hx-get="{% url 'modulo_card_partial' modulo.modulo_id %}"
+                hx-trigger="every 120s"
+                hx-swap="outerHTML"-->
             <div 
                 id="modulo-{{ modulo.modulo_id }}"
-                hx-get="{% url 'modulo_card_partial' modulo.modulo_id %}"
-                hx-trigger="every 60s"
-                hx-swap="outerHTML"
+                
             >
                 {% include 'modulos/partials/modulo_card.html' %}
                 <!-- Header del Card -->
