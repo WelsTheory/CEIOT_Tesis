@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 class ControlReinicio(models.Model):
     """Tabla Control_Reinicio"""
@@ -211,3 +212,87 @@ class InfoModulo(models.Model):
         indexes = [
             models.Index(fields=['modulo', 'fecha_actualizacion']),
         ]
+
+# Agregar al archivo src/backend_django/modulos/models.py
+
+class Notificacion(models.Model):
+    """
+    Modelo para almacenar notificaciones del sistema
+    """
+    TIPO_CHOICES = [
+        ('info', 'Información'),
+        ('warning', 'Advertencia'),
+        ('error', 'Error'),
+        ('success', 'Éxito'),
+    ]
+    
+    CATEGORIA_CHOICES = [
+        ('sistema', 'Sistema'),
+        ('modulo', 'Módulo'),
+        ('alerta', 'Alerta'),
+        ('medicion', 'Medición'),
+        ('control', 'Control'),
+    ]
+    
+    notificacion_id = models.AutoField(primary_key=True)
+    usuario = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='notificaciones')
+    modulo = models.ForeignKey('Modulo', on_delete=models.CASCADE, null=True, blank=True, related_name='notificaciones')
+    
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='info')
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='sistema')
+    
+    titulo = models.CharField(max_length=200)
+    mensaje = models.TextField()
+    
+    leida = models.BooleanField(default=False)
+    importante = models.BooleanField(default=False)
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_leida = models.DateTimeField(null=True, blank=True)
+    
+    # Datos adicionales en JSON (opcional)
+    datos_extra = models.JSONField(null=True, blank=True)
+    
+    class Meta:
+        db_table = 'Notificaciones'
+        ordering = ['-fecha_creacion']
+        indexes = [
+            models.Index(fields=['-fecha_creacion']),
+            models.Index(fields=['usuario', 'leida']),
+        ]
+    
+    def __str__(self):
+        return f"{self.titulo} - {self.tipo}"
+    
+    def marcar_como_leida(self):
+        """Marca la notificación como leída"""
+        if not self.leida:
+            self.leida = True
+            self.fecha_leida = timezone.now()
+            self.save()
+    
+    @classmethod
+    def crear_notificacion_modulo(cls, usuario, modulo, tipo, titulo, mensaje, importante=False):
+        """Helper para crear notificaciones de módulos"""
+        return cls.objects.create(
+            usuario=usuario,
+            modulo=modulo,
+            tipo=tipo,
+            categoria='modulo',
+            titulo=titulo,
+            mensaje=mensaje,
+            importante=importante
+        )
+    
+    @classmethod
+    def crear_alerta(cls, usuario, modulo, mensaje, importante=True):
+        """Helper para crear alertas"""
+        return cls.objects.create(
+            usuario=usuario,
+            modulo=modulo,
+            tipo='warning',
+            categoria='alerta',
+            titulo=f'Alerta: {modulo.nombre if modulo else "Sistema"}',
+            mensaje=mensaje,
+            importante=importante
+        )

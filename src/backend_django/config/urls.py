@@ -52,8 +52,12 @@ urlpatterns = [
     path('api/modulos/<int:modulo_id>/ultima-medicion/', modulos_views.ultima_medicion_partial, name='ultima_medicion_partial'),
     
     # Acciones de control
-    path('api/modulos/<int:modulo_id>/control-action/', modulos_views.modulo_control_action, name='modulo_control_action')
+    path('api/modulos/<int:modulo_id>/control-action/', modulos_views.modulo_control_action, name='modulo_control_action'),
 
+    path('notificaciones/', modulos_views.obtener_notificaciones, name='obtener_notificaciones'),
+    path('notificaciones/<int:notificacion_id>/marcar-leida/', modulos_views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
+    path('notificaciones/<int:notificacion_id>/eliminar/', modulos_views.eliminar_notificacion, name='eliminar_notificacion'),
+    path('notificaciones/marcar-todas-leidas/', modulos_views.marcar_todas_leidas, name='marcar_todas_notificaciones_leidas'),
 ]
 
 # Servir archivos estáticos en desarrollo

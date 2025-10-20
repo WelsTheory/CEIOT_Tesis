@@ -405,9 +405,10 @@ def test_htmx(request):
 
 @login_required
 def dashboard(request):
-    """Dashboard principal con datos reales de la BD"""
+    """Dashboard principal con datos reales y notificaciones automáticas"""
     from django.db.models import Count, Q, Avg, Max
     from datetime import datetime, timedelta
+    import re
     
     # Filtros de la URL
     ubicacion_filter = request.GET.get('ubicacion', 'all')
@@ -425,13 +426,14 @@ def dashboard(request):
     
     # Procesar cada módulo con su última medición y estado
     modulos_data = []
+    modulos_con_problemas = []
+    
     for modulo in modulos:
         # Última medición
-        ultima_medicion = modulo.mediciones.first()  # Ya ordenado por -fecha
+        ultima_medicion = modulo.mediciones.first()
         
         # Determinar estado
         if ultima_medicion:
-            # Módulo tiene mediciones recientes
             tiempo_desde_medicion = datetime.now() - ultima_medicion.fecha.replace(tzinfo=None)
             if tiempo_desde_medicion.total_seconds() < 300:  # 5 minutos
                 estado = 'online'
@@ -439,8 +441,10 @@ def dashboard(request):
                 estado = 'warning'
             else:
                 estado = 'offline'
+                modulos_con_problemas.append(modulo)
         else:
             estado = 'offline'
+            modulos_con_problemas.append(modulo)
         
         # Aplicar filtro de estado
         if estado_filter != 'all' and estado != estado_filter:
@@ -459,14 +463,27 @@ def dashboard(request):
             'ultima_medicion': ultima_medicion.fecha if ultima_medicion else None,
         })
     
-    # ORDENAMIENTO: Primero por ubicación (Norte, Este, Oeste, Sur), luego por nombre
+    # Crear notificaciones para módulos con problemas (una vez al día máximo)
+    if modulos_con_problemas:
+        hoy = timezone.now().date()
+        for modulo in modulos_con_problemas[:3]:  # Limitar a 3 para no saturar
+            # Verificar si ya se notificó hoy
+            notif_hoy = Notificacion.objects.filter(
+                usuario=request.user,
+                modulo=modulo,
+                fecha_creacion__date=hoy,
+                tipo='warning'
+            ).exists()
+            
+            if not notif_hoy:
+                crear_notificacion_modulo_offline(request.user, modulo)
+    
     # Función para extraer el número del nombre del módulo para ordenamiento numérico
     def extraer_numero(nombre):
-        import re
-        # Buscar el primer número en el nombre
         match = re.search(r'\d+', nombre)
         return int(match.group()) if match else 0
     
+    # ORDENAMIENTO
     orden_ubicacion = {'Norte': 1, 'Este': 2, 'Oeste': 3, 'Sur': 4}
     modulos_data.sort(key=lambda m: (orden_ubicacion.get(m['ubicacion'], 5), extraer_numero(m['nombre']), m['nombre']))
     
@@ -898,3 +915,146 @@ def reiniciar_todos_modulos(request):
             'success': False,
             'message': f'Error al reiniciar módulos: {str(e)}'
         }, status=500)
+
+@login_required
+def obtener_notificaciones(request):
+    """
+    Obtener notificaciones del usuario actual
+    """
+    from django.http import JsonResponse
+    
+    # Obtener solo las no leídas o las últimas 10
+    mostrar_todas = request.GET.get('todas', 'false') == 'true'
+    
+    if mostrar_todas:
+        notificaciones = Notificacion.objects.filter(usuario=request.user)[:20]
+    else:
+        notificaciones = Notificacion.objects.filter(usuario=request.user, leida=False)[:10]
+    
+    # Serializar notificaciones
+    notificaciones_data = []
+    for notif in notificaciones:
+        notificaciones_data.append({
+            'id': notif.notificacion_id,
+            'tipo': notif.tipo,
+            'categoria': notif.categoria,
+            'titulo': notif.titulo,
+            'mensaje': notif.mensaje,
+            'leida': notif.leida,
+            'importante': notif.importante,
+            'fecha': notif.fecha_creacion.isoformat(),
+            'modulo_id': notif.modulo.modulo_id if notif.modulo else None,
+            'modulo_nombre': notif.modulo.nombre if notif.modulo else None,
+        })
+    
+    # Contar no leídas
+    no_leidas = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    
+    return JsonResponse({
+        'notificaciones': notificaciones_data,
+        'no_leidas': no_leidas
+    })
+
+
+@login_required
+def marcar_notificacion_leida(request, notificacion_id):
+    """
+    Marcar una notificación como leída
+    """
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    notificacion = get_object_or_404(Notificacion, notificacion_id=notificacion_id, usuario=request.user)
+    notificacion.marcar_como_leida()
+    
+    # Contar no leídas actualizadas
+    no_leidas = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    
+    return JsonResponse({
+        'success': True,
+        'no_leidas': no_leidas
+    })
+
+
+@login_required
+def marcar_todas_leidas(request):
+    """
+    Marcar todas las notificaciones como leídas
+    """
+    from django.http import JsonResponse
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    # Actualizar todas las no leídas
+    Notificacion.objects.filter(usuario=request.user, leida=False).update(
+        leida=True,
+        fecha_leida=timezone.now()
+    )
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Todas las notificaciones marcadas como leídas'
+    })
+
+
+@login_required
+def eliminar_notificacion(request, notificacion_id):
+    """
+    Eliminar una notificación
+    """
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    
+    if request.method != 'DELETE' and request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    notificacion = get_object_or_404(Notificacion, notificacion_id=notificacion_id, usuario=request.user)
+    notificacion.delete()
+    
+    # Contar no leídas actualizadas
+    no_leidas = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    
+    return JsonResponse({
+        'success': True,
+        'no_leidas': no_leidas
+    })
+
+
+# ============================================================================
+# FUNCIONES HELPER PARA CREAR NOTIFICACIONES AUTOMÁTICAS
+# ============================================================================
+
+def crear_notificacion_modulo_offline(usuario, modulo):
+    """Crear notificación cuando un módulo se desconecta"""
+    Notificacion.crear_alerta(
+        usuario=usuario,
+        modulo=modulo,
+        mensaje=f'El módulo {modulo.nombre} está OFFLINE y no responde.',
+        importante=True
+    )
+
+
+def crear_notificacion_temperatura_alta(usuario, modulo, temperatura):
+    """Crear notificación cuando la temperatura es alta"""
+    Notificacion.crear_alerta(
+        usuario=usuario,
+        modulo=modulo,
+        mensaje=f'Temperatura elevada: {temperatura}°C (Límite: {modulo.temp_max}°C)',
+        importante=True
+    )
+
+
+def crear_notificacion_reinicio(usuario, modulo):
+    """Crear notificación cuando se reinicia un módulo"""
+    Notificacion.crear_notificacion_modulo(
+        usuario=usuario,
+        modulo=modulo,
+        tipo='info',
+        titulo=f'Módulo reiniciado',
+        mensaje=f'El módulo {modulo.nombre} ha sido reiniciado correctamente.',
+        importante=False
+    )
