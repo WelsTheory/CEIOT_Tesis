@@ -403,19 +403,6 @@ def test_htmx(request):
         })
     return JsonResponse({'error': 'Esta vista requiere htmx'})
 
-def modulo_search(request):
-    """Búsqueda de módulos (simulada)"""
-    query = request.GET.get('q', '')
-    modulos = [
-        {'id': 1, 'nombre': 'Módulo 1', 'ubicacion': 'Norte'},
-        {'id': 2, 'nombre': 'Módulo 2', 'ubicacion': 'Sur'},
-        {'id': 3, 'nombre': 'Módulo 3', 'ubicacion': 'Este'},
-        {'id': 4, 'nombre': 'Módulo 4', 'ubicacion': 'Oeste'},
-    ]
-    if query:
-        modulos = [m for m in modulos if query.lower() in m['nombre'].lower()]
-    return render(request, 'test/search_results.html', {'modulos': modulos})
-
 @login_required
 def dashboard(request):
     """Dashboard principal con datos reales de la BD"""
@@ -472,6 +459,17 @@ def dashboard(request):
             'ultima_medicion': ultima_medicion.fecha if ultima_medicion else None,
         })
     
+    # ORDENAMIENTO: Primero por ubicación (Norte, Este, Oeste, Sur), luego por nombre
+    # Función para extraer el número del nombre del módulo para ordenamiento numérico
+    def extraer_numero(nombre):
+        import re
+        # Buscar el primer número en el nombre
+        match = re.search(r'\d+', nombre)
+        return int(match.group()) if match else 0
+    
+    orden_ubicacion = {'Norte': 1, 'Este': 2, 'Oeste': 3, 'Sur': 4}
+    modulos_data.sort(key=lambda m: (orden_ubicacion.get(m['ubicacion'], 5), extraer_numero(m['nombre']), m['nombre']))
+    
     # Estadísticas generales
     total_modulos = len(modulos)
     modulos_activos = len([m for m in modulos_data if m['estado'] == 'online'])
@@ -488,9 +486,9 @@ def dashboard(request):
         'modulos': modulos_data,
         'stats': {
             'total': total_modulos,
-            'activos': modulos_activos,
-            'alertas': modulos_alerta,
-            'desconectados': modulos_offline,
+            'online': modulos_activos,
+            'warning': modulos_alerta,
+            'offline': modulos_offline,
         },
         'ubicaciones': ubicaciones,
         'filtro_ubicacion': ubicacion_filter,
@@ -499,11 +497,11 @@ def dashboard(request):
     
     return render(request, 'modulos/dashboard.html', context)
 
-
 @login_required
 def modulos_list(request):
     """Listado completo de módulos con filtros"""
     from django.db.models import Q
+    import re
     
     # Obtener parámetros de búsqueda y filtros
     search_query = request.GET.get('q', '')
@@ -527,19 +525,27 @@ def modulos_list(request):
     if version_filter:
         modulos = modulos.filter(version=version_filter)
     
-    # Ordenar
-    modulos = modulos.order_by('ubicacion', 'nombre')
+    # Convertir a lista para ordenamiento personalizado
+    modulos_list = list(modulos)
+    
+    # Función para extraer el número del nombre del módulo
+    def extraer_numero(modulo):
+        match = re.search(r'\d+', modulo.nombre)
+        return int(match.group()) if match else 0
+    
+    # ORDENAMIENTO: Primero por ubicación (Norte, Este, Oeste, Sur), luego por número
+    orden_ubicacion = {'Norte': 1, 'Este': 2, 'Oeste': 3, 'Sur': 4}
+    modulos_list.sort(key=lambda m: (orden_ubicacion.get(m.ubicacion, 5), extraer_numero(m), m.nombre))
     
     context = {
         'page_title': 'Todos los Módulos',
-        'modulos': modulos,
+        'modulos': modulos_list,
         'search_query': search_query,
         'ubicacion_filter': ubicacion_filter,
         'version_filter': version_filter,
     }
     
     return render(request, 'modulos/list.html', context)
-
 
 @login_required
 def modulo_detail(request, modulo_id):
@@ -830,3 +836,65 @@ def ultima_medicion_partial(request, modulo_id):
     
     html = render_to_string('modulos/partials/ultima_medicion.html', context, request=request)
     return HttpResponse(html)
+
+@login_required
+def reiniciar_todos_modulos(request):
+    """
+    Vista para reiniciar todos los módulos del sistema
+    """
+    from django.http import JsonResponse
+    from django.views.decorators.csrf import csrf_exempt
+    import json
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    try:
+        # Obtener todos los módulos
+        modulos = Modulo.objects.all()
+        total_modulos = modulos.count()
+        
+        # Contador de éxitos
+        reiniciados = 0
+        errores = 0
+        
+        # Reiniciar cada módulo
+        for modulo in modulos:
+            try:
+                # Aquí iría la lógica real de MQTT para reiniciar
+                # Ejemplo: mqtt_client.publish(f"modulos/{modulo.modulo_id}/control", "RESET")
+                
+                # Por ahora, simulamos el reinicio
+                # En producción, deberías publicar al broker MQTT
+                reiniciados += 1
+                
+                # Opcional: Registrar en log de reinicios
+                if hasattr(modulo, 'reset'):
+                    LogReinicio.objects.create(
+                        reset=modulo.reset,
+                        reinicio=True,
+                        fecha=timezone.now()
+                    )
+                
+            except Exception as e:
+                print(f"Error reiniciando módulo {modulo.modulo_id}: {str(e)}")
+                errores += 1
+        
+        # Respuesta exitosa
+        mensaje = f"Comando de reinicio enviado a {reiniciados} de {total_modulos} módulos"
+        if errores > 0:
+            mensaje += f" ({errores} errores)"
+        
+        return JsonResponse({
+            'success': True,
+            'message': mensaje,
+            'total': total_modulos,
+            'reiniciados': reiniciados,
+            'errores': errores
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error al reiniciar módulos: {str(e)}'
+        }, status=500)

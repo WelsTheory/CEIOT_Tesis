@@ -1,0 +1,219 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Todos los Módulos{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="text-gray-700 hover:text-blue-600">
+                <i class="fas fa-home mr-2"></i>Dashboard
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="text-gray-500">Todos los Módulos</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Todos los Módulos</h1>
+            <p class="text-gray-600">Listado completo y búsqueda de módulos</p>
+        </div>
+    </div>
+    
+    <!-- Barra de búsqueda y filtros -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Campo de búsqueda -->
+                <div class="md:col-span-1">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="search" 
+                            name="q" 
+                            value="{{ search_query }}"
+                            placeholder="Nombre o ubicación..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                        <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <!-- Filtro por Ubicación -->
+                <div>
+                    <label for="ubicacion" class="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
+                    <select 
+                        id="ubicacion" 
+                        name="ubicacion"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">Todas</option>
+                        <option value="Norte" {% if ubicacion_filter == 'Norte' %}selected{% endif %}>Norte</option>
+                        <option value="Este" {% if ubicacion_filter == 'Este' %}selected{% endif %}>Este</option>
+                        <option value="Oeste" {% if ubicacion_filter == 'Oeste' %}selected{% endif %}>Oeste</option>
+                        <option value="Sur" {% if ubicacion_filter == 'Sur' %}selected{% endif %}>Sur</option>
+                    </select>
+                </div>
+                
+                <!-- Filtro por Versión -->
+                <div>
+                    <label for="version" class="block text-sm font-medium text-gray-700 mb-2">Versión</label>
+                    <select 
+                        id="version" 
+                        name="version"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">Todas</option>
+                        <option value="1.0" {% if version_filter == '1.0' %}selected{% endif %}>Versión 1.0</option>
+                        <option value="2.0" {% if version_filter == '2.0' %}selected{% endif %}>Versión 2.0</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex gap-2">
+                <button 
+                    type="submit"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    <i class="fas fa-search mr-2"></i>Buscar
+                </button>
+                <a 
+                    href="{% url 'modulos_list' %}"
+                    class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                    <i class="fas fa-times mr-2"></i>Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Contador de resultados -->
+    <div class="flex items-center justify-between">
+        <p class="text-gray-600">
+            <span class="font-semibold text-gray-800">{{ modulos|length }}</span> módulos encontrados
+        </p>
+    </div>
+    
+    <!-- Tabla de módulos -->
+    {% if modulos %}
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ubicación</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Versión</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UP</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOWN</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado Reset</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for modulo in modulos %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ modulo.modulo_id }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <i class="fas fa-solar-panel text-blue-500 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-900">{{ modulo.nombre }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if modulo.ubicacion == 'Norte' %}bg-blue-100 text-blue-800
+                                {% elif modulo.ubicacion == 'Este' %}bg-yellow-100 text-yellow-800
+                                {% elif modulo.ubicacion == 'Oeste' %}bg-red-100 text-red-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                <i class="fas fa-location-dot mr-1"></i>
+                                {{ modulo.ubicacion }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <span class="inline-flex items-center px-2 py-1 rounded bg-gray-100 text-gray-700">
+                                v{{ modulo.version }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="font-semibold text-green-600">{{ modulo.up }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="font-semibold text-red-600">{{ modulo.down }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if modulo.reset.estado_actual %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Activo
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Inactivo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end gap-2">
+                                <a 
+                                    href="{% url 'modulo_detail' modulo.modulo_id %}" 
+                                    class="text-blue-600 hover:text-blue-900 transition-colors"
+                                    title="Ver detalle"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a 
+                                    href="{% url 'modulo_control' modulo.modulo_id %}" 
+                                    class="text-gray-600 hover:text-gray-900 transition-colors"
+                                    title="Control"
+                                >
+                                    <i class="fas fa-sliders-h"></i>
+                                </a>
+                                <a 
+                                    href="{% url 'modulo_mediciones' modulo.modulo_id %}" 
+                                    class="text-purple-600 hover:text-purple-900 transition-colors"
+                                    title="Ver mediciones"
+                                >
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <!-- No hay resultados -->
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+        <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">No se encontraron módulos</h3>
+        <p class="text-gray-500 mb-4">Intenta con otros criterios de búsqueda</p>
+        <a 
+            href="{% url 'modulos_list' %}"
+            class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+            <i class="fas fa-refresh mr-2"></i>Ver todos los módulos
+        </a>
+    </div>
+    {% endif %}
+    
+</div>
+{% endblock %}

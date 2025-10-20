@@ -6,25 +6,25 @@
 >
     <div class="p-6">
         
-        <!-- Resumen de Estado -->
+        <!-- Resumen de Estado con datos dinámicos -->
         <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
             <h3 class="text-sm font-semibold text-gray-700 mb-3">Estado General</h3>
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="text-xs text-gray-600">Total Módulos</span>
-                    <span class="text-sm font-bold text-gray-800">64</span>
+                    <span class="text-sm font-bold text-gray-800">{{ stats.total|default:0 }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-600">Activos</span>
-                    <span class="text-sm font-bold text-green-600">58</span>
+                    <span class="text-xs text-gray-600">Online</span>
+                    <span class="text-sm font-bold text-green-600">{{ stats.online|default:0 }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-xs text-gray-600">Con Alertas</span>
-                    <span class="text-sm font-bold text-yellow-600">4</span>
+                    <span class="text-sm font-bold text-yellow-600">{{ stats.warning|default:0 }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-600">Desconectados</span>
-                    <span class="text-sm font-bold text-red-600">2</span>
+                    <span class="text-xs text-gray-600">Offline</span>
+                    <span class="text-sm font-bold text-red-600">{{ stats.offline|default:0 }}</span>
                 </div>
             </div>
         </div>
@@ -40,86 +40,93 @@
             </a>
             
             <a 
-                href="#" 
-                class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                href="{% url 'modulos_list' %}" 
+                class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors {% if request.resolver_match.url_name == 'modulos_list' %}bg-blue-50 text-blue-700 border-l-4 border-blue-600{% endif %}"
             >
                 <i class="fas fa-solar-panel text-lg w-5"></i>
                 <span class="font-medium">Todos los Módulos</span>
             </a>
             
+            <!-- Enlaces para futuras funcionalidades -->
             <a 
                 href="#" 
-                class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-400 cursor-not-allowed rounded-lg"
+                title="Próximamente"
             >
                 <i class="fas fa-chart-line text-lg w-5"></i>
                 <span class="font-medium">Mediciones</span>
+                <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Próx</span>
             </a>
             
             <a 
                 href="#" 
-                class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-400 cursor-not-allowed rounded-lg"
+                title="Próximamente"
             >
                 <i class="fas fa-sliders-h text-lg w-5"></i>
                 <span class="font-medium">Control</span>
+                <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Próx</span>
             </a>
             
             <a 
                 href="#" 
-                class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors"
+                class="flex items-center space-x-3 px-4 py-3 text-gray-400 cursor-not-allowed rounded-lg"
+                title="Próximamente"
             >
                 <i class="fas fa-history text-lg w-5"></i>
                 <span class="font-medium">Historial</span>
+                <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Próx</span>
             </a>
         </nav>
         
         <!-- Filtros por Ubicación -->
         <div class="mt-8">
             <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Por Ubicación
+                Filtro por Ubicación
             </h3>
             <nav class="space-y-1">
                 <a 
-                    href="?ubicacion=norte" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    href="{% url 'dashboard' %}?ubicacion=norte" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors {% if request.GET.ubicacion == 'norte' %}bg-blue-50 text-blue-700{% endif %}"
                 >
                     <div class="flex items-center space-x-2">
                         <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <span>Norte</span>
                     </div>
-                    <span class="text-xs text-gray-500">16</span>
+                    <span class="text-xs text-gray-500">{{ ubicaciones.Norte|default:0 }}</span>
                 </a>
                 
                 <a 
-                    href="?ubicacion=sur" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
-                >
-                    <div class="flex items-center space-x-2">
-                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span>Sur</span>
-                    </div>
-                    <span class="text-xs text-gray-500">16</span>
-                </a>
-                
-                <a 
-                    href="?ubicacion=este" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    href="{% url 'dashboard' %}?ubicacion=este" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 rounded-lg transition-colors {% if request.GET.ubicacion == 'este' %}bg-yellow-50 text-yellow-700{% endif %}"
                 >
                     <div class="flex items-center space-x-2">
                         <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
                         <span>Este</span>
                     </div>
-                    <span class="text-xs text-gray-500">16</span>
+                    <span class="text-xs text-gray-500">{{ ubicaciones.Este|default:0 }}</span>
                 </a>
                 
                 <a 
-                    href="?ubicacion=oeste" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    href="{% url 'dashboard' %}?ubicacion=oeste" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors {% if request.GET.ubicacion == 'oeste' %}bg-red-50 text-red-700{% endif %}"
                 >
                     <div class="flex items-center space-x-2">
                         <div class="w-3 h-3 bg-red-500 rounded-full"></div>
                         <span>Oeste</span>
                     </div>
-                    <span class="text-xs text-gray-500">16</span>
+                    <span class="text-xs text-gray-500">{{ ubicaciones.Oeste|default:0 }}</span>
+                </a>
+                
+                <a 
+                    href="{% url 'dashboard' %}?ubicacion=sur" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors {% if request.GET.ubicacion == 'sur' %}bg-green-50 text-green-700{% endif %}"
+                >
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span>Sur</span>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ ubicaciones.Sur|default:0 }}</span>
                 </a>
             </nav>
         </div>
@@ -127,40 +134,40 @@
         <!-- Filtros por Estado -->
         <div class="mt-8">
             <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Por Estado
+                Filtro por Estado
             </h3>
             <nav class="space-y-1">
                 <a 
-                    href="?estado=activo" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    href="{% url 'dashboard' %}?estado=online" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors {% if request.GET.estado == 'online' %}bg-green-50 text-green-700{% endif %}"
                 >
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-check-circle text-green-500"></i>
-                        <span>Activos</span>
+                        <span>Online</span>
                     </div>
-                    <span class="text-xs text-gray-500">58</span>
+                    <span class="text-xs text-gray-500">{{ stats.online|default:0 }}</span>
                 </a>
                 
                 <a 
-                    href="?estado=alerta" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    href="{% url 'dashboard' %}?estado=warning" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 rounded-lg transition-colors {% if request.GET.estado == 'warning' %}bg-yellow-50 text-yellow-700{% endif %}"
                 >
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-exclamation-triangle text-yellow-500"></i>
                         <span>Con Alertas</span>
                     </div>
-                    <span class="text-xs text-gray-500">4</span>
+                    <span class="text-xs text-gray-500">{{ stats.warning|default:0 }}</span>
                 </a>
                 
                 <a 
-                    href="?estado=desconectado" 
-                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                    href="{% url 'dashboard' %}?estado=offline" 
+                    class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors {% if request.GET.estado == 'offline' %}bg-red-50 text-red-700{% endif %}"
                 >
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-times-circle text-red-500"></i>
-                        <span>Desconectados</span>
+                        <span>Offline</span>
                     </div>
-                    <span class="text-xs text-gray-500">2</span>
+                    <span class="text-xs text-gray-500">{{ stats.offline|default:0 }}</span>
                 </a>
             </nav>
         </div>

@@ -25,26 +25,29 @@
             <p class="text-gray-600">Monitoreo en tiempo real de módulos solares</p>
         </div>
         
-        <!-- Botón actualizar -->
-        <button 
-            onclick="location.reload()"
-            class="mt-4 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-        >
-            <i class="fas fa-sync-alt mr-2"></i>
-            Actualizar
-        </button>
+        <!-- Botones de acción -->
+        <div class="flex gap-3 mt-4 md:mt-0">
+            <button 
+                onclick="location.reload()"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+            >
+                <i class="fas fa-sync-alt mr-2"></i>
+                Actualizar
+            </button>
+            
+            <button 
+                onclick="reiniciarTodos()"
+                class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center"
+                id="btn-reiniciar-todos"
+            >
+                <i class="fas fa-power-off mr-2"></i>
+                Reiniciar Todos
+            </button>
+        </div>
     </div>
     
-    <!-- Cards de Estadísticas 
-    -->
-    <div 
-        id="stats-container"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-        hx-get="{% url 'dashboard_stats_partial' %}"
-        hx-trigger="every 60s"
-        hx-swap="innerHTML"
-    >
-        {% include 'modulos/partials/stats_cards.html' %}
+    <!-- Cards de Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
@@ -64,16 +67,16 @@
         <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500 hover:shadow-lg transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Activos</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ stats.activos }}</p>
+                    <p class="text-sm text-gray-600 mb-1">Módulos Online</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.online }}</p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-check-circle text-2xl text-green-600"></i>
                 </div>
             </div>
             <div class="mt-4 text-xs text-gray-500">
-                <i class="fas fa-circle text-green-500 mr-1 animate-pulse"></i>
-                Online ahora
+                <i class="fas fa-circle text-green-500 mr-1"></i>
+                Funcionando
             </div>
         </div>
         
@@ -81,14 +84,14 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Con Alertas</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ stats.alertas }}</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.warning }}</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
                 </div>
             </div>
             <div class="mt-4 text-xs text-gray-500">
-                <i class="fas fa-clock mr-1"></i>
+                <i class="fas fa-circle text-yellow-500 mr-1"></i>
                 Requieren atención
             </div>
         </div>
@@ -96,8 +99,8 @@
         <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500 hover:shadow-lg transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Desconectados</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ stats.desconectados }}</p>
+                    <p class="text-sm text-gray-600 mb-1">Offline</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ stats.offline }}</p>
                 </div>
                 <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                     <i class="fas fa-times-circle text-2xl text-red-600"></i>
@@ -108,7 +111,6 @@
                 Offline
             </div>
         </div>
-        
     </div>
     
     <!-- Filtros -->
@@ -164,98 +166,213 @@
         </div>
     </div>
     
-    <!-- Grid de Módulos -->
-    <div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">
-            Módulos 
-            {% if filtro_ubicacion != 'all' %}
-                - {{ filtro_ubicacion|title }}
-            {% endif %}
-            {% if filtro_estado != 'all' %}
-                - {{ filtro_estado|title }}
-            {% endif %}
-            ({{ modulos|length }})
-        </h2>
+    <!-- VISTA POR CUADRANTES - Solo cuando no hay filtros activos -->
+    {% if filtro_ubicacion == 'all' and filtro_estado == 'all' %}
+    <div class="space-y-8">
+        <h2 class="text-2xl font-bold text-gray-800">Vista por Cuadrantes</h2>
         
-        {% if modulos %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {% for modulo in modulos %}
-            <!-- hx-get="{% url 'modulo_card_partial' modulo.modulo_id %}"
-                hx-trigger="every 120s"
-                hx-swap="outerHTML"-->
-            <div 
-                id="modulo-{{ modulo.modulo_id }}"
-                
-            >
-                {% include 'modulos/partials/modulo_card.html' %}
-                <!-- Header del Card -->
-                <div class="p-4 {% if modulo.estado == 'online' %}bg-green-50{% elif modulo.estado == 'warning' %}bg-yellow-50{% else %}bg-red-50{% endif %}">
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-bold text-gray-800">{{ modulo.nombre }}</h3>
-                        <div class="flex items-center space-x-1">
-                            <span class="status-indicator {% if modulo.estado == 'online' %}online{% elif modulo.estado == 'warning' %}warning{% else %}offline{% endif %}"></span>
-                            <span class="text-xs font-semibold {% if modulo.estado == 'online' %}text-green-700{% elif modulo.estado == 'warning' %}text-yellow-700{% else %}text-red-700{% endif %}">
-                                {{ modulo.estado|upper }}
-                            </span>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">
-                        <i class="fas fa-location-dot mr-1"></i>{{ modulo.ubicacion }}
-                        <span class="ml-2 text-xs bg-white px-2 py-1 rounded">v{{ modulo.version }}</span>
-                    </p>
+        <!-- Grid de 2x2 para cuadrantes 
+             En pantallas grandes (xl): 2 columnas
+             En pantallas medianas y pequeñas: 1 columna (vertical)
+        -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            <!-- CUADRANTE NORTE (arriba izquierda) -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">N</span>
+                        Cuadrante Norte
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ ubicaciones.Norte }} módulos)</span>
                 </div>
                 
-                <!-- Body del Card -->
-                <div class="p-4 space-y-3">
-                    <!-- Temperatura -->
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">
-                            <i class="fas fa-temperature-high text-red-500 mr-2"></i>Temperatura
-                        </span>
-                        <span class="font-semibold text-gray-800">{{ modulo.temperatura|floatformat:1 }}°C</span>
-                    </div>
-                    
-                    <!-- Presión -->
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">
-                            <i class="fas fa-gauge text-blue-500 mr-2"></i>Presión
-                        </span>
-                        <span class="font-semibold text-gray-800">{{ modulo.presion|floatformat:1 }} hPa</span>
-                    </div>
-                    
-                    <!-- UP/DOWN -->
-                    <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-                        <div class="text-center flex-1">
-                            <p class="text-xs text-gray-500">UP</p>
-                            <p class="font-bold text-green-600">{{ modulo.up }}</p>
-                        </div>
-                        <div class="border-l border-gray-200 h-8"></div>
-                        <div class="text-center flex-1">
-                            <p class="text-xs text-gray-500">DOWN</p>
-                            <p class="font-bold text-red-600">{{ modulo.down }}</p>
-                        </div>
-                    </div>
-                    
-                    {% if modulo.ultima_medicion %}
-                    <div class="text-xs text-gray-500 text-center pt-2 border-t border-gray-200">
-                        <i class="fas fa-clock mr-1"></i>
-                        Última medición: {{ modulo.ultima_medicion|timesince }} atrás
-                    </div>
-                    {% endif %}
-                </div>
-                
-                <!-- Footer del Card -->
-                <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between">
-                    <a href="{% url 'modulo_detail' modulo.modulo_id %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        <i class="fas fa-eye mr-1"></i>Ver Detalle
-                    </a>
-                    <a href="{% url 'modulo_control' modulo.modulo_id %}" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
-                        <i class="fas fa-sliders-h mr-1"></i>Control
-                    </a>
+                <!-- Grid interno de módulos del cuadrante Norte -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                    {% for modulo in modulos %}
+                        {% if modulo.ubicacion == 'Norte' %}
+                            <div id="modulo-{{ modulo.modulo_id }}">
+                                {% include 'modulos/partials/modulo_card.html' %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
+            
+            <!-- CUADRANTE ESTE (arriba derecha) -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-yellow-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold mr-3">E</span>
+                        Cuadrante Este
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ ubicaciones.Este }} módulos)</span>
+                </div>
+                
+                <!-- Grid interno de módulos del cuadrante Este -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                    {% for modulo in modulos %}
+                        {% if modulo.ubicacion == 'Este' %}
+                            <div id="modulo-{{ modulo.modulo_id }}">
+                                {% include 'modulos/partials/modulo_card.html' %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- CUADRANTE OESTE (abajo izquierda) -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-red-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold mr-3">O</span>
+                        Cuadrante Oeste
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ ubicaciones.Oeste }} módulos)</span>
+                </div>
+                
+                <!-- Grid interno de módulos del cuadrante Oeste -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                    {% for modulo in modulos %}
+                        {% if modulo.ubicacion == 'Oeste' %}
+                            <div id="modulo-{{ modulo.modulo_id }}">
+                                {% include 'modulos/partials/modulo_card.html' %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- CUADRANTE SUR (abajo derecha) -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-green-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-3">S</span>
+                        Cuadrante Sur
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ ubicaciones.Sur }} módulos)</span>
+                </div>
+                
+                <!-- Grid interno de módulos del cuadrante Sur -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                    {% for modulo in modulos %}
+                        {% if modulo.ubicacion == 'Sur' %}
+                            <div id="modulo-{{ modulo.modulo_id }}">
+                                {% include 'modulos/partials/modulo_card.html' %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
         </div>
+    </div>
+    
+    {% else %}
+    <!-- VISTA FILTRADA - Mostrar módulos filtrados dentro de una caja estilizada -->
+    <div>
+        {% if modulos %}
+        
+        <!-- Caja con estilo según el cuadrante filtrado -->
+        {% if filtro_ubicacion == 'norte' %}
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-blue-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">N</span>
+                        Cuadrante Norte
+                        {% if filtro_estado != 'all' %}
+                            <span class="ml-3 text-base text-gray-600">- {{ filtro_estado|title }}</span>
+                        {% endif %}
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ modulos|length }} módulos)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {% for modulo in modulos %}
+                        <div id="modulo-{{ modulo.modulo_id }}">
+                            {% include 'modulos/partials/modulo_card.html' %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% elif filtro_ubicacion == 'sur' %}
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-green-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-3">S</span>
+                        Cuadrante Sur
+                        {% if filtro_estado != 'all' %}
+                            <span class="ml-3 text-base text-gray-600">- {{ filtro_estado|title }}</span>
+                        {% endif %}
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ modulos|length }} módulos)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {% for modulo in modulos %}
+                        <div id="modulo-{{ modulo.modulo_id }}">
+                            {% include 'modulos/partials/modulo_card.html' %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% elif filtro_ubicacion == 'este' %}
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-yellow-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold mr-3">E</span>
+                        Cuadrante Este
+                        {% if filtro_estado != 'all' %}
+                            <span class="ml-3 text-base text-gray-600">- {{ filtro_estado|title }}</span>
+                        {% endif %}
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ modulos|length }} módulos)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {% for modulo in modulos %}
+                        <div id="modulo-{{ modulo.modulo_id }}">
+                            {% include 'modulos/partials/modulo_card.html' %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% elif filtro_ubicacion == 'oeste' %}
+            <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-red-500">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold mr-3">O</span>
+                        Cuadrante Oeste
+                        {% if filtro_estado != 'all' %}
+                            <span class="ml-3 text-base text-gray-600">- {{ filtro_estado|title }}</span>
+                        {% endif %}
+                    </h3>
+                    <span class="text-sm text-gray-600">({{ modulos|length }} módulos)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {% for modulo in modulos %}
+                        <div id="modulo-{{ modulo.modulo_id }}">
+                            {% include 'modulos/partials/modulo_card.html' %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+        <!-- Filtro solo por estado, sin ubicación específica -->
+        <div class="bg-white rounded-lg shadow-lg p-6 border-t-4 border-gray-500">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-800">
+                    Módulos - {{ filtro_estado|title }}
+                </h3>
+                <span class="text-sm text-gray-600">({{ modulos|length }} módulos)</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {% for modulo in modulos %}
+                    <div id="modulo-{{ modulo.modulo_id }}">
+                        {% include 'modulos/partials/modulo_card.html' %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
         {% else %}
         <div class="bg-white rounded-lg shadow p-12 text-center">
             <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
@@ -264,15 +381,111 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
     
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Auto-refresh cada 30 segundos
-//setTimeout(() => {
-//    location.reload();
-//}, 30000);
+// Auto-refresh cada 30 segundos (opcional)
+// setTimeout(() => {
+//     location.reload();
+// }, 30000);
+
+// Función para reiniciar todos los módulos
+function reiniciarTodos() {
+    // Confirmar acción
+    if (!confirm('¿Estás seguro de que deseas reiniciar TODOS los módulos? Esta acción afectará a {{ stats.total }} módulos.')) {
+        return;
+    }
+    
+    const btn = document.getElementById('btn-reiniciar-todos');
+    const originalText = btn.innerHTML;
+    
+    // Deshabilitar botón y mostrar loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Reiniciando...';
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    // Enviar petición al servidor
+    fetch('{% url "reiniciar_todos_modulos" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            accion: 'reiniciar_todos'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            mostrarNotificacion('success', `✅ ${data.message}`);
+            
+            // Opcional: recargar la página después de 3 segundos
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
+        } else {
+            mostrarNotificacion('error', `❌ Error: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarNotificacion('error', '❌ Error al enviar comando de reinicio');
+    })
+    .finally(() => {
+        // Restaurar botón
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }, 2000);
+    });
+}
+
+// Función para obtener el token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para mostrar notificaciones
+function mostrarNotificacion(tipo, mensaje) {
+    // Crear elemento de notificación
+    const notificacion = document.createElement('div');
+    notificacion.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ${
+        tipo === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white font-medium`;
+    notificacion.textContent = mensaje;
+    
+    document.body.appendChild(notificacion);
+    
+    // Animar entrada
+    setTimeout(() => {
+        notificacion.style.transform = 'translateX(0)';
+    }, 10);
+    
+    // Remover después de 5 segundos
+    setTimeout(() => {
+        notificacion.style.opacity = '0';
+        setTimeout(() => {
+            notificacion.remove();
+        }, 300);
+    }, 5000);
+}
 </script>
 {% endblock %}

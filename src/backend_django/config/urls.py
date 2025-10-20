@@ -36,13 +36,13 @@ urlpatterns = [
     path('modulos/<int:modulo_id>/', modulos_views.modulo_detail, name='modulo_detail'),
     path('modulos/<int:modulo_id>/mediciones/', modulos_views.modulo_mediciones, name='modulo_mediciones'),
     path('modulos/<int:modulo_id>/control/', modulos_views.modulo_control, name='modulo_control'),
-    
+    # NUEVA LÍNEA - Agregar aquí:
+    path('modulos/reiniciar-todos/', modulos_views.reiniciar_todos_modulos, name='reiniciar_todos_modulos'),
     # ============================================================================
     # VISTAS DE PRUEBA (mantener para referencia)
     # ============================================================================
     path('test/', modulos_views.test_base_template, name='test_base'),
     path('test/htmx/', modulos_views.test_htmx, name='test_htmx'),
-    path('search/', modulos_views.modulo_search, name='modulo_search'),
     # ============================================================================
     # ENDPOINTS HTMX (Etapa 4)
     # ============================================================================
@@ -52,7 +52,8 @@ urlpatterns = [
     path('api/modulos/<int:modulo_id>/ultima-medicion/', modulos_views.ultima_medicion_partial, name='ultima_medicion_partial'),
     
     # Acciones de control
-    path('api/modulos/<int:modulo_id>/control-action/', modulos_views.modulo_control_action, name='modulo_control_action'),
+    path('api/modulos/<int:modulo_id>/control-action/', modulos_views.modulo_control_action, name='modulo_control_action')
+
 ]
 
 # Servir archivos estáticos en desarrollo
