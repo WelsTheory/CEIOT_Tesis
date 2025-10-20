@@ -15,7 +15,8 @@ from django.template.loader import render_to_string
 
 from .models import (
     Modulo, Medicion, Beam, ControlReinicio,
-    EstadoConexion, InfoModulo, LogReinicio
+    EstadoConexion, InfoModulo, LogReinicio,
+    Notificacion
 )
 from .serializers import (
     ModuloSerializer, ModuloDetalleSerializer,
