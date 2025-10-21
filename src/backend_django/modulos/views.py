@@ -12,6 +12,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect  # ← Agregar redirect
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from .models import Notificacion
 
 from .models import (
     Modulo, Medicion, Beam, ControlReinicio,
@@ -432,6 +437,9 @@ def dashboard(request):
     for modulo in modulos:
         # Última medición
         ultima_medicion = modulo.mediciones.first()
+
+        estado_up = 'correcto'
+        estado_dw = 'correcto'
         
         # Determinar estado
         if ultima_medicion:
@@ -445,6 +453,12 @@ def dashboard(request):
                 modulos_con_problemas.append(modulo)
         else:
             estado = 'offline'
+            modulos_con_problemas.append(modulo)
+
+        tiene_mismatch = (estado_up == 'mismatch' or estado_dw == 'mismatch')
+
+        if estado == 'online' and tiene_mismatch:
+            estado = 'warning'
             modulos_con_problemas.append(modulo)
         
         # Aplicar filtro de estado
@@ -462,6 +476,9 @@ def dashboard(request):
             'temperatura': float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0,
             'presion': float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0,
             'ultima_medicion': ultima_medicion.fecha if ultima_medicion else None,
+            'estado_up':'estado_up',
+            'estado_dw':'estado_dw',
+            'tiene_mismatch': tiene_mismatch,
         })
     
     # Crear notificaciones para módulos con problemas (una vez al día máximo)
@@ -1024,6 +1041,106 @@ def eliminar_notificacion(request, notificacion_id):
         'no_leidas': no_leidas
     })
 
+@login_required
+@csrf_exempt  # ← AGREGAR ESTE DECORADOR
+def obtener_notificaciones(request):
+    """
+    Obtener notificaciones del usuario actual
+    """
+    # Obtener solo las no leídas o las últimas 10
+    mostrar_todas = request.GET.get('todas', 'false') == 'true'
+    
+    if mostrar_todas:
+        notificaciones = Notificacion.objects.filter(usuario=request.user)[:20]
+    else:
+        notificaciones = Notificacion.objects.filter(usuario=request.user, leida=False)[:10]
+    
+    # Serializar notificaciones
+    notificaciones_data = []
+    for notif in notificaciones:
+        notificaciones_data.append({
+            'id': notif.notificacion_id,
+            'tipo': notif.tipo,
+            'categoria': notif.categoria,
+            'titulo': notif.titulo,
+            'mensaje': notif.mensaje,
+            'leida': notif.leida,
+            'importante': notif.importante,
+            'fecha': notif.fecha_creacion.isoformat(),
+            'modulo_id': notif.modulo.modulo_id if notif.modulo else None,
+            'modulo_nombre': notif.modulo.nombre if notif.modulo else None,
+        })
+    
+    # Contar no leídas
+    no_leidas = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    
+    return JsonResponse({
+        'notificaciones': notificaciones_data,
+        'no_leidas': no_leidas
+    })
+
+
+@login_required
+@csrf_exempt  # ← AGREGAR ESTE DECORADOR
+def marcar_notificacion_leida(request, notificacion_id):
+    """
+    Marcar una notificación como leída
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    notificacion = get_object_or_404(Notificacion, notificacion_id=notificacion_id, usuario=request.user)
+    notificacion.marcar_como_leida()
+    
+    # Contar no leídas actualizadas
+    no_leidas = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    
+    return JsonResponse({
+        'success': True,
+        'no_leidas': no_leidas
+    })
+
+
+@login_required
+@csrf_exempt  # ← AGREGAR ESTE DECORADOR
+def marcar_todas_leidas(request):
+    """
+    Marcar todas las notificaciones como leídas
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    # Actualizar todas las no leídas
+    Notificacion.objects.filter(usuario=request.user, leida=False).update(
+        leida=True,
+        fecha_leida=timezone.now()
+    )
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Todas las notificaciones marcadas como leídas'
+    })
+
+
+@login_required
+@csrf_exempt  # ← AGREGAR ESTE DECORADOR
+def eliminar_notificacion(request, notificacion_id):
+    """
+    Eliminar una notificación
+    """
+    if request.method != 'DELETE' and request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
+    
+    notificacion = get_object_or_404(Notificacion, notificacion_id=notificacion_id, usuario=request.user)
+    notificacion.delete()
+    
+    # Contar no leídas actualizadas
+    no_leidas = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+    
+    return JsonResponse({
+        'success': True,
+        'no_leidas': no_leidas
+    })
 
 # ============================================================================
 # FUNCIONES HELPER PARA CREAR NOTIFICACIONES AUTOMÁTICAS

@@ -42,7 +42,7 @@
                     ></span>
                 </div>
                 
-                <!-- Notificaciones -->
+<!-- Notificaciones -->
 <div x-data="notificationDropdown()" x-init="init()" class="relative">
     <button 
         @click="toggle()"
@@ -74,7 +74,7 @@
         <div class="p-4 border-b border-gray-200 flex items-center justify-between">
             <h3 class="font-semibold text-gray-800">Notificaciones</h3>
             <button 
-                @click="marcarTodasLeidas()"
+                @click.prevent="marcarTodasLeidas()"
                 x-show="noLeidas > 0"
                 class="text-xs text-blue-600 hover:text-blue-800"
             >
@@ -93,189 +93,190 @@
             
             <template x-for="notif in notificaciones" :key="notif.id">
                 <div 
+                    class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                    :class="{'bg-blue-50': !notif.leida}"
                     @click="marcarLeida(notif.id)"
-                    :class="{'bg-blue-50': !notif.leida, 'bg-white hover:bg-gray-50': notif.leida}"
-                    class="p-4 border-b border-gray-100 cursor-pointer transition-colors"
                 >
-                    <div class="flex items-start space-x-3">
-                        <!-- Icono según tipo -->
-                        <div class="flex-shrink-0 mt-1">
-                            <i :class="{
-                                'fas fa-info-circle text-blue-500': notif.tipo === 'info',
-                                'fas fa-exclamation-triangle text-yellow-500': notif.tipo === 'warning',
-                                'fas fa-times-circle text-red-500': notif.tipo === 'error',
-                                'fas fa-check-circle text-green-500': notif.tipo === 'success'
-                            }" class="text-xl"></i>
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <!-- Icono según tipo -->
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0">
+                                    <template x-if="notif.tipo === 'ALERTA'">
+                                        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                                    </template>
+                                    <template x-if="notif.tipo === 'ERROR'">
+                                        <i class="fas fa-times-circle text-red-500"></i>
+                                    </template>
+                                    <template x-if="notif.tipo === 'INFO'">
+                                        <i class="fas fa-info-circle text-blue-500"></i>
+                                    </template>
+                                    <template x-if="notif.tipo === 'EXITO'">
+                                        <i class="fas fa-check-circle text-green-500"></i>
+                                    </template>
+                                </div>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900" x-text="notif.titulo"></p>
+                                    <p class="text-sm text-gray-600 mt-1" x-text="notif.mensaje"></p>
+                                    <span 
+                                        class="text-xs text-gray-500 mt-2 inline-block"
+                                        x-text="formatearFecha(notif.fecha)"
+                                    ></span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Contenido -->
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between">
-                                <p class="text-sm font-medium text-gray-900" x-text="notif.titulo"></p>
-                                <button 
-                                    @click.stop="eliminar(notif.id)"
-                                    class="text-gray-400 hover:text-gray-600 ml-2"
-                                >
-                                    <i class="fas fa-times text-xs"></i>
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-600 mt-1" x-text="notif.mensaje"></p>
-                            
-                            <!-- Módulo y fecha -->
-                            <div class="flex items-center justify-between mt-2">
-                                <span 
-                                    x-show="notif.modulo_nombre"
-                                    class="text-xs text-blue-600"
-                                    x-text="notif.modulo_nombre"
-                                ></span>
-                                <span 
-                                    class="text-xs text-gray-400" 
-                                    x-text="formatearFecha(notif.fecha)"
-                                ></span>
-                            </div>
-                        </div>
+                        <!-- Botón eliminar -->
+                        <button 
+                            @click.stop="eliminar(notif.id)"
+                            class="flex-shrink-0 ml-3 text-gray-400 hover:text-red-600 focus:outline-none"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 </div>
             </template>
         </div>
             
-            <!-- Footer -->
-            <div class="p-3 border-t border-gray-200 text-center">
-                <a 
-                    href="#" 
-                    class="text-sm text-blue-600 hover:text-blue-800"
-                    @click.prevent="cargarTodas()"
-                >
-                    Ver todas las notificaciones</a>
-            </div>
+        <!-- Footer -->
+        <div class="p-3 border-t border-gray-200 text-center">
+            <a 
+                href="#" 
+                class="text-sm text-blue-600 hover:text-blue-800"
+                @click.prevent="cargarTodas()"
+            >
+                Ver todas las notificaciones
+            </a>
         </div>
     </div>
+</div>
 
-            <script>
-            function notificationDropdown() {
-                return {
-                    open: false,
-                    notificaciones: [],
-                    noLeidas: 0,
-                    
-                    init() {
-                        this.cargar();
-                        // Actualizar cada 30 segundos
-                        setInterval(() => this.cargar(), 30000);
-                    },
-                    
-                    toggle() {
-                        this.open = !this.open;
-                        if (this.open) {
-                            this.cargar();
-                        }
-                    },
-                    
-                    async cargar() {
-                        try {
-                            const response = await fetch('{% url "obtener_notificaciones" %}');
-                            const data = await response.json();
-                            this.notificaciones = data.notificaciones;
-                            this.noLeidas = data.no_leidas;
-                        } catch (error) {
-                            console.error('Error al cargar notificaciones:', error);
-                        }
-                    },
-                    
-                    async cargarTodas() {
-                        try {
-                            const response = await fetch('{% url "obtener_notificaciones" %}?todas=true');
-                            const data = await response.json();
-                            this.notificaciones = data.notificaciones;
-                        } catch (error) {
-                            console.error('Error al cargar todas las notificaciones:', error);
-                        }
-                    },
-                    
-                    async marcarLeida(id) {
-                        try {
-                            const response = await fetch(`/notificaciones/${id}/marcar-leida/`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRFToken': this.getCookie('csrftoken')
-                                }
-                            });
-                            const data = await response.json();
-                            if (data.success) {
-                                this.noLeidas = data.no_leidas;
-                                // Actualizar estado en la lista
-                                const notif = this.notificaciones.find(n => n.id === id);
-                                if (notif) notif.leida = true;
-                            }
-                        } catch (error) {
-                            console.error('Error al marcar notificación:', error);
-                        }
-                    },
-                    
-                    async marcarTodasLeidas() {
-                        try {
-                            const response = await fetch('{% url "marcar_todas_notificaciones_leidas" %}', {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRFToken': this.getCookie('csrftoken')
-                                }
-                            });
-                            const data = await response.json();
-                            if (data.success) {
-                                this.noLeidas = 0;
-                                this.notificaciones.forEach(n => n.leida = true);
-                            }
-                        } catch (error) {
-                            console.error('Error al marcar todas:', error);
-                        }
-                    },
-                    
-                    async eliminar(id) {
-                        try {
-                            const response = await fetch(`/notificaciones/${id}/eliminar/`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRFToken': this.getCookie('csrftoken')
-                                }
-                            });
-                            const data = await response.json();
-                            if (data.success) {
-                                this.notificaciones = this.notificaciones.filter(n => n.id !== id);
-                                this.noLeidas = data.no_leidas;
-                            }
-                        } catch (error) {
-                            console.error('Error al eliminar notificación:', error);
-                        }
-                    },
-                    
-                    formatearFecha(fecha) {
-                        const date = new Date(fecha);
-                        const ahora = new Date();
-                        const diff = Math.floor((ahora - date) / 1000); // segundos
-                        
-                        if (diff < 60) return 'Hace un momento';
-                        if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
-                        if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
-                        return date.toLocaleDateString();
-                    },
-                    
-                    getCookie(name) {
-                        let cookieValue = null;
-                        if (document.cookie && document.cookie !== '') {
-                            const cookies = document.cookie.split(';');
-                            for (let i = 0; i < cookies.length; i++) {
-                                const cookie = cookies[i].trim();
-                                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                    break;
-                                }
-                            }
-                        }
-                        return cookieValue;
+<script>
+function notificationDropdown() {
+    return {
+        open: false,
+        notificaciones: [],
+        noLeidas: 0,
+        
+        init() {
+            this.cargar();
+            // Actualizar cada 30 segundos
+            setInterval(() => this.cargar(), 30000);
+        },
+        
+        toggle() {
+            this.open = !this.open;
+            if (this.open) {
+                this.cargar();
+            }
+        },
+        
+        async cargar() {
+            try {
+                const response = await fetch('{% url "obtener_notificaciones" %}');
+                const data = await response.json();
+                this.notificaciones = data.notificaciones;
+                this.noLeidas = data.no_leidas;
+            } catch (error) {
+                console.error('Error al cargar notificaciones:', error);
+            }
+        },
+        
+        async cargarTodas() {
+            try {
+                const response = await fetch('{% url "obtener_notificaciones" %}?todas=true');
+                const data = await response.json();
+                this.notificaciones = data.notificaciones;
+            } catch (error) {
+                console.error('Error al cargar todas las notificaciones:', error);
+            }
+        },
+        
+        async marcarLeida(id) {
+            try {
+                const response = await fetch(`/notificaciones/${id}/marcar-leida/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.noLeidas = data.no_leidas;
+                    // Actualizar estado en la lista
+                    const notif = this.notificaciones.find(n => n.id === id);
+                    if (notif) notif.leida = true;
+                }
+            } catch (error) {
+                console.error('Error al marcar notificación:', error);
+            }
+        },
+        
+        async marcarTodasLeidas() {
+            try {
+                const response = await fetch('{% url "marcar_todas_notificaciones_leidas" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.noLeidas = 0;
+                    this.notificaciones.forEach(n => n.leida = true);
+                }
+            } catch (error) {
+                console.error('Error al marcar todas:', error);
+            }
+        },
+        
+        async eliminar(id) {
+            try {
+                const response = await fetch(`/notificaciones/${id}/eliminar/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': this.getCookie('csrftoken')
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.notificaciones = this.notificaciones.filter(n => n.id !== id);
+                    this.noLeidas = data.no_leidas;
+                }
+            } catch (error) {
+                console.error('Error al eliminar notificación:', error);
+            }
+        },
+        
+        formatearFecha(fecha) {
+            const date = new Date(fecha);
+            const ahora = new Date();
+            const diff = Math.floor((ahora - date) / 1000); // segundos
+            
+            if (diff < 60) return 'Hace un momento';
+            if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
+            if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
+            return date.toLocaleDateString();
+        },
+        
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
                     }
                 }
             }
-            </script>
+            return cookieValue;
+        }
+    }
+}
+</script>
                     
                 <!-- Menú de Usuario -->
                 <div x-data="{ open: false }" class="relative">

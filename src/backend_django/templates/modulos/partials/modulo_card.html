@@ -38,12 +38,22 @@
         <div class="flex items-center justify-between pt-2 border-t border-gray-200">
             <div class="text-center flex-1">
                 <p class="text-xs text-gray-500">UP</p>
-                <p class="font-bold text-green-600">{{ modulo.up }}</p>
+                <p class="font-bold {% if modulo.estado_up == 'correcto' %}text-green-600{% else %}text-red-600{% endif %}">
+                    {{ modulo.up }}
+                </p>
+                {% if modulo.estado_up == 'mismatch' %}
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xs"></i>
+                {% endif %}
             </div>
             <div class="border-l border-gray-200 h-8"></div>
             <div class="text-center flex-1">
                 <p class="text-xs text-gray-500">DOWN</p>
-                <p class="font-bold text-red-600">{{ modulo.down }}</p>
+                <p class="font-bold {% if modulo.estado_dw == 'correcto' %}text-green-600{% else %}text-red-600{% endif %}">
+                    {{ modulo.down }}
+                </p>
+                {% if modulo.estado_dw == 'mismatch' %}
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xs"></i>
+                {% endif %}
             </div>
         </div>
     </div>
