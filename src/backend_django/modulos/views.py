@@ -1179,80 +1179,105 @@ def crear_notificacion_reinicio(usuario, modulo):
         importante=False
     )
 
-##
-## MEDICIONES
-##
-# @login_required
-# def mediciones_view(request):
-#     """Vista principal de mediciones con filtros por cuadrante"""
+@login_required
+def mediciones_view(request):
+    """Vista principal de mediciones agrupadas por ubicación"""
     
-#     # Obtener el filtro de cuadrante desde GET
-#     cuadrante_seleccionado = request.GET.get('cuadrante', 'todos')
+    # Obtener el filtro de ubicación desde GET
+    ubicacion_seleccionada = request.GET.get('ubicacion', 'todas')
     
-#     # Obtener todos los cuadrantes para los botones de filtro
-#     cuadrantes = Cuadrante.objects.all().order_by('nombre')
+    # Obtener todas las ubicaciones disponibles
+    ubicaciones_disponibles = Modulo.objects.values_list('ubicacion', flat=True).distinct().order_by('ubicacion')
     
-#     # Filtrar cuadrantes según la selección
-#     if cuadrante_seleccionado == 'todos':
-#             cuadrantes_filtrados = cuadrantes
-#         else:
-#             cuadrantes_filtrados = cuadrantes.filter(id=cuadrante_seleccionado)
+    # Filtrar módulos según la selección
+    if ubicacion_seleccionada == 'todas':
+        modulos_query = Modulo.objects.all()
+    else:
+        modulos_query = Modulo.objects.filter(ubicacion=ubicacion_seleccionada)
+    
+    # Agrupar módulos por ubicación
+    ubicaciones_con_datos = {}
+    
+    for ubicacion in ubicaciones_disponibles:
+        if ubicacion_seleccionada != 'todas' and ubicacion != ubicacion_seleccionada:
+            continue
+            
+        # Obtener módulos de esta ubicación
+        modulos = modulos_query.filter(ubicacion=ubicacion).prefetch_related('mediciones')
         
-#         # Anotar cada cuadrante con promedios calculados
-#         cuadrantes_con_datos = []
-#         for cuadrante in cuadrantes_filtrados:
-#             # Obtener todos los módulos del cuadrante
-#             modulos = cuadrante.modulos.all()
+        # Calcular promedios de la ubicación (últimas mediciones de cada módulo)
+        total_temp = 0
+        total_presion = 0
+        modulos_con_datos = 0  # Contador de módulos que tienen datos
+        
+        for modulo in modulos:
+            ultima_medicion = modulo.mediciones.first()
+            if ultima_medicion and ultima_medicion.valor_temp and ultima_medicion.valor_press:
+                try:
+                    total_temp += float(ultima_medicion.valor_temp)
+                    total_presion += float(ultima_medicion.valor_press)
+                    modulos_con_datos += 1
+                except (ValueError, TypeError):
+                    pass
+        
+        # Calcular promedio basado en módulos que tienen datos
+        temp_promedio = total_temp / modulos_con_datos if modulos_con_datos > 0 else 0
+        presion_promedio = total_presion / modulos_con_datos if modulos_con_datos > 0 else 0
+        
+        # Agregar datos de tendencia a cada módulo
+        modulos_con_tendencias = []
+        for modulo in modulos:
+            ultima_medicion = modulo.mediciones.first()
+            modulo.ultima_medicion = ultima_medicion
             
-#             # Calcular promedios del cuadrante
-#             medidas_cuadrante = Medida.objects.filter(
-#                 modulo__cuadrante=cuadrante
-#             ).order_by('-timestamp')[:100]  # Últimas 100 medidas
+            # Calcular tendencias (comparar últimas 2 mediciones)
+            ultimas_mediciones = list(modulo.mediciones.all()[:2])
             
-#             temp_promedio = medidas_cuadrante.aggregate(
-#                 Avg('temperatura')
-#             )['temperatura__avg'] or 0
-            
-#             presion_promedio = medidas_cuadrante.aggregate(
-#                 Avg('presion')
-#             )['presion__avg'] or 0
-            
-#             # Agregar datos calculados al cuadrante
-#             cuadrante.temp_promedio = temp_promedio
-#             cuadrante.presion_promedio = presion_promedio
-            
-#             # Para cada módulo, obtener última medida y tendencias
-#             for modulo in modulos:
-#                 modulo.ultima_medida = modulo.medidas.order_by('-timestamp').first()
-                
-#                 # Calcular tendencias (comparar últimas 2 medidas)
-#                 ultimas_medidas = modulo.medidas.order_by('-timestamp')[:2]
-#                 if len(ultimas_medidas) == 2:
-#                     if ultimas_medidas[0].temperatura > ultimas_medidas[1].temperatura:
-#                         modulo.tendencia_temperatura = 'up'
-#                     elif ultimas_medidas[0].temperatura < ultimas_medidas[1].temperatura:
-#                         modulo.tendencia_temperatura = 'down'
-#                     else:
-#                         modulo.tendencia_temperatura = 'stable'
+            if len(ultimas_mediciones) == 2:
+                try:
+                    temp_actual = float(ultimas_mediciones[0].valor_temp or 0)
+                    temp_anterior = float(ultimas_mediciones[1].valor_temp or 0)
+                    presion_actual = float(ultimas_mediciones[0].valor_press or 0)
+                    presion_anterior = float(ultimas_mediciones[1].valor_press or 0)
                     
-#                     if ultimas_medidas[0].presion > ultimas_medidas[1].presion:
-#                         modulo.tendencia_presion = 'up'
-#                     elif ultimas_medidas[0].presion < ultimas_medidas[1].presion:
-#                         modulo.tendencia_presion = 'down'
-#                     else:
-#                         modulo.tendencia_presion = 'stable'
+                    if temp_actual > temp_anterior:
+                        modulo.tendencia_temperatura = 'up'
+                    elif temp_actual < temp_anterior:
+                        modulo.tendencia_temperatura = 'down'
+                    else:
+                        modulo.tendencia_temperatura = 'stable'
+                    
+                    if presion_actual > presion_anterior:
+                        modulo.tendencia_presion = 'up'
+                    elif presion_actual < presion_anterior:
+                        modulo.tendencia_presion = 'down'
+                    else:
+                        modulo.tendencia_presion = 'stable'
+                except (ValueError, TypeError):
+                    modulo.tendencia_temperatura = 'stable'
+                    modulo.tendencia_presion = 'stable'
+            else:
+                modulo.tendencia_temperatura = 'stable'
+                modulo.tendencia_presion = 'stable'
             
-#             cuadrantes_con_datos.append(cuadrante)
+            modulos_con_tendencias.append(modulo)
         
-#         context = {
-#             'cuadrantes': cuadrantes,  # Todos los cuadrantes para los filtros
-#             'cuadrantes_filtrados': cuadrantes_con_datos,  # Cuadrantes filtrados con datos
-#             'cuadrante_seleccionado': cuadrante_seleccionado,
-#         }
-        
-#         # Si es una petición HTMX, solo devolver el partial
-#         if request.headers.get('HX-Request'):
-#             return render(request, 'mediciones/partials/lista_cuadrantes.html', context)
-        
-#         # Si es petición normal, devolver template completo
-#         return render(request, 'mediciones/mediciones.html', context)
+        ubicaciones_con_datos[ubicacion] = {
+            'nombre': ubicacion,
+            'modulos': modulos_con_tendencias,
+            'temp_promedio': temp_promedio,
+            'presion_promedio': presion_promedio,
+        }
+    
+    context = {
+        'ubicaciones_disponibles': ubicaciones_disponibles,
+        'ubicaciones_con_datos': ubicaciones_con_datos,
+        'ubicacion_seleccionada': ubicacion_seleccionada,
+    }
+    
+    # Si es una petición HTMX, solo devolver el partial
+    if request.headers.get('HX-Request'):
+        return render(request, 'mediciones/partials/lista_ubicaciones.html', context)
+    
+    # Si es petición normal, devolver template completo
+    return render(request, 'mediciones/mediciones.html', context)

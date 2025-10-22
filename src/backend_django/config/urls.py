@@ -58,7 +58,7 @@ urlpatterns = [
     path('notificaciones/<int:notificacion_id>/marcar-leida/', modulos_views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
     path('notificaciones/<int:notificacion_id>/eliminar/', modulos_views.eliminar_notificacion, name='eliminar_notificacion'),
     path('notificaciones/marcar-todas-leidas/', modulos_views.marcar_todas_leidas, name='marcar_todas_notificaciones_leidas'),
-    #path('mediciones/', modulos_views.mediciones_view, name='mediciones'),
+    path('mediciones/', modulos_views.mediciones_view, name='mediciones'),
 ]
 
 # Servir archivos estáticos en desarrollo

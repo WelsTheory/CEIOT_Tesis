@@ -24,46 +24,72 @@
 {% block content %}
 <div class="space-y-6">
     
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+    <!-- Header con Resumen -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <!-- Título -->
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Mediciones</h1>
-            <p class="text-gray-600">Vista general de temperatura y presión por cuadrante</p>
+            <p class="text-gray-600">Vista general de temperatura y presión por ubicación</p>
+        </div>
+
+        <!-- Tarjetas de Resumen por Ubicación -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 flex-1 lg:max-w-3xl">
+            {% for ubicacion_key, ubicacion_data in ubicaciones_con_datos.items %}
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-bold text-gray-700">{{ ubicacion_data.nombre }}</h3>
+                    <i class="fas fa-location-dot text-blue-600"></i>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-600">Temp.</span>
+                        <span class="text-lg font-bold text-red-600">{{ ubicacion_data.temp_promedio|floatformat:1 }}°C</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-600">Pres.</span>
+                        <span class="text-lg font-bold text-blue-600">{{ ubicacion_data.presion_promedio|floatformat:1 }} hPa</span>
+                    </div>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    {{ ubicacion_data.modulos|length }} módulo{{ ubicacion_data.modulos|length|pluralize }}
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 
-    <!-- Filtros por Cuadrante -->
+    <!-- Filtros por Ubicación -->
     <div class="bg-white rounded-lg shadow p-4">
         <div class="flex items-center space-x-3 overflow-x-auto">
             <span class="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por:</span>
             
             <button 
-                hx-get="{% url 'mediciones' %}?cuadrante=todos"
+                hx-get="{% url 'mediciones' %}?ubicacion=todas"
                 hx-target="#mediciones-content"
                 hx-swap="innerHTML"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
-                    {% if cuadrante_seleccionado == 'todos' %}
+                    {% if ubicacion_seleccionada == 'todas' %}
                         bg-blue-600 text-white
                     {% else %}
                         bg-gray-100 text-gray-700 hover:bg-gray-200
                     {% endif %}"
             >
-                <i class="fas fa-border-all mr-2"></i>Todos
+                <i class="fas fa-border-all mr-2"></i>Todas
             </button>
 
-            {% for cuadrante in cuadrantes %}
+            {% for ubicacion in ubicaciones_disponibles %}
             <button 
-                hx-get="{% url 'mediciones' %}?cuadrante={{ cuadrante.id }}"
+                hx-get="{% url 'mediciones' %}?ubicacion={{ ubicacion }}"
                 hx-target="#mediciones-content"
                 hx-swap="innerHTML"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
-                    {% if cuadrante_seleccionado == cuadrante.id %}
+                    {% if ubicacion_seleccionada == ubicacion %}
                         bg-blue-600 text-white
                     {% else %}
                         bg-gray-100 text-gray-700 hover:bg-gray-200
                     {% endif %}"
             >
-                Cuadrante {{ cuadrante.nombre }}
+                {{ ubicacion }}
             </button>
             {% endfor %}
         </div>
@@ -71,7 +97,7 @@
 
     <!-- Contenido de Mediciones -->
     <div id="mediciones-content">
-        {% include 'mediciones/partials/lista_cuadrantes.html' %}
+        {% include 'mediciones/partials/lista_ubicaciones.html' %}
     </div>
 
 </div>
