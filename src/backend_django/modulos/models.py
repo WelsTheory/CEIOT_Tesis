@@ -296,3 +296,38 @@ class Notificacion(models.Model):
             mensaje=mensaje,
             importante=importante
         )
+    
+class Cuadrante(models.Model):
+    nombre = models.CharField(max_length=50)
+    descripcion = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name_plural = 'Cuadrantes'
+    
+    def __str__(self):
+        return f"Cuadrante {self.nombre}"
+
+
+class Modulo(models.Model):
+    nombre = models.CharField(max_length=100)
+    ubicacion = models.CharField(max_length=200)
+    cuadrante = models.ForeignKey(
+        Cuadrante, 
+        on_delete=models.CASCADE, 
+        related_name='modulos'
+    )
+    # ... otros campos ...
+
+
+class Medida(models.Model):
+    modulo = models.ForeignKey(
+        Modulo, 
+        on_delete=models.CASCADE, 
+        related_name='medidas'
+    )
+    temperatura = models.FloatField()
+    presion = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-timestamp']

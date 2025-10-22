@@ -7,6 +7,7 @@ from .views import (
     ControlReinicioViewSet, EstadoConexionViewSet,
     InfoModuloViewSet, LogReinicioViewSet
 )
+from . import views
 
 # Crear router para las APIs REST
 router = DefaultRouter()

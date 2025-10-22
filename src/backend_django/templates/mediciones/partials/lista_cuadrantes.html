@@ -1,0 +1,124 @@
+<!-- templates/mediciones/partials/lista_cuadrantes.html -->
+
+{% for cuadrante in cuadrantes_filtrados %}
+<div class="bg-white rounded-lg shadow mb-6">
+    
+    <!-- Header del Cuadrante -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-t-lg"
+         x-data="{ expanded: true }">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-border-all text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold">Cuadrante {{ cuadrante.nombre }}</h3>
+                    <p class="text-sm text-blue-100">{{ cuadrante.modulos.count }} módulo{{ cuadrante.modulos.count|pluralize }}</p>
+                </div>
+            </div>
+            
+            <!-- Métricas Promedio del Cuadrante -->
+            <div class="flex items-center space-x-6">
+                <div class="text-right">
+                    <p class="text-xs text-blue-100 mb-1">Temp. Promedio</p>
+                    <p class="text-2xl font-bold">{{ cuadrante.temp_promedio|floatformat:1 }}°C</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-blue-100 mb-1">Presión Promedio</p>
+                    <p class="text-2xl font-bold">{{ cuadrante.presion_promedio|floatformat:1 }} hPa</p>
+                </div>
+                
+                <!-- Botón para expandir/contraer -->
+                <button @click="expanded = !expanded" class="ml-4 text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors">
+                    <i class="fas" :class="expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Módulos -->
+    <div x-show="expanded" x-collapse class="p-4">
+        <div class="space-y-3">
+            {% for modulo in cuadrante.modulos.all %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                
+                <!-- Nombre del Módulo -->
+                <div class="flex items-center space-x-3 flex-1">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-solar-panel text-blue-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">{{ modulo.nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ modulo.ubicacion }}</p>
+                    </div>
+                </div>
+
+                <!-- Temperatura -->
+                <div class="flex items-center space-x-3 px-6">
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 mb-1">Temperatura</p>
+                        <div class="flex items-center space-x-2">
+                            <p class="text-lg font-bold text-gray-800">
+                                {% if modulo.ultima_medida %}
+                                    {{ modulo.ultima_medida.temperatura|floatformat:1 }}°C
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </p>
+                            {% if modulo.ultima_medida %}
+                                {% if modulo.tendencia_temperatura == 'up' %}
+                                    <i class="fas fa-arrow-trend-up text-green-500 text-sm"></i>
+                                {% elif modulo.tendencia_temperatura == 'down' %}
+                                    <i class="fas fa-arrow-trend-down text-red-500 text-sm"></i>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presión -->
+                <div class="flex items-center space-x-3 px-6">
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 mb-1">Presión</p>
+                        <div class="flex items-center space-x-2">
+                            <p class="text-lg font-bold text-gray-800">
+                                {% if modulo.ultima_medida %}
+                                    {{ modulo.ultima_medida.presion|floatformat:1 }} hPa
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </p>
+                            {% if modulo.ultima_medida %}
+                                {% if modulo.tendencia_presion == 'up' %}
+                                    <i class="fas fa-arrow-trend-up text-green-500 text-sm"></i>
+                                {% elif modulo.tendencia_presion == 'down' %}
+                                    <i class="fas fa-arrow-trend-down text-red-500 text-sm"></i>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón Ver Detalle -->
+                <a href="{% url 'modulo_detalle' modulo.id %}" 
+                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-chart-line mr-2"></i>Ver Detalle
+                </a>
+            </div>
+            {% empty %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>No hay módulos en este cuadrante</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% empty %}
+<div class="bg-white rounded-lg shadow p-12 text-center">
+    <i class="fas fa-filter text-gray-300 text-6xl mb-4"></i>
+    <h3 class="text-xl font-semibold text-gray-700 mb-2">No hay datos disponibles</h3>
+    <p class="text-gray-500">No se encontraron cuadrantes con los filtros seleccionados</p>
+</div>
+{% endfor %}

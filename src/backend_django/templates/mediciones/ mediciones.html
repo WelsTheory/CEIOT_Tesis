@@ -1,0 +1,90 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Mediciones{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex mb-4" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="text-gray-700 hover:text-blue-600">
+                <i class="fas fa-home mr-2"></i>Dashboard
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="text-gray-500">Mediciones</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Mediciones</h1>
+            <p class="text-gray-600">Vista general de temperatura y presión por cuadrante</p>
+        </div>
+    </div>
+
+    <!-- Filtros por Cuadrante -->
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center space-x-3 overflow-x-auto">
+            <span class="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por:</span>
+            
+            <button 
+                hx-get="{% url 'mediciones' %}?cuadrante=todos"
+                hx-target="#mediciones-content"
+                hx-swap="innerHTML"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+                    {% if cuadrante_seleccionado == 'todos' %}
+                        bg-blue-600 text-white
+                    {% else %}
+                        bg-gray-100 text-gray-700 hover:bg-gray-200
+                    {% endif %}"
+            >
+                <i class="fas fa-border-all mr-2"></i>Todos
+            </button>
+
+            {% for cuadrante in cuadrantes %}
+            <button 
+                hx-get="{% url 'mediciones' %}?cuadrante={{ cuadrante.id }}"
+                hx-target="#mediciones-content"
+                hx-swap="innerHTML"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+                    {% if cuadrante_seleccionado == cuadrante.id %}
+                        bg-blue-600 text-white
+                    {% else %}
+                        bg-gray-100 text-gray-700 hover:bg-gray-200
+                    {% endif %}"
+            >
+                Cuadrante {{ cuadrante.nombre }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Contenido de Mediciones -->
+    <div id="mediciones-content">
+        {% include 'mediciones/partials/lista_cuadrantes.html' %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh cada 30 segundos
+    setInterval(() => {
+        const activeFilter = document.querySelector('[hx-target="#mediciones-content"].bg-blue-600');
+        if (activeFilter) {
+            htmx.trigger(activeFilter, 'click');
+        }
+    }, 30000);
+</script>
+{% endblock %}
