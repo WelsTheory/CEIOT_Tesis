@@ -1281,3 +1281,168 @@ def mediciones_view(request):
     
     # Si es petición normal, devolver template completo
     return render(request, 'mediciones/mediciones.html', context)
+
+@login_required
+def modulo_detail(request, modulo_id):
+    """Vista detallada de un módulo con tabs para mediciones, apuntes y logs"""
+    from django.shortcuts import get_object_or_404
+    from datetime import datetime, timedelta
+    from django.db.models import Avg, Max, Min
+    import json
+    
+    # Obtener módulo
+    modulo = get_object_or_404(
+        Modulo.objects.select_related('reset'),
+        modulo_id=modulo_id
+    )
+    
+    # ========================================
+    # TAB 1: MEDICIONES
+    # ========================================
+    
+    # Última medición y tendencias
+    ultima_medicion = modulo.mediciones.first()
+    ultimas_dos = list(modulo.mediciones.all()[:2])
+    
+    tendencia_temp = 'stable'
+    tendencia_presion = 'stable'
+    
+    if len(ultimas_dos) == 2:
+        try:
+            temp_actual = float(ultimas_dos[0].valor_temp or 0)
+            temp_anterior = float(ultimas_dos[1].valor_temp or 0)
+            presion_actual = float(ultimas_dos[0].valor_press or 0)
+            presion_anterior = float(ultimas_dos[1].valor_press or 0)
+            
+            tendencia_temp = 'up' if temp_actual > temp_anterior else ('down' if temp_actual < temp_anterior else 'stable')
+            tendencia_presion = 'up' if presion_actual > presion_anterior else ('down' if presion_actual < presion_anterior else 'stable')
+        except (ValueError, TypeError):
+            pass
+    
+    # Últimas 10 mediciones para la tabla
+    ultimas_mediciones = modulo.mediciones.all()[:10]
+    
+    # Mediciones de las últimas 24 horas para gráfico y estadísticas
+    hace_24h = datetime.now() - timedelta(hours=24)
+    mediciones_24h = modulo.mediciones.filter(fecha__gte=hace_24h).order_by('fecha')
+    
+    # Calcular estadísticas
+    stats_24h = mediciones_24h.aggregate(
+        temp_promedio=Avg('valor_temp'),
+        temp_max=Max('valor_temp'),
+        temp_min=Min('valor_temp')
+    )
+    
+    # Mediciones de ayer para comparativa
+    hace_48h = datetime.now() - timedelta(hours=48)
+    mediciones_ayer = modulo.mediciones.filter(
+        fecha__gte=hace_48h,
+        fecha__lt=hace_24h
+    )
+    
+    temp_promedio_ayer = mediciones_ayer.aggregate(Avg('valor_temp'))['valor_temp__avg'] or 0
+    diferencia_ayer = (stats_24h['temp_promedio'] or 0) - temp_promedio_ayer
+    
+    stats = {
+        'temp_promedio_24h': stats_24h['temp_promedio'] or 0,
+        'temp_max_dia': stats_24h['temp_max'] or 0,
+        'temp_min_dia': stats_24h['temp_min'] or 0,
+        'diferencia_ayer': diferencia_ayer,
+    }
+    
+    # Preparar datos para gráfico Chart.js
+    chart_labels = []
+    chart_temp_data = []
+    chart_presion_data = []
+    
+    for medicion in mediciones_24h:
+        chart_labels.append(medicion.fecha.strftime('%H:%M'))
+        try:
+            chart_temp_data.append(float(medicion.valor_temp or 0))
+            chart_presion_data.append(float(medicion.valor_press or 0))
+        except (ValueError, TypeError):
+            chart_temp_data.append(None)
+            chart_presion_data.append(None)
+    
+    # ========================================
+    # TAB 2: APUNTES/NOTAS
+    # ========================================
+    
+    # Últimos 20 apuntes
+    historial_apuntes = modulo.apuntes.all()[:20]
+    
+    # Calcular cambios entre apuntes consecutivos
+    apuntes_con_cambios = []
+    for i, apunte in enumerate(historial_apuntes):
+        if i < len(historial_apuntes) - 1:
+            apunte_anterior = historial_apuntes[i + 1]
+            apunte.cambio_up = float(apunte.valor_up) - float(apunte_anterior.valor_up)
+            apunte.cambio_down = float(apunte.valor_down) - float(apunte_anterior.valor_down)
+        else:
+            apunte.cambio_up = None
+            apunte.cambio_down = None
+        apuntes_con_cambios.append(apunte)
+    
+    # Datos para gráfico de apuntes
+    apuntes_labels = []
+    apuntes_up_data = []
+    apuntes_down_data = []
+    
+    for apunte in reversed(list(historial_apuntes[:10])):
+        apuntes_labels.append(apunte.fecha.strftime('%d/%m %H:%M'))
+        apuntes_up_data.append(float(apunte.valor_up))
+        apuntes_down_data.append(float(apunte.valor_down))
+    
+    # ========================================
+    # TAB 3: LOG DE CAMBIOS
+    # ========================================
+    
+    # Eventos de conexión (últimos 30)
+    logs_eventos = modulo.estados_conexion.all()[:30]
+    
+    # Estadísticas de eventos
+    logs_stats = {
+        'total': logs_eventos.count(),
+        'conexiones': modulo.estados_conexion.filter(
+            tipo_evento__in=['ONLINE', 'RECONEXION']
+        ).count(),
+        'ajustes': 0,  # Aquí podrías agregar un modelo de ajustes
+        'alarmas': 0,  # Aquí podrías agregar un modelo de alarmas
+    }
+    
+    # Historial de reinicios (últimos 10)
+    if modulo.reset:
+        logs_reinicios = modulo.reset.logs.all()[:10]
+    else:
+        logs_reinicios = []
+    
+    # ========================================
+    # CONTEXTO
+    # ========================================
+    
+    context = {
+        'modulo': modulo,
+        'ultima_medicion': ultima_medicion,
+        'tendencia_temp': tendencia_temp,
+        'tendencia_presion': tendencia_presion,
+        
+        # Tab Mediciones
+        'ultimas_mediciones': ultimas_mediciones,
+        'stats': stats,
+        'chart_labels': json.dumps(chart_labels),
+        'chart_temp_data': json.dumps(chart_temp_data),
+        'chart_presion_data': json.dumps(chart_presion_data),
+        
+        # Tab Apuntes
+        'historial_apuntes': apuntes_con_cambios,
+        'apuntes_labels': json.dumps(apuntes_labels),
+        'apuntes_up_data': json.dumps(apuntes_up_data),
+        'apuntes_down_data': json.dumps(apuntes_down_data),
+        
+        # Tab Logs
+        'logs_eventos': logs_eventos,
+        'logs_stats': logs_stats,
+        'logs_reinicios': logs_reinicios,
+    }
+    
+    return render(request, 'modulos/detalle_tabs.html', context)
