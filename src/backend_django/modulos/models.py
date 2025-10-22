@@ -40,8 +40,7 @@ class Modulo(models.Model):
         ('2.0', '2.0'),
     ]
     
-    VALORES_APUNTE = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5]
-    
+    VALORES_APUNTE = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5]    
     modulo_id = models.AutoField(primary_key=True, db_column='moduloId')
     nombre = models.CharField(max_length=200, null=True, blank=True)
     ubicacion = models.CharField(max_length=5, choices=UBICACIONES, null=True, blank=True)
@@ -296,38 +295,3 @@ class Notificacion(models.Model):
             mensaje=mensaje,
             importante=importante
         )
-    
-class Cuadrante(models.Model):
-    nombre = models.CharField(max_length=50)
-    descripcion = models.TextField(blank=True)
-    
-    class Meta:
-        verbose_name_plural = 'Cuadrantes'
-    
-    def __str__(self):
-        return f"Cuadrante {self.nombre}"
-
-
-class Modulo(models.Model):
-    nombre = models.CharField(max_length=100)
-    ubicacion = models.CharField(max_length=200)
-    cuadrante = models.ForeignKey(
-        Cuadrante, 
-        on_delete=models.CASCADE, 
-        related_name='modulos'
-    )
-    # ... otros campos ...
-
-
-class Medida(models.Model):
-    modulo = models.ForeignKey(
-        Modulo, 
-        on_delete=models.CASCADE, 
-        related_name='medidas'
-    )
-    temperatura = models.FloatField()
-    presion = models.FloatField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-timestamp']

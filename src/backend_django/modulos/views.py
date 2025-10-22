@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Notificacion, Modulo, Cuadrante, Medida
+from .models import Notificacion, Modulo
 from django.shortcuts import render
 
 
@@ -1182,77 +1182,77 @@ def crear_notificacion_reinicio(usuario, modulo):
 ##
 ## MEDICIONES
 ##
-@login_required
-def mediciones_view(request):
-    """Vista principal de mediciones con filtros por cuadrante"""
+# @login_required
+# def mediciones_view(request):
+#     """Vista principal de mediciones con filtros por cuadrante"""
     
-    # Obtener el filtro de cuadrante desde GET
-    cuadrante_seleccionado = request.GET.get('cuadrante', 'todos')
+#     # Obtener el filtro de cuadrante desde GET
+#     cuadrante_seleccionado = request.GET.get('cuadrante', 'todos')
     
-    # Obtener todos los cuadrantes para los botones de filtro
-    cuadrantes = Cuadrante.objects.all().order_by('nombre')
+#     # Obtener todos los cuadrantes para los botones de filtro
+#     cuadrantes = Cuadrante.objects.all().order_by('nombre')
     
-    # Filtrar cuadrantes según la selección
-    if cuadrante_seleccionado == 'todos':
-        cuadrantes_filtrados = cuadrantes
-    else:
-        cuadrantes_filtrados = cuadrantes.filter(id=cuadrante_seleccionado)
-    
-    # Anotar cada cuadrante con promedios calculados
-    cuadrantes_con_datos = []
-    for cuadrante in cuadrantes_filtrados:
-        # Obtener todos los módulos del cuadrante
-        modulos = cuadrante.modulos.all()
+#     # Filtrar cuadrantes según la selección
+#     if cuadrante_seleccionado == 'todos':
+#             cuadrantes_filtrados = cuadrantes
+#         else:
+#             cuadrantes_filtrados = cuadrantes.filter(id=cuadrante_seleccionado)
         
-        # Calcular promedios del cuadrante
-        medidas_cuadrante = Medida.objects.filter(
-            modulo__cuadrante=cuadrante
-        ).order_by('-timestamp')[:100]  # Últimas 100 medidas
-        
-        temp_promedio = medidas_cuadrante.aggregate(
-            Avg('temperatura')
-        )['temperatura__avg'] or 0
-        
-        presion_promedio = medidas_cuadrante.aggregate(
-            Avg('presion')
-        )['presion__avg'] or 0
-        
-        # Agregar datos calculados al cuadrante
-        cuadrante.temp_promedio = temp_promedio
-        cuadrante.presion_promedio = presion_promedio
-        
-        # Para cada módulo, obtener última medida y tendencias
-        for modulo in modulos:
-            modulo.ultima_medida = modulo.medidas.order_by('-timestamp').first()
+#         # Anotar cada cuadrante con promedios calculados
+#         cuadrantes_con_datos = []
+#         for cuadrante in cuadrantes_filtrados:
+#             # Obtener todos los módulos del cuadrante
+#             modulos = cuadrante.modulos.all()
             
-            # Calcular tendencias (comparar últimas 2 medidas)
-            ultimas_medidas = modulo.medidas.order_by('-timestamp')[:2]
-            if len(ultimas_medidas) == 2:
-                if ultimas_medidas[0].temperatura > ultimas_medidas[1].temperatura:
-                    modulo.tendencia_temperatura = 'up'
-                elif ultimas_medidas[0].temperatura < ultimas_medidas[1].temperatura:
-                    modulo.tendencia_temperatura = 'down'
-                else:
-                    modulo.tendencia_temperatura = 'stable'
+#             # Calcular promedios del cuadrante
+#             medidas_cuadrante = Medida.objects.filter(
+#                 modulo__cuadrante=cuadrante
+#             ).order_by('-timestamp')[:100]  # Últimas 100 medidas
+            
+#             temp_promedio = medidas_cuadrante.aggregate(
+#                 Avg('temperatura')
+#             )['temperatura__avg'] or 0
+            
+#             presion_promedio = medidas_cuadrante.aggregate(
+#                 Avg('presion')
+#             )['presion__avg'] or 0
+            
+#             # Agregar datos calculados al cuadrante
+#             cuadrante.temp_promedio = temp_promedio
+#             cuadrante.presion_promedio = presion_promedio
+            
+#             # Para cada módulo, obtener última medida y tendencias
+#             for modulo in modulos:
+#                 modulo.ultima_medida = modulo.medidas.order_by('-timestamp').first()
                 
-                if ultimas_medidas[0].presion > ultimas_medidas[1].presion:
-                    modulo.tendencia_presion = 'up'
-                elif ultimas_medidas[0].presion < ultimas_medidas[1].presion:
-                    modulo.tendencia_presion = 'down'
-                else:
-                    modulo.tendencia_presion = 'stable'
+#                 # Calcular tendencias (comparar últimas 2 medidas)
+#                 ultimas_medidas = modulo.medidas.order_by('-timestamp')[:2]
+#                 if len(ultimas_medidas) == 2:
+#                     if ultimas_medidas[0].temperatura > ultimas_medidas[1].temperatura:
+#                         modulo.tendencia_temperatura = 'up'
+#                     elif ultimas_medidas[0].temperatura < ultimas_medidas[1].temperatura:
+#                         modulo.tendencia_temperatura = 'down'
+#                     else:
+#                         modulo.tendencia_temperatura = 'stable'
+                    
+#                     if ultimas_medidas[0].presion > ultimas_medidas[1].presion:
+#                         modulo.tendencia_presion = 'up'
+#                     elif ultimas_medidas[0].presion < ultimas_medidas[1].presion:
+#                         modulo.tendencia_presion = 'down'
+#                     else:
+#                         modulo.tendencia_presion = 'stable'
+            
+#             cuadrantes_con_datos.append(cuadrante)
         
-        cuadrantes_con_datos.append(cuadrante)
-    
-    context = {
-        'cuadrantes': cuadrantes,  # Todos los cuadrantes para los filtros
-        'cuadrantes_filtrados': cuadrantes_con_datos,  # Cuadrantes filtrados con datos
-        'cuadrante_seleccionado': cuadrante_seleccionado,
-    }
-    
-    # Si es una petición HTMX, solo devolver el partial
-    if request.headers.get('HX-Request'):
-        return render(request, 'mediciones/partials/lista_cuadrantes.html', context)
-    
-    # Si es petición normal, devolver template completo
-    return render(request, 'mediciones/mediciones.html', context)
+#         context = {
+#             'cuadrantes': cuadrantes,  # Todos los cuadrantes para los filtros
+#             'cuadrantes_filtrados': cuadrantes_con_datos,  # Cuadrantes filtrados con datos
+#             'cuadrante_seleccionado': cuadrante_seleccionado,
+#         }
+        
+#         # Si es una petición HTMX, solo devolver el partial
+#         if request.headers.get('HX-Request'):
+#             return render(request, 'mediciones/partials/lista_cuadrantes.html', context)
+        
+#         # Si es petición normal, devolver template completo
+#         return render(request, 'mediciones/mediciones.html', context)
