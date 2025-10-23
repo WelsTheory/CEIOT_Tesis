@@ -16,6 +16,11 @@ class ControlReinicio(models.Model):
         db_column='moduloId',
         related_name='controles_reinicio'
     )
+    # ⭐ AGREGAR ESTA LÍNEA:
+    estado = models.BooleanField(
+        default=False, 
+        help_text="True=Encendido, False=Apagado"
+    )
     
     class Meta:
         db_table = 'Control_Reinicio'

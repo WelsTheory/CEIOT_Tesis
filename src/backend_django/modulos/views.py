@@ -6,11 +6,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Max, Avg, Count, Q
+import logging
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required  
 from django.shortcuts import render, get_object_or_404, redirect  # ← Agregar redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -36,6 +37,7 @@ from .serializers import (
 
 from mqtt_handler.client import mqtt_client
 import json
+from .models import Modulo,ControlReinicio,Medicion
 
 
 class ModuloViewSet(viewsets.ModelViewSet):
@@ -859,7 +861,10 @@ def modulo_card_partial(request, modulo_id):
 @login_required
 def modulo_control_action(request, modulo_id):
     """Vista para acciones de control via htmx"""
-    from django.http import JsonResponse
+    from datetime import timedelta
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     if request.method != 'POST':
         return JsonResponse({'error': 'Método no permitido'}, status=405)
@@ -867,31 +872,87 @@ def modulo_control_action(request, modulo_id):
     modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
     accion = request.POST.get('accion')
     
-    # Aquí iría la lógica MQTT real
-    # mqtt_client.publish(f"modulos/{modulo_id}/control", accion.upper())
-    
-    mensajes = {
-        'encender': f'✅ Módulo {modulo.nombre} encendido',
-        'apagar': f'🔴 Módulo {modulo.nombre} apagado',
-        'reiniciar': f'🔄 Módulo {modulo.nombre} reiniciado'
-    }
-    
-    mensaje = mensajes.get(accion, 'Acción realizada')
-    
-    # Devolver HTML con mensaje
-    html = f'''
-    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4" 
-         x-data="{{ show: true }}" 
-         x-show="show"
-         x-init="setTimeout(() => show = false, 3000)">
-        <div class="flex items-center">
-            <i class="fas fa-check-circle text-green-600 text-xl mr-3"></i>
-            <span class="text-green-800">{mensaje}</span>
-        </div>
-    </div>
-    '''
-    
-    return HttpResponse(html)
+    try:
+        # Verificar que el módulo tiene reset asignado
+        if not modulo.reset:
+            logger.warning(f"⚠️ Módulo {modulo_id} no tiene ControlReinicio asignado")
+            # Opcional: crear uno automáticamente
+            reset = ControlReinicio.objects.create(
+                nombre=f"Reset_{modulo.nombre}",
+                modulo=modulo,
+                estado=False
+            )
+            modulo.reset = reset
+            modulo.save()
+        else:
+            reset = modulo.reset
+        
+        # Actualizar el estado según la acción
+        if accion == 'encender':
+            reset.estado = True
+            reset.save()
+            # TODO: Descomentar cuando tengas MQTT configurado
+            # from mqtt_handler.client import mqtt_client
+            # mqtt_client.publish(f"modulos/{modulo_id}/control", "ON")
+            logger.info(f"✅ Módulo {modulo_id} ENCENDIDO")
+            
+        elif accion == 'apagar':
+            reset.estado = False
+            reset.save()
+            # TODO: Descomentar cuando tengas MQTT configurado
+            # from mqtt_handler.client import mqtt_client
+            # mqtt_client.publish(f"modulos/{modulo_id}/control", "OFF")
+            logger.info(f"🔴 Módulo {modulo_id} APAGADO")
+            
+        elif accion == 'reiniciar':
+            # TODO: Lógica de reinicio
+            # from mqtt_handler.client import mqtt_client
+            # mqtt_client.publish(f"modulos/{modulo_id}/control", "RESTART")
+            logger.info(f"🔄 Módulo {modulo_id} REINICIADO")
+        
+        # Preparar el context para devolver el card actualizado
+        ultima_medicion = modulo.mediciones.first()
+        
+        # Determinar estado del módulo
+        if ultima_medicion:
+            hace_5_min = timezone.now() - timedelta(minutes=5)
+            hace_15_min = timezone.now() - timedelta(minutes=15)
+            
+            if ultima_medicion.fecha >= hace_5_min:
+                estado = 'online'
+            elif ultima_medicion.fecha >= hace_15_min:
+                estado = 'warning'
+            else:
+                estado = 'offline'
+        else:
+            estado = 'offline'
+        
+        # Agregar propiedades al módulo para el template
+        modulo.estado = estado
+        modulo.temperatura = float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0
+        modulo.presion = float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0
+        modulo.ultima_medicion = ultima_medicion.fecha if ultima_medicion else None
+        
+        # Estados UP/DOWN
+        modulo.estado_up = 'correcto'
+        modulo.estado_down = 'correcto'
+        
+        # Renderizar el card completo actualizado
+        context = {
+            'modulo': modulo,
+        }
+        
+        html = render_to_string('modulos/partials/modulo_card.html', context, request=request)
+        return HttpResponse(html)
+        
+    except Exception as e:
+        logger.error(f"❌ Error en modulo_control_action: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return HttpResponse(
+            '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Error al procesar la acción</div>',
+            status=500
+        )
 
 
 @login_required
