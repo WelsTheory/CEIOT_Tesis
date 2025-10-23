@@ -351,3 +351,211 @@ tr:hover {
 .space-x-4 > * + * {
     margin-left: 1rem;
 }
+
+* Toggle Switch mejorado */
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e0;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .toggle-slider {
+    background-color: #48bb78;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+input:disabled + .toggle-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Panel de información técnica */
+.info-tecnica-panel {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        max-height: 300px;
+        transform: translateY(0);
+    }
+}
+
+/* Botón de información técnica */
+.btn-info-tecnica {
+    transition: all 0.2s ease;
+}
+
+.btn-info-tecnica:hover {
+    transform: scale(1.1);
+}
+
+.btn-info-tecnica:active {
+    transform: scale(0.95);
+}
+
+/* Items de información técnica */
+.tech-info-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tech-info-item:last-child {
+    border-bottom: none;
+}
+
+.tech-info-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Indicadores de estado mejorados */
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.online {
+    background-color: #48bb78;
+    box-shadow: 0 0 8px rgba(72, 187, 120, 0.6);
+}
+
+.status-indicator.warning {
+    background-color: #ecc94b;
+    box-shadow: 0 0 8px rgba(236, 201, 75, 0.6);
+}
+
+.status-indicator.offline {
+    background-color: #f56565;
+    box-shadow: 0 0 8px rgba(245, 101, 101, 0.6);
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Loading indicator para htmx */
+.htmx-indicator {
+    display: none;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
+
+/* Animación de carga */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Estilos responsive para cards */
+@media (max-width: 640px) {
+    .modulo-card {
+        margin: 0.5rem;
+    }
+    
+    .tech-info-item {
+        font-size: 0.75rem;
+    }
+}
+
+/* Efecto hover en el card completo */
+.modulo-card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+/* Badges de estado personalizados */
+.badge-estado {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-encendido {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.badge-apagado {
+    background-color: #fed7d7;
+    color: #742a2a;
+}
+
+/* Transición suave para el panel colapsable */
+.collapsible-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.collapsible-panel.show {
+    max-height: 500px;
+}

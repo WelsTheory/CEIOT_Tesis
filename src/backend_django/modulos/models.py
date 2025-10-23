@@ -67,6 +67,13 @@ class Modulo(models.Model):
         db_column='resetId',
         related_name='modulos'
     )
+
+    version_firmware = models.CharField(max_length=50, null=True, blank=True)
+    direccion_ip = models.GenericIPAddressField(null=True, blank=True)
+    direccion_mac = models.CharField(max_length=17, null=True, blank=True)
+    memoria_libre = models.IntegerField(null=True, blank=True, help_text="En bytes")
+    temperatura_interna = models.DecimalField(max_digits=4, decimal_places=1, null=True, blank=True)
+    voltaje_alimentacion = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     
     class Meta:
         db_table = 'Modulos'

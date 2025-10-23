@@ -518,7 +518,41 @@ def dashboard(request):
     for ubicacion in ['Norte', 'Sur', 'Este', 'Oeste']:
         ubicaciones[ubicacion] = len([m for m in modulos_data if m['ubicacion'] == ubicacion])
     
+    # Enriquecer datos de módulos
+    modulos_enriquecidos = []
+    for modulo in modulos:
+        ultima_medicion = modulo.mediciones.first()
+        
+        # Determinar estado
+        if ultima_medicion:
+            hace_5_min = timezone.now() - timedelta(minutes=5)
+            hace_15_min = timezone.now() - timedelta(minutes=15)
+            
+            if ultima_medicion.fecha >= hace_5_min:
+                estado = 'online'
+            elif ultima_medicion.fecha >= hace_15_min:
+                estado = 'warning'
+            else:
+                estado = 'offline'
+        else:
+            estado = 'offline'
+    
+    modulo.estado = estado
+    modulo.temperatura = float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0
+    modulo.presion = float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0
+    modulo.ultima_medicion = ultima_medicion.fecha if ultima_medicion else None
+
+    if not hasattr(modulo, 'version_firmware'):
+            modulo.version_firmware = "N/A"
+    if not hasattr(modulo, 'direccion_ip'):
+        modulo.direccion_ip = "N/A"
+    if not hasattr(modulo, 'direccion_mac'):
+        modulo.direccion_mac = "N/A"
+        
+    modulos_enriquecidos.append(modulo)
+
     context = {
+        'modulos': modulos_enriquecidos,
         'page_title': 'Dashboard',
         'modulos': modulos_data,
         'stats': {
@@ -1446,3 +1480,19 @@ def modulo_detail(request, modulo_id):
     }
     
     return render(request, 'modulos/detalle_tabs.html', context)
+
+@login_required
+def modulo_control(request, modulo_id):
+    """Panel de control del módulo CON historial"""
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    
+    # Obtener últimos 10 eventos para el historial
+    logs_eventos = modulo.estados_conexion.all()[:10]
+    
+    context = {
+        'page_title': f'Control - {modulo.nombre}',
+        'modulo': modulo,
+        'logs_eventos': logs_eventos,  # 🆕 Agregar logs
+    }
+    
+    return render(request, 'modulos/control.html', context)

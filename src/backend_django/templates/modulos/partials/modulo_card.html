@@ -1,10 +1,9 @@
 <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
-    <!-- Header del Card con tooltip en el indicador de estado -->
+    <!-- Header del Card -->
     <div class="p-4 {% if modulo.estado == 'online' %}bg-green-50{% elif modulo.estado == 'warning' %}bg-yellow-50{% else %}bg-red-50{% endif %}">
         <div class="flex items-center justify-between">
             <h3 class="font-bold text-gray-800">{{ modulo.nombre }}</h3>
             <div class="flex items-center space-x-1">
-                <!-- Indicador de estado sin tooltip -->
                 <span class="status-indicator {% if modulo.estado == 'online' %}online{% elif modulo.estado == 'warning' %}warning{% else %}offline{% endif %}"></span>
                 
                 <span class="text-xs font-semibold {% if modulo.estado == 'online' %}text-green-700{% elif modulo.estado == 'warning' %}text-yellow-700{% else %}text-red-700{% endif %}">
@@ -20,6 +19,7 @@
     
     <!-- Body del Card -->
     <div class="p-4 space-y-3">
+        <!-- Mediciones -->
         <div class="flex items-center justify-between">
             <span class="text-sm text-gray-600">
                 <i class="fas fa-temperature-high text-red-500 mr-2"></i>Temperatura
@@ -31,7 +31,7 @@
             <span class="text-sm text-gray-600">
                 <i class="fas fa-gauge text-blue-500 mr-2"></i>Presión
             </span>
-            <span class="font-semibold text-gray-800">{{ modulo.presion|floatformat:1 }} hPa</span>
+            <span class="font-semibold text-gray-800">{{ modulo.presion|floatformat:1 }} bar</span>
         </div>
         
         <!-- Valores UP y DOWN -->
@@ -48,26 +48,154 @@
             <div class="border-l border-gray-200 h-8"></div>
             <div class="text-center flex-1">
                 <p class="text-xs text-gray-500">DOWN</p>
-                <p class="font-bold {% if modulo.estado_dw == 'correcto' %}text-green-600{% else %}text-red-600{% endif %}">
+                <p class="font-bold {% if modulo.estado_down == 'correcto' %}text-green-600{% else %}text-red-600{% endif %}">
                     {{ modulo.down }}
                 </p>
-                {% if modulo.estado_dw == 'mismatch' %}
+                {% if modulo.estado_down == 'mismatch' %}
                     <i class="fas fa-exclamation-triangle text-red-500 text-xs"></i>
                 {% endif %}
             </div>
         </div>
+
+        <!-- ===== NUEVA SECCIÓN: Control con Información Técnica ===== -->
+        <div class="pt-3 border-t border-gray-200">
+            <!-- Toggle de Encendido/Apagado con Info -->
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium text-gray-700">Control:</span>
+                    <span class="text-xs px-2 py-1 rounded {% if modulo.reset.estado %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ modulo.reset.estado|yesno:"Encendido,Apagado,Desconocido" }}
+                    </span>
+                </div>
+                
+                <!-- Botón de información técnica (expandible) -->
+                <button 
+                    type="button"
+                    onclick="toggleInfoTecnica{{ modulo.modulo_id }}()"
+                    class="text-gray-500 hover:text-blue-600 transition-colors"
+                    title="Ver información técnica">
+                    <i class="fas fa-info-circle text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Toggle Switch -->
+            <div class="flex items-center justify-center space-x-3 py-2">
+                <span class="text-xs text-gray-500">OFF</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input 
+                        type="checkbox" 
+                        {% if modulo.reset.estado %}checked{% endif %}
+                        class="sr-only peer"
+                        hx-post="{% url 'modulo_control_action' modulo.modulo_id %}"
+                        hx-vals='{"accion": "{{ modulo.reset.estado|yesno:"apagar,encender" }}"}'
+                        hx-target="#modulo-{{ modulo.modulo_id }}"
+                        hx-swap="outerHTML"
+                        hx-indicator="#loading-{{ modulo.modulo_id }}">
+                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                </label>
+                <span class="text-xs text-gray-500">ON</span>
+                
+                <!-- Spinner de carga -->
+                <div id="loading-{{ modulo.modulo_id }}" class="htmx-indicator">
+                    <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                </div>
+            </div>
+
+            <!-- Panel de información técnica (colapsable) -->
+            <div id="info-tecnica-{{ modulo.modulo_id }}" class="hidden mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                <div class="text-xs text-gray-600">
+                    <div class="flex items-center justify-between py-1">
+                        <span class="flex items-center">
+                            <i class="fas fa-microchip text-purple-500 mr-2 w-4"></i>
+                            <span class="font-medium">Firmware:</span>
+                        </span>
+                        <span class="font-mono text-gray-800">{{ modulo.version_firmware|default:"N/A" }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-1">
+                        <span class="flex items-center">
+                            <i class="fas fa-network-wired text-blue-500 mr-2 w-4"></i>
+                            <span class="font-medium">IP:</span>
+                        </span>
+                        <span class="font-mono text-gray-800">{{ modulo.direccion_ip|default:"N/A" }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-1">
+                        <span class="flex items-center">
+                            <i class="fas fa-ethernet text-green-500 mr-2 w-4"></i>
+                            <span class="font-medium">MAC:</span>
+                        </span>
+                        <span class="font-mono text-gray-800">{{ modulo.direccion_mac|default:"N/A" }}</span>
+                    </div>
+
+                    {% if modulo.memoria_libre or modulo.temperatura_interna or modulo.voltaje_alimentacion %}
+                    <div class="border-t border-gray-300 my-2 pt-2">
+                        {% if modulo.memoria_libre %}
+                        <div class="flex items-center justify-between py-1">
+                            <span class="flex items-center">
+                                <i class="fas fa-memory text-indigo-500 mr-2 w-4"></i>
+                                <span class="font-medium">Memoria Libre:</span>
+                            </span>
+                            <span class="font-mono text-gray-800">{{ modulo.memoria_libre|filesizeformat }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if modulo.temperatura_interna %}
+                        <div class="flex items-center justify-between py-1">
+                            <span class="flex items-center">
+                                <i class="fas fa-fire text-orange-500 mr-2 w-4"></i>
+                                <span class="font-medium">Temp. Interna:</span>
+                            </span>
+                            <span class="font-mono text-gray-800">{{ modulo.temperatura_interna|floatformat:1 }}°C</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if modulo.voltaje_alimentacion %}
+                        <div class="flex items-center justify-between py-1">
+                            <span class="flex items-center">
+                                <i class="fas fa-bolt text-yellow-500 mr-2 w-4"></i>
+                                <span class="font-medium">Voltaje:</span>
+                            </span>
+                            <span class="font-mono text-gray-800">{{ modulo.voltaje_alimentacion|floatformat:2 }}V</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- ===== FIN NUEVA SECCIÓN ===== -->
+
+        <!-- Última actualización -->
+        {% if modulo.ultima_medicion %}
+        <div class="text-xs text-gray-500 text-center pt-2">
+            <i class="fas fa-clock mr-1"></i>
+            Actualizado: {{ modulo.ultima_medicion|timesince }} ago
+        </div>
+        {% endif %}
     </div>
     
-    <!-- Footer del Card -->
-    <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-between">
-        <a href="{% url 'modulo_detail' modulo.modulo_id %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-            <i class="fas fa-eye mr-1"></i>Ver Detalle
+    <!-- Footer con botones de acción -->
+    <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t">
+        <a href="{% url 'modulo_detail' modulo.modulo_id %}" 
+           class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+            <i class="fas fa-eye mr-1"></i>Ver detalles
         </a>
-        <a href="{% url 'modulo_control' modulo.modulo_id %}" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
-            <i class="fas fa-sliders-h mr-1"></i>Control
+        
+        <a href="{% url 'modulo_mediciones' modulo.modulo_id %}" 
+           class="text-xs text-purple-600 hover:text-purple-800 font-medium">
+            <i class="fas fa-chart-line mr-1"></i>Mediciones
         </a>
     </div>
 </div>
+
+<!-- Script para toggle de información técnica -->
+<script>
+function toggleInfoTecnica{{ modulo.modulo_id }}() {
+    const panel = document.getElementById('info-tecnica-{{ modulo.modulo_id }}');
+    panel.classList.toggle('hidden');
+}
+</script>
 
 <style>
 /* Estilo para el indicador de estado */

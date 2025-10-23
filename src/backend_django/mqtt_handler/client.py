@@ -17,7 +17,6 @@ class MQTTClient:
         base_client_id = getattr(settings, 'MQTT_CLIENT_ID', 'django_backend')
         self.client_id = f"{base_client_id}_{uuid.uuid4().hex[:8]}"
         
-        
     def on_connect(self, client, userdata, flags, rc):
         """Callback cuando se conecta al broker"""
         if rc == 0:
@@ -29,8 +28,9 @@ class MQTTClient:
             self.client.subscribe("apunte/#")
             self.client.subscribe("estado/#")
             self.client.subscribe("heartbeat/#")
+            self.client.subscribe("modulos/+/info-tecnica")  # ← NUEVO TOPIC
             
-            logger.info("📡 Suscrito a topics: medicion/# apunte/# estado/# heartbeat/#")
+            logger.info("📡 Suscrito a topics: medicion/# apunte/# estado/# heartbeat/# modulos/+/info-tecnica")
         else:
             logger.error(f"❌ Error conectando al broker MQTT. Código: {rc}")
             self.connected = False
@@ -61,6 +61,8 @@ class MQTTClient:
                 self.handle_estado(topic, payload)
             elif topic.startswith('heartbeat/'):
                 self.handle_heartbeat(topic, payload)
+            elif 'info-tecnica' in topic or (topic.startswith('modulos/') and topic.endswith('/info-tecnica')):  # ← NUEVO
+                self.handle_info_tecnica(topic, payload)
             else:
                 logger.warning(f"⚠️ Topic no manejado: {topic}")
                 
@@ -130,7 +132,7 @@ class MQTTClient:
         try:
             from modulos.models import Modulo, EstadoConexion
             
-            data = json.parse(payload)
+            data = json.loads(payload)
             modulo_id = data.get('moduloId')
             estado = data.get('estado', 'DESCONOCIDO')
             
@@ -153,45 +155,19 @@ class MQTTClient:
             logger.error(f"❌ Error procesando estado: {e}")
     
     def handle_heartbeat(self, topic, payload):
-        """Procesar heartbeats de módulos"""
+        """Procesar heartbeat (señal de vida)"""
         try:
-            from modulos.models import Modulo, InfoModulo
+            from modulos.models import Modulo
             
             data = json.loads(payload)
             modulo_id = data.get('moduloId')
             
             if modulo_id:
                 modulo = Modulo.objects.get(modulo_id=modulo_id)
+                # Actualizar última vez que se recibió heartbeat
+                # Esto podría guardarse en una tabla separada o actualizar campo en Modulo
                 
-                # Actualizar o crear info del módulo
-                info, created = InfoModulo.objects.get_or_create(
-                    modulo=modulo,
-                    activo=True,
-                    defaults={
-                        'version_firmware': data.get('firmware'),
-                        'ip_address': data.get('ip'),
-                        'mac_address': data.get('mac'),
-                        'uptime': data.get('uptime'),
-                        'memoria_libre': data.get('memoria'),
-                        'temperatura_interna': data.get('temperatura'),
-                        'voltaje_alimentacion': data.get('voltaje'),
-                        'signal_strength': data.get('signal')
-                    }
-                )
-                
-                if not created:
-                    # Actualizar campos
-                    info.version_firmware = data.get('firmware', info.version_firmware)
-                    info.ip_address = data.get('ip', info.ip_address)
-                    info.mac_address = data.get('mac', info.mac_address)
-                    info.uptime = data.get('uptime', info.uptime)
-                    info.memoria_libre = data.get('memoria', info.memoria_libre)
-                    info.temperatura_interna = data.get('temperatura', info.temperatura_interna)
-                    info.voltaje_alimentacion = data.get('voltaje', info.voltaje_alimentacion)
-                    info.signal_strength = data.get('signal', info.signal_strength)
-                    info.save()
-                
-                logger.debug(f"✅ Heartbeat procesado - Módulo {modulo_id}")
+                logger.info(f"💓 Heartbeat recibido - Módulo {modulo_id}")
             else:
                 logger.warning(f"⚠️ Heartbeat sin moduloId: {data}")
                 
@@ -199,6 +175,112 @@ class MQTTClient:
             logger.error(f"❌ Módulo {modulo_id} no existe")
         except Exception as e:
             logger.error(f"❌ Error procesando heartbeat: {e}")
+    
+    # ========================================================================
+    # NUEVA FUNCIÓN: Handle Info Técnica
+    # ========================================================================
+    def handle_info_tecnica(self, topic, payload):
+        """
+        Procesar información técnica del módulo (firmware, IP, MAC, etc.)
+        
+        Topic esperado: modulos/{moduloId}/info-tecnica
+        
+        Formato del payload:
+        {
+            "moduloId": 14,
+            "version_firmware": "v2.3.1",
+            "ip_address": "192.168.1.100",
+            "mac_address": "AA:BB:CC:DD:EE:FF",
+            "memoria_libre": 32768,
+            "temperatura_interna": 42.5,
+            "voltaje_alimentacion": 3.31,
+            "uptime": 345600,
+            "signal_strength": -45
+        }
+        """
+        try:
+            from modulos.models import Modulo
+            
+            data = json.loads(payload)
+            modulo_id = data.get('moduloId')
+            
+            if not modulo_id:
+                logger.warning(f"⚠️ Info técnica sin moduloId: {data}")
+                return
+            
+            # Buscar el módulo
+            try:
+                modulo = Modulo.objects.get(modulo_id=modulo_id)
+            except Modulo.DoesNotExist:
+                logger.error(f"❌ Módulo {modulo_id} no existe")
+                return
+            
+            # Actualizar campos de información técnica
+            updated_fields = []
+            
+            if 'version_firmware' in data:
+                modulo.version_firmware = data['version_firmware']
+                updated_fields.append('version_firmware')
+            
+            if 'ip_address' in data:
+                modulo.direccion_ip = data['ip_address']
+                updated_fields.append('direccion_ip')
+            
+            if 'mac_address' in data:
+                modulo.direccion_mac = data['mac_address']
+                updated_fields.append('direccion_mac')
+            
+            if 'memoria_libre' in data:
+                modulo.memoria_libre = data['memoria_libre']
+                updated_fields.append('memoria_libre')
+            
+            if 'temperatura_interna' in data:
+                modulo.temperatura_interna = data['temperatura_interna']
+                updated_fields.append('temperatura_interna')
+            
+            if 'voltaje_alimentacion' in data:
+                modulo.voltaje_alimentacion = data['voltaje_alimentacion']
+                updated_fields.append('voltaje_alimentacion')
+            
+            # Guardar cambios
+            if updated_fields:
+                modulo.save(update_fields=updated_fields)
+                logger.info(f"✅ Info técnica actualizada - Módulo {modulo_id}: {', '.join(updated_fields)}")
+            else:
+                logger.warning(f"⚠️ No se actualizó ningún campo para módulo {modulo_id}")
+            
+            # Opcional: Crear log en InfoModulo si existe ese modelo
+            try:
+                from modulos.models import InfoModulo
+                
+                InfoModulo.objects.create(
+                    modulo=modulo,
+                    version_firmware=data.get('version_firmware'),
+                    ip_address=data.get('ip_address'),
+                    mac_address=data.get('mac_address'),
+                    uptime=data.get('uptime'),
+                    memoria_libre=data.get('memoria_libre'),
+                    temperatura_interna=data.get('temperatura_interna'),
+                    voltaje_alimentacion=data.get('voltaje_alimentacion'),
+                    signal_strength=data.get('signal_strength')
+                )
+                logger.info(f"📝 Log de info técnica creado para módulo {modulo_id}")
+                
+            except ImportError:
+                # El modelo InfoModulo no existe, solo actualizar Modulo
+                pass
+            except Exception as e:
+                logger.warning(f"⚠️ No se pudo crear log de info técnica: {e}")
+                
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Error parseando JSON de info técnica: {e}")
+        except Exception as e:
+            logger.error(f"❌ Error procesando info técnica: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+    # ========================================================================
+    # FIN NUEVA FUNCIÓN
+    # ========================================================================
     
     def connect(self):
         """Conectar al broker MQTT"""
@@ -251,6 +333,44 @@ class MQTTClient:
         else:
             logger.warning("⚠️ Cliente MQTT no conectado")
             return False
+        
+    def procesar_info_tecnica(payload):
+        """
+        Procesa mensajes del topic: modulos/+/info-tecnica
+        
+        Formato esperado:
+        {
+            "moduloId": 14,
+            "version_firmware": "v2.3.1",
+            "ip_address": "192.168.1.100",
+            "mac_address": "AA:BB:CC:DD:EE:FF",
+            "memoria_libre": 32768,
+            "temperatura_interna": 42.5,
+            "voltaje_alimentacion": 3.31,
+            "uptime": 345600,
+            "signal_strength": -45
+        }
+        """
+        try:
+            modulo_id = payload.get('moduloId')
+            modulo = Modulo.objects.get(modulo_id=modulo_id)
+            
+            # Actualizar información técnica
+            modulo.version_firmware = payload.get('version_firmware')
+            modulo.direccion_ip = payload.get('ip_address')
+            modulo.direccion_mac = payload.get('mac_address')
+            modulo.memoria_libre = payload.get('memoria_libre')
+            modulo.temperatura_interna = payload.get('temperatura_interna')
+            modulo.voltaje_alimentacion = payload.get('voltaje_alimentacion')
+            
+            modulo.save()
+            
+            logger.info(f"✅ Info técnica actualizada para módulo {modulo_id}")
+            
+        except Modulo.DoesNotExist:
+            logger.error(f"❌ Módulo {modulo_id} no existe")
+        except Exception as e:
+            logger.error(f"❌ Error procesando info técnica: {e}")
 
 
 # Instancia global del cliente MQTT
