@@ -57,13 +57,11 @@
             </a>
             
             <a 
-                href="#" 
-                class="flex items-center space-x-3 px-4 py-3 text-gray-400 cursor-not-allowed rounded-lg"
-                title="Próximamente"
+                href="{% url 'apuntes' %}" 
+                class="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-colors {% if request.resolver_match.url_name == 'apuntes' %}bg-blue-50 text-blue-700 border-l-4 border-blue-600{% endif %}"
             >
                 <i class="fas fa-sliders-h text-lg w-5"></i>
                 <span class="font-medium">Apuntes</span>
-                <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Próx</span>
             </a>
             
             <a 

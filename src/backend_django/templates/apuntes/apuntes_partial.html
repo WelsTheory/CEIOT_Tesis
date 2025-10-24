@@ -1,0 +1,111 @@
+{% if ubicaciones_con_datos %}
+    {% for ubicacion, datos in ubicaciones_con_datos.items %}
+    
+    <!-- Contenedor por ubicación -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6 
+        {% if ubicacion == 'Norte' %}border-t-4 border-blue-500
+        {% elif ubicacion == 'Este' %}border-t-4 border-yellow-500
+        {% elif ubicacion == 'Oeste' %}border-t-4 border-purple-500
+        {% elif ubicacion == 'Sur' %}border-t-4 border-green-500
+        {% endif %}">
+        
+        <!-- Header de ubicación -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <span class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold
+                    {% if ubicacion == 'Norte' %}bg-blue-500
+                    {% elif ubicacion == 'Este' %}bg-yellow-500
+                    {% elif ubicacion == 'Oeste' %}bg-purple-500
+                    {% elif ubicacion == 'Sur' %}bg-green-500
+                    {% endif %}">
+                    {{ ubicacion|first }}
+                </span>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">{{ ubicacion }}</h2>
+                    <p class="text-sm text-gray-600">{{ datos.total_modulos }} módulos</p>
+                </div>
+            </div>
+        
+        </div>
+        
+        <!-- Grid de módulos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {% for modulo in datos.modulos %}
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
+                
+                <!-- Nombre del módulo -->
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-gray-800">{{ modulo.nombre }}</h3>
+                    <a href="{% url 'modulo_detail' modulo.modulo_id %}" 
+                       class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                
+                {% if modulo.ultimo_apunte %}
+                <!-- Valores actuales -->
+                <div class="space-y-2 mb-3">
+                    <!-- Valor UP -->
+                    <div class="flex items-center justify-between bg-white rounded p-2">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-arrow-up text-blue-500"></i>
+                            <span class="text-sm font-medium text-gray-700">UP</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg font-bold text-blue-600">
+                                {{ modulo.ultimo_apunte.valor_up|floatformat:1 }}
+                            </span>
+                            {% if modulo.tendencia_up == 'up' %}
+                                <i class="fas fa-caret-up text-green-500"></i>
+                            {% elif modulo.tendencia_up == 'down' %}
+                                <i class="fas fa-caret-down text-red-500"></i>
+                            {% else %}
+                                <i class="fas fa-minus text-gray-400"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Valor DOWN -->
+                    <div class="flex items-center justify-between bg-white rounded p-2">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-arrow-down text-orange-500"></i>
+                            <span class="text-sm font-medium text-gray-700">DOWN</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg font-bold text-orange-600">
+                                {{ modulo.ultimo_apunte.valor_down|floatformat:1 }}
+                            </span>
+                            {% if modulo.tendencia_down == 'up' %}
+                                <i class="fas fa-caret-up text-green-500"></i>
+                            {% elif modulo.tendencia_down == 'down' %}
+                                <i class="fas fa-caret-down text-red-500"></i>
+                            {% else %}
+                                <i class="fas fa-minus text-gray-400"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Última actualización -->
+                <div class="text-xs text-gray-500 text-center pt-2 border-t border-gray-200">
+                    <i class="far fa-clock mr-1"></i>
+                    {{ modulo.ultimo_apunte.fecha|date:"d/m/Y H:i" }}
+                </div>
+                
+                {% else %}
+                <p class="text-gray-500 text-sm text-center py-4">Sin apuntes</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+    </div>
+    
+    {% endfor %}
+{% else %}
+    <div class="bg-white rounded-lg shadow p-12 text-center">
+        <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">No hay apuntes disponibles</h3>
+        <p class="text-gray-500">No se encontraron registros de apuntes para la ubicación seleccionada</p>
+    </div>
+{% endif %}

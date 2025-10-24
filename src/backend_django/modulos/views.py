@@ -1632,3 +1632,100 @@ def reiniciar_modulo(request, modulo_id):
             'success': False,
             'error': f'Error al reiniciar el módulo: {str(e)}'
         }, status=500)
+
+@login_required
+def apuntes_view(request):
+    """Vista principal de apuntes agrupados por ubicación"""
+    from django.db.models import Avg
+    
+    # Obtener el filtro de ubicación desde GET
+    ubicacion_seleccionada = request.GET.get('ubicacion', 'todas')
+    
+    # Normalizar ubicación: convertir primera letra a mayúscula
+    if ubicacion_seleccionada != 'todas':
+        ubicacion_seleccionada = ubicacion_seleccionada.capitalize()  # "norte" → "Norte"
+    
+    # Obtener todas las ubicaciones disponibles
+    ubicaciones_disponibles = Modulo.objects.values_list('ubicacion', flat=True).distinct().order_by('ubicacion')
+    
+    # Filtrar módulos según la selección
+    if ubicacion_seleccionada == 'todas':
+        modulos_query = Modulo.objects.all()
+    else:
+        modulos_query = Modulo.objects.filter(ubicacion=ubicacion_seleccionada)
+    
+    # Agrupar módulos por ubicación
+    ubicaciones_con_datos = {}
+    
+    for ubicacion in ubicaciones_disponibles:
+        if ubicacion_seleccionada != 'todas' and ubicacion != ubicacion_seleccionada:
+            continue
+            
+        # Obtener módulos de esta ubicación
+        modulos = modulos_query.filter(ubicacion=ubicacion).prefetch_related('apuntes')
+        
+        # Calcular promedios de la ubicación (últimos apuntes de cada módulo)
+        total_up = 0
+        total_down = 0
+        modulos_con_datos = 0
+        
+        for modulo in modulos:
+            ultimo_apunte = modulo.apuntes.first()
+            if ultimo_apunte:
+                try:
+                    total_up += float(ultimo_apunte.valor_up)
+                    total_down += float(ultimo_apunte.valor_down)
+                    modulos_con_datos += 1
+                except (ValueError, TypeError):
+                    pass
+        
+        # Calcular promedio
+        up_promedio = total_up / modulos_con_datos if modulos_con_datos > 0 else 0
+        down_promedio = total_down / modulos_con_datos if modulos_con_datos > 0 else 0
+        
+        # Agregar datos de tendencia a cada módulo
+        modulos_con_tendencias = []
+        for modulo in modulos:
+            ultimo_apunte = modulo.apuntes.first()
+            modulo.ultimo_apunte = ultimo_apunte
+            
+            # Calcular tendencia (comparar con apunte anterior)
+            apuntes_recientes = list(modulo.apuntes.all()[:2])
+            if len(apuntes_recientes) == 2:
+                try:
+                    up_actual = float(apuntes_recientes[0].valor_up)
+                    up_anterior = float(apuntes_recientes[1].valor_up)
+                    down_actual = float(apuntes_recientes[0].valor_down)
+                    down_anterior = float(apuntes_recientes[1].valor_down)
+                    
+                    modulo.tendencia_up = 'up' if up_actual > up_anterior else ('down' if up_actual < up_anterior else 'stable')
+                    modulo.tendencia_down = 'up' if down_actual > down_anterior else ('down' if down_actual < down_anterior else 'stable')
+                except (ValueError, TypeError):
+                    modulo.tendencia_up = 'stable'
+                    modulo.tendencia_down = 'stable'
+            else:
+                modulo.tendencia_up = 'stable'
+                modulo.tendencia_down = 'stable'
+            
+            modulos_con_tendencias.append(modulo)
+        
+        ubicaciones_con_datos[ubicacion] = {
+            'modulos': modulos_con_tendencias,
+            'up_promedio': up_promedio,
+            'down_promedio': down_promedio,
+            'total_modulos': modulos_con_datos,
+        }
+    
+    context = {
+        'page_title': 'Apuntes de Módulos',
+        'ubicaciones_con_datos': ubicaciones_con_datos,
+        'ubicaciones_disponibles': ubicaciones_disponibles,
+        'ubicacion_seleccionada': ubicacion_seleccionada,
+    }
+    
+    # Si es petición HTMX, devolver solo partial
+    if request.headers.get('HX-Request'):
+        return render(request, 'apuntes/apuntes_partial.html', context)
+    
+    # Si no, devolver template completo
+    return render(request, 'apuntes/apuntes.html', context)

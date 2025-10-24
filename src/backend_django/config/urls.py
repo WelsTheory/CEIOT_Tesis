@@ -62,6 +62,8 @@ urlpatterns = [
     path('notificaciones/<int:notificacion_id>/eliminar/', modulos_views.eliminar_notificacion, name='eliminar_notificacion'),
     path('notificaciones/marcar-todas-leidas/', modulos_views.marcar_todas_leidas, name='marcar_todas_notificaciones_leidas'),
     path('mediciones/', modulos_views.mediciones_view, name='mediciones'),
+    # Apuntes
+    path('apuntes/', modulos_views.apuntes_view, name='apuntes'),
 ]
 
 # Servir archivos estáticos en desarrollo
