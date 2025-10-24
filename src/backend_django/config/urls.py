@@ -51,6 +51,9 @@ urlpatterns = [
     path('api/modulos/<int:modulo_id>/card/', modulos_views.modulo_card_partial, name='modulo_card_partial'),
     path('api/modulos/<int:modulo_id>/ultima-medicion/', modulos_views.ultima_medicion_partial, name='ultima_medicion_partial'),
     
+    # Reinicio módulos
+    path('api/modulos/<int:modulo_id>/reiniciar/', modulos_views.reiniciar_modulo, name='reiniciar_modulo'),
+
     # Acciones de control
     path('api/modulos/<int:modulo_id>/control-action/', modulos_views.modulo_control_action, name='modulo_control_action'),
 

@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect  # ← Agregar redirect
 from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -871,88 +871,97 @@ def modulo_control_action(request, modulo_id):
     
     modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
     accion = request.POST.get('accion')
+
+    if accion == 'reiniciar':
+        # Redirigir al nuevo endpoint de reinicio
+        return reiniciar_modulo(request, modulo_id)
     
-    try:
-        # Verificar que el módulo tiene reset asignado
-        if not modulo.reset:
-            logger.warning(f"⚠️ Módulo {modulo_id} no tiene ControlReinicio asignado")
-            # Opcional: crear uno automáticamente
-            reset = ControlReinicio.objects.create(
-                nombre=f"Reset_{modulo.nombre}",
-                modulo=modulo,
-                estado=False
-            )
-            modulo.reset = reset
-            modulo.save()
-        else:
-            reset = modulo.reset
+    # Las acciones de encender/apagar ya no están disponibles
+    return JsonResponse({
+        'error': 'Acción no soportada. Solo está disponible "reiniciar"'
+    }, status=400)
+    
+    # try:
+    #     # Verificar que el módulo tiene reset asignado
+    #     if not modulo.reset:
+    #         logger.warning(f"⚠️ Módulo {modulo_id} no tiene ControlReinicio asignado")
+    #         # Opcional: crear uno automáticamente
+    #         reset = ControlReinicio.objects.create(
+    #             nombre=f"Reset_{modulo.nombre}",
+    #             modulo=modulo,
+    #             estado=False
+    #         )
+    #         modulo.reset = reset
+    #         modulo.save()
+    #     else:
+    #         reset = modulo.reset
         
-        # Actualizar el estado según la acción
-        if accion == 'encender':
-            reset.estado = True
-            reset.save()
-            # TODO: Descomentar cuando tengas MQTT configurado
-            # from mqtt_handler.client import mqtt_client
-            # mqtt_client.publish(f"modulos/{modulo_id}/control", "ON")
-            logger.info(f"✅ Módulo {modulo_id} ENCENDIDO")
+    #     # Actualizar el estado según la acción
+    #     if accion == 'encender':
+    #         reset.estado = True
+    #         reset.save()
+    #         # TODO: Descomentar cuando tengas MQTT configurado
+    #         # from mqtt_handler.client import mqtt_client
+    #         # mqtt_client.publish(f"modulos/{modulo_id}/control", "ON")
+    #         logger.info(f"✅ Módulo {modulo_id} ENCENDIDO")
             
-        elif accion == 'apagar':
-            reset.estado = False
-            reset.save()
-            # TODO: Descomentar cuando tengas MQTT configurado
-            # from mqtt_handler.client import mqtt_client
-            # mqtt_client.publish(f"modulos/{modulo_id}/control", "OFF")
-            logger.info(f"🔴 Módulo {modulo_id} APAGADO")
+    #     elif accion == 'apagar':
+    #         reset.estado = False
+    #         reset.save()
+    #         # TODO: Descomentar cuando tengas MQTT configurado
+    #         # from mqtt_handler.client import mqtt_client
+    #         # mqtt_client.publish(f"modulos/{modulo_id}/control", "OFF")
+    #         logger.info(f"🔴 Módulo {modulo_id} APAGADO")
             
-        elif accion == 'reiniciar':
-            # TODO: Lógica de reinicio
-            # from mqtt_handler.client import mqtt_client
-            # mqtt_client.publish(f"modulos/{modulo_id}/control", "RESTART")
-            logger.info(f"🔄 Módulo {modulo_id} REINICIADO")
+    #     elif accion == 'reiniciar':
+    #         # TODO: Lógica de reinicio
+    #         # from mqtt_handler.client import mqtt_client
+    #         # mqtt_client.publish(f"modulos/{modulo_id}/control", "RESTART")
+    #         logger.info(f"🔄 Módulo {modulo_id} REINICIADO")
         
-        # Preparar el context para devolver el card actualizado
-        ultima_medicion = modulo.mediciones.first()
+    #     # Preparar el context para devolver el card actualizado
+    #     ultima_medicion = modulo.mediciones.first()
         
-        # Determinar estado del módulo
-        if ultima_medicion:
-            hace_5_min = timezone.now() - timedelta(minutes=5)
-            hace_15_min = timezone.now() - timedelta(minutes=15)
+    #     # Determinar estado del módulo
+    #     if ultima_medicion:
+    #         hace_5_min = timezone.now() - timedelta(minutes=5)
+    #         hace_15_min = timezone.now() - timedelta(minutes=15)
             
-            if ultima_medicion.fecha >= hace_5_min:
-                estado = 'online'
-            elif ultima_medicion.fecha >= hace_15_min:
-                estado = 'warning'
-            else:
-                estado = 'offline'
-        else:
-            estado = 'offline'
+    #         if ultima_medicion.fecha >= hace_5_min:
+    #             estado = 'online'
+    #         elif ultima_medicion.fecha >= hace_15_min:
+    #             estado = 'warning'
+    #         else:
+    #             estado = 'offline'
+    #     else:
+    #         estado = 'offline'
         
-        # Agregar propiedades al módulo para el template
-        modulo.estado = estado
-        modulo.temperatura = float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0
-        modulo.presion = float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0
-        modulo.ultima_medicion = ultima_medicion.fecha if ultima_medicion else None
+    #     # Agregar propiedades al módulo para el template
+    #     modulo.estado = estado
+    #     modulo.temperatura = float(ultima_medicion.valor_temp) if ultima_medicion and ultima_medicion.valor_temp else 0
+    #     modulo.presion = float(ultima_medicion.valor_press) if ultima_medicion and ultima_medicion.valor_press else 0
+    #     modulo.ultima_medicion = ultima_medicion.fecha if ultima_medicion else None
         
-        # Estados UP/DOWN
-        modulo.estado_up = 'correcto'
-        modulo.estado_down = 'correcto'
+    #     # Estados UP/DOWN
+    #     modulo.estado_up = 'correcto'
+    #     modulo.estado_down = 'correcto'
         
-        # Renderizar el card completo actualizado
-        context = {
-            'modulo': modulo,
-        }
+    #     # Renderizar el card completo actualizado
+    #     context = {
+    #         'modulo': modulo,
+    #     }
         
-        html = render_to_string('modulos/partials/modulo_card.html', context, request=request)
-        return HttpResponse(html)
+    #     html = render_to_string('modulos/partials/modulo_card.html', context, request=request)
+    #     return HttpResponse(html)
         
-    except Exception as e:
-        logger.error(f"❌ Error en modulo_control_action: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        return HttpResponse(
-            '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Error al procesar la acción</div>',
-            status=500
-        )
+    # except Exception as e:
+    #     logger.error(f"❌ Error en modulo_control_action: {e}")
+    #     import traceback
+    #     logger.error(traceback.format_exc())
+    #     return HttpResponse(
+    #         '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">Error al procesar la acción</div>',
+    #         status=500
+    #     )
 
 
 @login_required
@@ -1557,3 +1566,69 @@ def modulo_control(request, modulo_id):
     }
     
     return render(request, 'modulos/control.html', context)
+
+cooldown_reinicios = {}
+
+@login_required
+@csrf_protect
+def reiniciar_modulo(request, modulo_id):
+    """
+    Vista para reiniciar un módulo individual con período de espera
+    
+    POST /api/modulos/<modulo_id>/reiniciar/
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    
+    modulo = get_object_or_404(Modulo, modulo_id=modulo_id)
+    
+    # Verificar cooldown (30 segundos)
+    ahora = timezone.now()
+    ultimo_reinicio = cooldown_reinicios.get(modulo_id)
+    
+    if ultimo_reinicio:
+        tiempo_transcurrido = (ahora - ultimo_reinicio).total_seconds()
+        if tiempo_transcurrido < 30:
+            tiempo_restante = int(30 - tiempo_transcurrido)
+            return JsonResponse({
+                'success': False,
+                'error': f'Debes esperar {tiempo_restante} segundos antes de reiniciar nuevamente',
+                'cooldown_restante': tiempo_restante
+            }, status=429)
+    
+    try:
+        # ============================================
+        # LÓGICA DE REINICIO MQTT
+        # ============================================
+        # Aquí va tu código MQTT para enviar el comando de reinicio
+        # Ejemplo:
+        # mqtt_client.publish(f"modulos/{modulo_id}/control/reset", "1")
+        
+        # Por ahora solo simulamos el reinicio
+        print(f"[REINICIO] Módulo {modulo_id} - {modulo.nombre} reiniciado en {ahora}")
+        
+        # Registrar en log de reinicios (si tienes el modelo)
+        if hasattr(modulo, 'reset') and modulo.reset:
+            LogReinicio.objects.create(
+                reset=modulo.reset,
+                reinicio=True,
+                fecha=ahora
+            )
+        
+        # Actualizar el cooldown
+        cooldown_reinicios[modulo_id] = ahora
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': f'Módulo {modulo.nombre} reiniciado exitosamente',
+            'modulo_id': modulo_id,
+            'timestamp': ahora.isoformat(),
+            'cooldown_segundos': 30
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Reinicio módulo {modulo_id}: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Error al reiniciar el módulo: {str(e)}'
+        }, status=500)

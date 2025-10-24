@@ -62,13 +62,7 @@
             <!-- Toggle de Encendido/Apagado con Info -->
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-2">
-                    <span class="text-sm font-medium text-gray-700">Control:</span>
-                    <span class="text-xs px-2 py-1 rounded {% if modulo.reset.estado %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
-                        {{ modulo.reset.estado|yesno:"Encendido,Apagado,Desconocido" }}
-                    </span>
-                </div>
-                
-                <!-- Botón de información técnica (expandible) -->
+                <span class="text-sm font-medium text-gray-700">Más información técnica:</span>
                 <button 
                     type="button"
                     onclick="toggleInfoTecnica{{ modulo.modulo_id }}()"
@@ -76,28 +70,29 @@
                     title="Ver información técnica">
                     <i class="fas fa-info-circle text-lg"></i>
                 </button>
+                </div>
             </div>
 
-            <!-- Toggle Switch -->
-            <div class="flex items-center justify-center space-x-3 py-2">
-                <span class="text-xs text-gray-500">OFF</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input 
-                        type="checkbox" 
-                        {% if modulo.reset.estado %}checked{% endif %}
-                        class="sr-only peer"
-                        hx-post="{% url 'modulo_control_action' modulo.modulo_id %}"
-                        hx-vals='{"accion": "{{ modulo.reset.estado|yesno:"apagar,encender" }}"}'
-                        hx-target="#modulo-{{ modulo.modulo_id }}"
-                        hx-swap="outerHTML"
-                        hx-indicator="#loading-{{ modulo.modulo_id }}">
-                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                </label>
-                <span class="text-xs text-gray-500">ON</span>
+            <div class="reinicio-container-{{ modulo.modulo_id }}">
+                <button 
+                    type="button"
+                    id="btn-reinicio-{{ modulo.modulo_id }}"
+                    class="w-full py-3.5 px-5 text-white font-bold text-sm uppercase tracking-wide rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                    style="background-color: #a8c7fa;"
+                    onmouseover="this.style.backgroundColor='#8bb4f7'"
+                    onmouseout="if(!this.disabled) this.style.backgroundColor='#a8c7fa'"
+                    onclick="reiniciarModulo({{ modulo.modulo_id }})"
+                >
+                    <i class="fas fa-redo-alt text-base" id="icono-reinicio-{{ modulo.modulo_id }}"></i>
+                    <span id="texto-reinicio-{{ modulo.modulo_id }}">Reiniciar Módulo</span>
+                </button>
                 
-                <!-- Spinner de carga -->
-                <div id="loading-{{ modulo.modulo_id }}" class="htmx-indicator">
-                    <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                <!-- Mensaje de espera -->
+                <div id="mensaje-cooldown-{{ modulo.modulo_id }}" class="hidden mt-3 text-center">
+                    <div class="inline-flex items-center space-x-2 text-xs font-semibold px-4 py-2.5 rounded-full shadow-sm" style="background-color: #e8f0fe; color: #5a7db8;">
+                        <i class="fas fa-hourglass-half"></i>
+                        <span>Podrás reiniciar en <span id="tiempo-restante-{{ modulo.modulo_id }}" class="font-bold" style="color: #4a6ba5;">30</span>s</span>
+                    </div>
                 </div>
             </div>
 
@@ -187,6 +182,110 @@ function toggleInfoTecnica{{ modulo.modulo_id }}() {
     const panel = document.getElementById('info-tecnica-{{ modulo.modulo_id }}');
     panel.classList.toggle('hidden');
 }
+
+// Toggle información técnica
+function toggleInfoTecnica{{ modulo.modulo_id }}() {
+    const panel = document.getElementById('info-tecnica-{{ modulo.modulo_id }}');
+    panel.classList.toggle('hidden');
+}
+
+// Función para reiniciar el módulo
+function reiniciarModulo(moduloId) {
+    const boton = document.getElementById(`btn-reinicio-${moduloId}`);
+    const icono = document.getElementById(`icono-reinicio-${moduloId}`);
+    const texto = document.getElementById(`texto-reinicio-${moduloId}`);
+    const mensajeCooldown = document.getElementById(`mensaje-cooldown-${moduloId}`);
+    const tiempoRestante = document.getElementById(`tiempo-restante-${moduloId}`);
+    
+    // Deshabilitar botón
+    boton.disabled = true;
+    icono.className = 'fas fa-spinner fa-spin';
+    texto.textContent = 'Reiniciando...';
+    
+    // Hacer petición HTMX
+    fetch(`/api/modulos/${moduloId}/reiniciar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            mostrarNotificacion('✅ Módulo reiniciado exitosamente', 'success');
+            
+            // Iniciar cooldown de 30 segundos
+            let segundos = 30;
+            tiempoRestante.textContent = segundos;
+            mensajeCooldown.classList.remove('hidden');
+            icono.className = 'fas fa-clock';
+            texto.textContent = 'Esperando...';
+            
+            const intervalo = setInterval(() => {
+                segundos--;
+                tiempoRestante.textContent = segundos;
+                
+                if (segundos <= 0) {
+                    clearInterval(intervalo);
+                    boton.disabled = false;
+                    icono.className = 'fas fa-redo-alt';
+                    texto.textContent = 'Reiniciar Módulo';
+                    mensajeCooldown.classList.add('hidden');
+                }
+            }, 1000);
+        } else {
+            // Mostrar mensaje de error
+            mostrarNotificacion('❌ Error al reiniciar el módulo', 'error');
+            boton.disabled = false;
+            icono.className = 'fas fa-redo-alt';
+            texto.textContent = 'Reiniciar Módulo';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarNotificacion('❌ Error de conexión', 'error');
+        boton.disabled = false;
+        icono.className = 'fas fa-redo-alt';
+        texto.textContent = 'Reiniciar Módulo';
+    });
+}
+
+// Función auxiliar para obtener el CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para mostrar notificaciones (requiere que exista en tu base.html)
+function mostrarNotificacion(mensaje, tipo) {
+    // Puedes usar tu sistema de notificaciones existente
+    // O simplemente un alert temporal
+    const div = document.createElement('div');
+    div.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
+        tipo === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white animate-fade-in`;
+    div.textContent = mensaje;
+    document.body.appendChild(div);
+    
+    setTimeout(() => {
+        div.classList.add('animate-fade-out');
+        setTimeout(() => div.remove(), 500);
+    }, 3000);
+}
+
 </script>
 
 <style>
