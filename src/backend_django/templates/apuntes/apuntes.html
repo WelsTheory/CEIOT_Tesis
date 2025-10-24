@@ -25,26 +25,57 @@
 <div class="space-y-6">
     
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Apuntes de Módulos</h1>
-            <p class="text-gray-600">Monitoreo de valores UP y DOWN por ubicación</p>
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-solar-panel text-3xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800">Apuntes de Módulos</h1>
+                        <div class="flex items-center space-x-4 mt-2">
+                            <p class="text-gray-600">Monitoreo de valores UP y DOWN por ubicación</p>
+                        </div>
+                    </div>
+                </div>
+            </div>  
         </div>
-        
-        <!-- Filtro por ubicación -->
-        <div class="mt-4 md:mt-0">
-            <select 
-                id="filtro-ubicacion"
-                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onchange="window.location.href='{% url 'apuntes' %}?ubicacion=' + this.value"
+    </div>
+    <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center space-x-3 overflow-x-auto">
+            <span class="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por:</span>
+            
+            <button 
+                hx-get="{% url 'mediciones' %}?ubicacion=todas"
+                hx-target="#mediciones-content"
+                hx-swap="innerHTML"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+                    {% if ubicacion_seleccionada == 'todas' %}
+                        bg-blue-600 text-white
+                    {% else %}
+                        bg-gray-100 text-gray-700 hover:bg-gray-200
+                    {% endif %}"
             >
-                <option value="todas" {% if ubicacion_seleccionada == 'todas' %}selected{% endif %}>Todas las ubicaciones</option>
-                {% for ubicacion in ubicaciones_disponibles %}
-                <option value="{{ ubicacion|lower }}" {% if ubicacion_seleccionada == ubicacion %}selected{% endif %}>
-                    {{ ubicacion }}
-                </option>
-                {% endfor %}
-            </select>
+                <i class="fas fa-border-all mr-2"></i>Todas
+            </button>
+
+            {% for ubicacion in ubicaciones_disponibles %}
+            <button 
+                hx-get="{% url 'mediciones' %}?ubicacion={{ ubicacion }}"
+                hx-target="#mediciones-content"
+                hx-swap="innerHTML"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+                    {% if ubicacion_seleccionada == ubicacion %}
+                        bg-blue-600 text-white
+                    {% else %}
+                        bg-gray-100 text-gray-700 hover:bg-gray-200
+                    {% endif %}"
+            >
+                {{ ubicacion }}
+            </button>
+            {% endfor %}
         </div>
     </div>
     
