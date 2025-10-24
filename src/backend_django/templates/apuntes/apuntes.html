@@ -48,8 +48,8 @@
             <span class="text-sm font-medium text-gray-700 whitespace-nowrap">Filtrar por:</span>
             
             <button 
-                hx-get="{% url 'mediciones' %}?ubicacion=todas"
-                hx-target="#mediciones-content"
+                hx-get="{% url 'apuntes' %}?ubicacion=todas"
+                hx-target="#apuntes-content"
                 hx-swap="innerHTML"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                     {% if ubicacion_seleccionada == 'todas' %}
@@ -63,8 +63,8 @@
 
             {% for ubicacion in ubicaciones_disponibles %}
             <button 
-                hx-get="{% url 'mediciones' %}?ubicacion={{ ubicacion }}"
-                hx-target="#mediciones-content"
+                hx-get="{% url 'apuntes' %}?ubicacion={{ ubicacion|lower}}"
+                hx-target="#apuntes-content"
                 hx-swap="innerHTML"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                     {% if ubicacion_seleccionada == ubicacion %}
