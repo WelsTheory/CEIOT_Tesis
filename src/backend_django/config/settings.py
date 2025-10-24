@@ -59,6 +59,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.static',  # Para {% static %}
                 'django.template.context_processors.media',   # Para archivos media
+                'modulos.context_processors.sidebar_stats',
             ],
         },
     },

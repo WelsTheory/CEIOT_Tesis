@@ -663,7 +663,7 @@ def modulo_detail(request, modulo_id):
     
     # Estadísticas del módulo
     from django.db.models import Avg, Max, Min, Count
-    stats = modulo.mediciones.aggregate(
+    stats_modulo = modulo.mediciones.aggregate(
         temp_promedio=Avg('valor_temp'),
         temp_max=Max('valor_temp'),
         temp_min=Min('valor_temp'),
@@ -681,7 +681,7 @@ def modulo_detail(request, modulo_id):
         'ultimas_mediciones': ultimas_mediciones,
         'chart_data': chart_data,
         'info_tecnica': info_tecnica,
-        'stats': stats,
+        'stats_modulo': stats_modulo,
     }
     
     return render(request, 'modulos/detalle.html', context)
@@ -1447,7 +1447,7 @@ def modulo_detail(request, modulo_id):
     temp_promedio_ayer = mediciones_ayer.aggregate(Avg('valor_temp'))['valor_temp__avg'] or 0
     diferencia_ayer = (stats_24h['temp_promedio'] or 0) - temp_promedio_ayer
     
-    stats = {
+    stats_mediciones = {
         'temp_promedio_24h': stats_24h['temp_promedio'] or 0,
         'temp_max_dia': stats_24h['temp_max'] or 0,
         'temp_min_dia': stats_24h['temp_min'] or 0,
@@ -1532,7 +1532,7 @@ def modulo_detail(request, modulo_id):
         
         # Tab Mediciones
         'ultimas_mediciones': ultimas_mediciones,
-        'stats': stats,
+        'stats_mediciones': stats_mediciones,
         'chart_labels': json.dumps(chart_labels),
         'chart_temp_data': json.dumps(chart_temp_data),
         'chart_presion_data': json.dumps(chart_presion_data),

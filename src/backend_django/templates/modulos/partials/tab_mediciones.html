@@ -8,7 +8,7 @@
             <h3 class="text-sm font-semibold text-gray-700">Temp. Promedio 24h</h3>
             <i class="fas fa-temperature-high text-red-600"></i>
         </div>
-        <p class="text-3xl font-bold text-red-600">{{ stats.temp_promedio_24h|floatformat:1 }}°C</p>
+        <p class="text-3xl font-bold text-red-600">{{ stats_mediciones.temp_promedio_24h|floatformat:1 }}°C</p>
     </div>
 
     <!-- Máximos y Mínimos del Día -->
@@ -20,11 +20,11 @@
         <div class="space-y-1">
             <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-600">Máx:</span>
-                <span class="font-bold text-red-600">{{ stats.temp_max_dia|floatformat:1 }}°C</span>
+                <span class="font-bold text-red-600">{{ stats_mediciones.temp_max_dia|floatformat:1 }}°C</span>
             </div>
             <div class="flex items-center justify-between text-sm">
                 <span class="text-gray-600">Mín:</span>
-                <span class="font-bold text-blue-600">{{ stats.temp_min_dia|floatformat:1 }}°C</span>
+                <span class="font-bold text-blue-600">{{ stats_mediciones.temp_min_dia|floatformat:1 }}°C</span>
             </div>
         </div>
     </div>
@@ -36,12 +36,12 @@
             <i class="fas fa-chart-line text-green-600"></i>
         </div>
         <div class="flex items-center space-x-2">
-            {% if stats.diferencia_ayer > 0 %}
+            {% if stats_mediciones.diferencia_ayer > 0 %}
                 <i class="fas fa-arrow-up text-red-500 text-xl"></i>
-                <span class="text-2xl font-bold text-red-600">+{{ stats.diferencia_ayer|floatformat:1 }}°C</span>
-            {% elif stats.diferencia_ayer < 0 %}
+                <span class="text-2xl font-bold text-red-600">+{{ stats_mediciones.diferencia_ayer|floatformat:1 }}°C</span>
+            {% elif stats_mediciones.diferencia_ayer < 0 %}
                 <i class="fas fa-arrow-down text-blue-500 text-xl"></i>
-                <span class="text-2xl font-bold text-blue-600">{{ stats.diferencia_ayer|floatformat:1 }}°C</span>
+                <span class="text-2xl font-bold text-blue-600">{{ stats_mediciones.diferencia_ayer|floatformat:1 }}°C</span>
             {% else %}
                 <span class="text-2xl font-bold text-gray-600">Sin cambio</span>
             {% endif %}
